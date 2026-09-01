@@ -1,0 +1,104 @@
+.genres {
+  padding: 14px 20px 10px;
+  background: #0d0d0f;
+  flex-shrink: 0;
+  border-bottom: 1px solid #1a1a1e;
+}
+
+.genres__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.genres__title h2 {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #f5a623;
+}
+
+.genres__carousel {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+}
+
+.vinyl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  width: 90px;
+  transition: transform 0.2s;
+}
+
+.vinyl:hover {
+  transform: translateY(-2px);
+}
+
+.vinyl--selected .vinyl__disc {
+  box-shadow: 0 0 0 2px #f5a623, 0 0 16px rgba(245, 166, 35, 0.3);
+}
+
+.vinyl__disc {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #1a1a1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 2px solid #2a2a30;
+}
+
+.vinyl__grooves {
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow:
+    inset 0 0 0 6px rgba(255, 255, 255, 0.02),
+    inset 0 0 0 12px rgba(255, 255, 255, 0.02),
+    inset 0 0 0 18px rgba(255, 255, 255, 0.015);
+}
+
+.vinyl__label {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  border: 2px solid rgba(0, 0, 0, 0.3);
+}
+
+.vinyl__label-text {
+  font-size: 0.45rem;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.vinyl__name {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #ccc;
+  text-align: center;
+  line-height: 1.2;
+  max-width: 90px;
+}
+
+.vinyl__count {
+  font-size: 0.55rem;
+  color: #666;
+}

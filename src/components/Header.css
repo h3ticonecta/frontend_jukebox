@@ -1,0 +1,70 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: #111114;
+  border-bottom: 1px solid #1e1e22;
+  flex-shrink: 0;
+}
+
+.header__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header__logo {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #f5a623;
+  text-transform: uppercase;
+}
+
+.header__badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.12);
+  border: 1px solid rgba(255, 107, 107, 0.35);
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.header__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header__btn-leitura {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #f5a623;
+  border: 1.5px solid #f5a623;
+  padding: 6px 16px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.header__btn-leitura:hover {
+  background: rgba(245, 166, 35, 0.1);
+}
+
+.header__icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  color: #888;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.header__icon-btn:hover {
+  color: #f5a623;
+  background: rgba(245, 166, 35, 0.08);
+}
