@@ -1,4 +1,6 @@
 import { Disc, ListPlus, Play } from 'lucide-react';
+import { cn, formatDuration } from '../../lib/utils';
+import EmptyState from '../shared/EmptyState';
 
 export default function SongSidePanel({ album, tracks, playingTrackId, onPlay, onAddToQueue }) {
   if (!album) {
