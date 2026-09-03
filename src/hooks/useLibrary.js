@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { MUSIC_ROOT_PREFIX } from '../api/config';
-import {
-  fetchMusicas,
-  getFoldersFromResponse,
-  getTracksFromResponse,
-  resolveFolderCover,
-} from '../api/musicas';
+import { fetchMusicas, getFoldersFromResponse, getTracksFromResponse } from '../api/musicas';
 import { formatFolderCountLabel, mapFolderFromApi, mapTrackFromApi } from '../lib/library';
 
 const GRADIENTS = [
@@ -25,16 +20,6 @@ function mapFolder(folder, index) {
 
 function mapTrack(track, index) {
   return mapTrackFromApi(track, index);
-}
-
-async function enrichFoldersWithCovers(token, folders, mapped) {
-  return Promise.all(
-    mapped.map(async (item, index) => {
-      if (item.cover) return item;
-      const cover = await resolveFolderCover(token, folders[index]);
-      return cover ? { ...item, cover } : item;
-    })
-  );
 }
 
 export function useLibrary(token) {
@@ -75,14 +60,7 @@ export function useLibrary(token) {
     if (mapped.length > 0) {
       setSelectedGenre((current) => current || mapped[0]);
     }
-
-    const enriched = await enrichFoldersWithCovers(token, folders, mapped);
-    setGenres(enriched);
-    setSelectedGenre((current) => {
-      if (!current) return enriched[0] || null;
-      return enriched.find((genre) => genre.id === current.id) || enriched[0] || null;
-    });
-  }, [loadPrefix, token]);
+  }, [loadPrefix]);
 
   const loadAlbums = useCallback(
     async (genre) => {
@@ -97,9 +75,7 @@ export function useLibrary(token) {
       const folderTracks = getTracksFromResponse(data);
 
       if (folders.length > 0) {
-        const mappedAlbums = folders.map(mapFolder);
-        const enrichedAlbums = await enrichFoldersWithCovers(token, folders, mappedAlbums);
-        setAlbums(enrichedAlbums);
+        setAlbums(folders.map(mapFolder));
         setTracks([]);
         setSelectedAlbum(null);
       } else if (folderTracks.length > 0) {
@@ -123,7 +99,7 @@ export function useLibrary(token) {
         setSelectedAlbum(null);
       }
     },
-    [loadPrefix, token]
+    [loadPrefix]
   );
 
   const loadAlbumTracks = useCallback(
