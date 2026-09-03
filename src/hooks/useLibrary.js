@@ -177,6 +177,32 @@ export function useLibrary(token) {
     [loadAlbumTracks]
   );
 
+  const navigateGenre = useCallback(
+    (delta) => {
+      if (!genres.length) return;
+      const currentIndex = genres.findIndex((genre) => genre.id === selectedGenre?.id);
+      const start = currentIndex < 0 ? 0 : currentIndex;
+      const nextIndex = Math.max(0, Math.min(genres.length - 1, start + delta));
+      if (genres[nextIndex]) {
+        selectGenre(genres[nextIndex]);
+      }
+    },
+    [genres, selectedGenre, selectGenre]
+  );
+
+  const navigateAlbum = useCallback(
+    (delta) => {
+      if (!albums.length) return;
+      const currentIndex = albums.findIndex((album) => album.id === selectedAlbum?.id);
+      const start = currentIndex < 0 ? 0 : currentIndex;
+      const nextIndex = Math.max(0, Math.min(albums.length - 1, start + delta));
+      if (albums[nextIndex]) {
+        selectAlbum(albums[nextIndex]);
+      }
+    },
+    [albums, selectedAlbum, selectAlbum]
+  );
+
   return {
     genres,
     albums,
@@ -188,6 +214,8 @@ export function useLibrary(token) {
     error,
     selectGenre,
     selectAlbum,
+    navigateGenre,
+    navigateAlbum,
     refreshLibrary,
     setError,
   };

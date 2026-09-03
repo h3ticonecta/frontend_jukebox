@@ -6,7 +6,8 @@ export async function fetchMusicas(token, { prefix = '', q = '' } = {}) {
   if (q) params.set('q', q);
 
   const query = params.toString();
-  return apiRequest(`/api/v1/musicas/${query ? `?${query}` : ''}`, { token });
+  const path = query ? `/api/v1/musicas/?${query}` : '/api/v1/musicas/';
+  return apiRequest(path, { token });
 }
 
 export function getTracksFromResponse(data) {

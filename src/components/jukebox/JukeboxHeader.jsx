@@ -1,5 +1,7 @@
-import { Disc, Loader2, RefreshCw } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { Disc, Keyboard, Loader2, RefreshCw } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import KeysPanel from './KeysPanel';
 
 export default function JukeboxHeader({
   isPlaying = false,
@@ -7,9 +9,27 @@ export default function JukeboxHeader({
   isRegistered = false,
   machineName,
   errorMessage,
+  teclas = [],
+  keysPanelOpen = false,
   onOpenBilling,
+  onToggleKeysPanel,
   onSyncLibrary,
 }) {
+  const keysPanelRef = useRef(null);
+
+  useEffect(() => {
+    if (!keysPanelOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (keysPanelRef.current && !keysPanelRef.current.contains(event.target)) {
+        onToggleKeysPanel?.(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => document.removeEventListener('mousedown', handlePointerDown);
+  }, [keysPanelOpen, onToggleKeysPanel]);
+
   return (
     <>
       <header className="relative z-10 px-4 py-3 flex items-center gap-3 border-b border-border shrink-0">
@@ -32,6 +52,24 @@ export default function JukeboxHeader({
           >
             Leitura
           </button>
+          <div className="relative" ref={keysPanelRef}>
+            <button
+              type="button"
+              onClick={() => onToggleKeysPanel?.(!keysPanelOpen)}
+              className={cn(
+                'p-1.5 rounded-md border transition-colors',
+                keysPanelOpen
+                  ? 'border-primary/60 bg-primary/20 text-primary'
+                  : 'border-border text-muted-foreground hover:text-primary hover:border-primary/40'
+              )}
+              title="Teclas"
+              aria-label="Teclas"
+              aria-expanded={keysPanelOpen}
+            >
+              <Keyboard size={16} />
+            </button>
+            {keysPanelOpen && <KeysPanel teclas={teclas} onClose={() => onToggleKeysPanel?.(false)} />}
+          </div>
           <button
             type="button"
             onClick={onSyncLibrary}

@@ -6,9 +6,11 @@ export function useAudioPlayer() {
   const [currentSong, setCurrentSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [volume, setVolume] = useState(1);
 
   useEffect(() => {
     const audio = new Audio();
+    audio.volume = 1;
     audioRef.current = audio;
 
     const onTimeUpdate = () => {
@@ -73,13 +75,37 @@ export function useAudioPlayer() {
     setProgress(0);
   }, []);
 
+  const skip = useCallback(() => {
+    stop();
+    setCurrentSong(null);
+  }, [stop]);
+
+  const adjustVolume = useCallback((delta) => {
+    setVolume((current) => {
+      const next = Math.min(1, Math.max(0, current + delta));
+      if (audioRef.current) {
+        audioRef.current.volume = next;
+      }
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
+
   return {
     currentSong,
     isPlaying,
     progress,
+    volume,
     play,
     togglePlay,
     stop,
+    skip,
+    adjustVolume,
     creditsPerSong: CREDITS_PER_SONG,
   };
 }

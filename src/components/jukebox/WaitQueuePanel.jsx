@@ -3,9 +3,14 @@ import { cn } from '../../lib/utils';
 import EmptyState from '../shared/EmptyState';
 import EqualizerBars from '../shared/EqualizerBars';
 
-export default function WaitQueuePanel({ currentSong, isPlaying, queue }) {
+export default function WaitQueuePanel({ currentSong, isPlaying, queue, highlighted = false }) {
   return (
-    <div className="w-[360px] h-full flex flex-col overflow-hidden border-l-2 border-primary/30 shrink-0">
+    <div
+      className={cn(
+        'w-[360px] h-full flex flex-col overflow-hidden border-l-2 shrink-0 transition-all duration-300',
+        highlighted ? 'border-secondary ring-2 ring-secondary/50 shadow-[0_0_20px_hsl(var(--secondary)/0.4)]' : 'border-primary/30'
+      )}
+    >
       <div className="px-3 py-2 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
           <ListMusic className="text-secondary" size={18} />

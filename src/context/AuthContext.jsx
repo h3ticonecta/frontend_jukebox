@@ -1,10 +1,13 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { loginMaquina } from '../api/auth';
+import { fetchMaquinaConfig } from '../api/maquinas';
 import {
   clearMaquinaSession,
   getMaquinaInfo,
   getMaquinaToken,
+  getMaquinaTeclas,
   setMaquinaSession,
+  updateMaquinaTeclas,
 } from '../lib/storage';
 
 const AuthContext = createContext(null);
@@ -12,6 +15,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => getMaquinaToken());
   const [machine, setMachine] = useState(() => getMaquinaInfo());
+  const [teclas, setTeclas] = useState(() => getMaquinaTeclas());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -20,18 +24,25 @@ export function AuthProvider({ children }) {
     setError(null);
     try {
       const data = await loginMaquina(usuario, senha);
+      const authToken = data?.token;
+      if (!authToken) {
+        throw new Error('Servidor não retornou o token da máquina. Verifique o backend.');
+      }
+      const sessionTeclas = data.teclas || [];
       setMaquinaSession({
-        token: data.token,
+        token: authToken,
         id: data.id,
         nome_jukebox: data.nome_jukebox,
         usuario: data.usuario,
+        teclas: sessionTeclas,
       });
-      setToken(data.token);
+      setToken(authToken);
       setMachine({
         id: data.id,
         nome_jukebox: data.nome_jukebox,
         usuario: data.usuario,
       });
+      setTeclas(sessionTeclas);
       return data;
     } catch (err) {
       const message =
@@ -51,21 +62,44 @@ export function AuthProvider({ children }) {
     clearMaquinaSession();
     setToken(null);
     setMachine(null);
+    setTeclas([]);
     setError(null);
   }, []);
+
+  const refreshConfig = useCallback(async () => {
+    if (!token) return null;
+    try {
+      const data = await fetchMaquinaConfig(token);
+      if (data?.teclas) {
+        setTeclas(data.teclas);
+        updateMaquinaTeclas(data.teclas);
+      }
+      return data;
+    } catch {
+      return null;
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      refreshConfig();
+    }
+  }, [token, refreshConfig]);
 
   const value = useMemo(
     () => ({
       token,
       machine,
+      teclas,
       isAuthenticated: Boolean(token),
       isLoading,
       error,
       login,
       logout,
+      refreshConfig,
       clearError: () => setError(null),
     }),
-    [token, machine, isLoading, error, login, logout]
+    [token, machine, teclas, isLoading, error, login, logout, refreshConfig]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

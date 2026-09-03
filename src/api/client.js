@@ -1,4 +1,5 @@
 import { API_BASE_URL } from './config';
+import { getMaquinaToken } from '../lib/storage';
 
 export class ApiError extends Error {
   constructor(message, status, data) {
@@ -10,7 +11,7 @@ export class ApiError extends Error {
 }
 
 export async function apiRequest(path, options = {}) {
-  const { token, tokenType = 'Maquina', body, headers = {}, ...rest } = options;
+  const { token = getMaquinaToken(), tokenType = 'Maquina', body, headers = {}, ...rest } = options;
 
   const requestHeaders = {
     Accept: 'application/json',
@@ -21,8 +22,9 @@ export async function apiRequest(path, options = {}) {
     requestHeaders['Content-Type'] = 'application/json';
   }
 
-  if (token) {
-    requestHeaders.Authorization = `${tokenType} ${token}`;
+  const authToken = token && token !== 'undefined' ? String(token).trim() : null;
+  if (authToken) {
+    requestHeaders.Authorization = `${tokenType} ${authToken}`;
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {

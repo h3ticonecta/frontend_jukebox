@@ -5,10 +5,17 @@ const KEYS = {
 };
 
 export function getMaquinaToken() {
-  return localStorage.getItem(KEYS.TOKEN);
+  const token = localStorage.getItem(KEYS.TOKEN);
+  if (!token || token === 'undefined' || token === 'null') {
+    return null;
+  }
+  return token;
 }
 
 export function setMaquinaSession({ token, ...info }) {
+  if (!token || token === 'undefined' || token === 'null') {
+    throw new Error('Token da máquina não recebido do servidor.');
+  }
   localStorage.setItem(KEYS.TOKEN, token);
   localStorage.setItem(KEYS.INFO, JSON.stringify(info));
 }
@@ -26,6 +33,17 @@ export function getMaquinaInfo() {
 export function clearMaquinaSession() {
   localStorage.removeItem(KEYS.TOKEN);
   localStorage.removeItem(KEYS.INFO);
+}
+
+export function getMaquinaTeclas() {
+  return getMaquinaInfo()?.teclas || [];
+}
+
+export function updateMaquinaTeclas(teclas) {
+  const token = getMaquinaToken();
+  const info = getMaquinaInfo() || {};
+  if (!token) return;
+  setMaquinaSession({ token, ...info, teclas });
 }
 
 export function getCreditsBalance() {

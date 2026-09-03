@@ -3,7 +3,7 @@ import AlbumCard from './AlbumCard';
 
 export default function GenreCarousel({ genres, selectedGenre, onSelectGenre }) {
   return (
-    <section className="px-4 py-3 border-b border-border shrink-0">
+    <section id="hits-section" className="px-4 py-3 border-b border-border shrink-0">
       <div className="flex items-center gap-2 mb-3">
         <Star className="text-primary fill-primary" size={16} />
         <h2 className="text-sm font-display text-primary neon-glow-amber tracking-wider">SUCESSOS</h2>
