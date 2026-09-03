@@ -16,14 +16,16 @@ export default function SongSidePanel({ album, tracks, playingTrackId, onPlay, o
       <div className="px-4 py-3 flex items-center gap-3 border-b border-border shrink-0">
         <img
           src={album.cover}
-          alt={album.album}
+          alt={album.name}
           className="w-12 h-12 rounded-md object-cover shrink-0 neon-border-amber"
         />
         <div className="min-w-0">
           <h3 className="text-sm font-display text-foreground truncate">
-            {album.name} - {album.album}
+            {album.album ? `${album.name} - ${album.album}` : album.name}
           </h3>
-          <p className="text-xs text-muted-foreground">{album.songsCount} músicas</p>
+          <p className="text-xs text-muted-foreground">
+            {album.songsCount ? `${album.songsCount} músicas` : 'Selecione uma faixa'}
+          </p>
         </div>
       </div>
 

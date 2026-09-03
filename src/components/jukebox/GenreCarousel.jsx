@@ -15,12 +15,15 @@ export default function GenreCarousel({ genres, selectedGenre, onSelectGenre }) 
               size="lg"
               gradientClass={genre.coverColor}
               albumName={genre.name}
+              coverImage={genre.cover}
               artistName=""
-              isSelected={selectedGenre === genre.id}
-              onClick={() => onSelectGenre(genre.id)}
+              isSelected={selectedGenre?.id === genre.id}
+              onClick={() => onSelectGenre(genre)}
             />
             <span className="text-[10px] font-semibold text-foreground/80 text-center leading-tight">{genre.name}</span>
-            <span className="text-[9px] text-muted-foreground">{genre.artistsCount} artistas</span>
+            <span className="text-[9px] text-muted-foreground">
+              {genre.artistsCount != null ? `${genre.artistsCount} pastas` : 'gênero'}
+            </span>
           </div>
         ))}
       </div>

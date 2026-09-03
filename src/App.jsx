@@ -1,84 +1,182 @@
-import { useState } from 'react';
-import JukeboxShell from './components/jukebox/JukeboxShell';
-import JukeboxHeader from './components/jukebox/JukeboxHeader';
-import GenreCarousel from './components/jukebox/GenreCarousel';
+import { useCallback, useState } from 'react';
+import { CREDITS_PER_SONG, DEFAULT_SONG_PRICE } from './api/config';
+import { registrarCredito, registrarMusicaTocada } from './api/maquinas';
+import { useAuth } from './context/AuthContext';
+import { useAudioPlayer } from './hooks/useAudioPlayer';
+import { useLibrary } from './hooks/useLibrary';
+import {
+  addCredits,
+  deductCredits,
+  getCreditsBalance,
+} from './lib/storage';
+import MachineLoginCard from './components/auth/MachineLoginCard';
 import AlbumBrowser from './components/jukebox/AlbumBrowser';
-import SongSidePanel from './components/jukebox/SongSidePanel';
-import WaitQueuePanel from './components/jukebox/WaitQueuePanel';
+import GenreCarousel from './components/jukebox/GenreCarousel';
+import JukeboxHeader from './components/jukebox/JukeboxHeader';
+import JukeboxShell from './components/jukebox/JukeboxShell';
 import PlayerBar from './components/jukebox/PlayerBar';
-import { artists, genres, tracks } from './data/mockData';
+import SongSidePanel from './components/jukebox/SongSidePanel';
+import SyncBanner from './components/jukebox/SyncBanner';
+import WaitQueuePanel from './components/jukebox/WaitQueuePanel';
 
-function App() {
-  const [selectedGenre, setSelectedGenre] = useState(genres[0].id);
-  const [selectedArtist, setSelectedArtist] = useState(artists[0]);
+function JukeboxApp() {
+  const { token, machine, isAuthenticated } = useAuth();
+  const audio = useAudioPlayer();
+  const library = useLibrary(token);
+
   const [queue, setQueue] = useState([]);
-  const [currentSong, setCurrentSong] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [credits] = useState(7);
+  const [credits, setCredits] = useState(() => getCreditsBalance());
+  const [actionError, setActionError] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  const handleAddToQueue = (track) => {
-    const queueItem = {
-      ...track,
-      artist: selectedArtist.name,
-      album: selectedArtist.album,
-      cover: selectedArtist.cover,
-    };
-    setQueue((prev) => [...prev, queueItem]);
-  };
+  const handleInsertCredit = useCallback(async () => {
+    if (!token) return;
+    setActionError(null);
+    try {
+      await registrarCredito(token, { valor: 1, origem: 'moeda' });
+      const next = addCredits(1);
+      setCredits(next);
+    } catch (err) {
+      setActionError(err.message || 'Erro ao registrar crédito');
+    }
+  }, [token]);
 
-  const handlePlay = (track) => {
-    const song = {
-      ...track,
-      artist: selectedArtist.name,
-      album: selectedArtist.album,
-      cover: selectedArtist.cover,
-    };
-    setCurrentSong(song);
-    setIsPlaying(true);
-    handleAddToQueue(track);
-  };
+  const handleAddToQueue = useCallback(
+    (track) => {
+      const album = library.selectedAlbum || library.selectedGenre;
+      setQueue((prev) => [
+        ...prev,
+        {
+          ...track,
+          artist: album?.name || track.artist || '',
+          cover: track.cover_url || album?.cover || null,
+        },
+      ]);
+    },
+    [library.selectedAlbum, library.selectedGenre]
+  );
+
+  const handlePlay = useCallback(
+    async (track) => {
+      if (!token) return;
+
+      if (credits < CREDITS_PER_SONG) {
+        setActionError('Créditos insuficientes. Insira créditos para tocar músicas.');
+        return;
+      }
+
+      setActionError(null);
+      const album = library.selectedAlbum || library.selectedGenre;
+
+      try {
+        await registrarMusicaTocada(token, {
+          musica_key: track.key,
+          musica_nome: track.title,
+          titulo: track.title,
+          pasta: track.pasta || album?.path || '',
+          media_type: track.media_type || 'audio',
+          media_url: track.media_url,
+          cover_url: track.cover_url || album?.cover || null,
+          valor: DEFAULT_SONG_PRICE,
+        });
+
+        const nextCredits = deductCredits(CREDITS_PER_SONG);
+        setCredits(nextCredits);
+
+        const song = {
+          ...track,
+          artist: album?.name || track.artist || '',
+          cover: track.cover_url || album?.cover || null,
+        };
+
+        audio.play(song);
+        handleAddToQueue(track);
+      } catch (err) {
+        setActionError(err.message || 'Erro ao registrar música tocada');
+      }
+    },
+    [token, credits, library.selectedAlbum, library.selectedGenre, audio, handleAddToQueue]
+  );
+
+  const handleSyncLibrary = useCallback(async () => {
+    setIsSyncing(true);
+    try {
+      await library.refreshLibrary();
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [library]);
+
+  const headerError = actionError || library.error;
 
   return (
     <JukeboxShell
       header={
-        <JukeboxHeader
-          isPlaying={isPlaying}
-          isRegistered={false}
-          onOpenBilling={() => {}}
-          onSyncLibrary={() => {}}
-        />
+        <>
+          <JukeboxHeader
+            isPlaying={audio.isPlaying}
+            isSyncing={isSyncing || library.isLoading}
+            isRegistered={isAuthenticated}
+            machineName={machine?.nome_jukebox}
+            errorMessage={headerError}
+            onOpenBilling={() => {}}
+            onSyncLibrary={handleSyncLibrary}
+          />
+          <SyncBanner needsSync={library.needsSync} />
+        </>
       }
       genreCarousel={
-        <GenreCarousel genres={genres} selectedGenre={selectedGenre} onSelectGenre={setSelectedGenre} />
+        <GenreCarousel
+          genres={library.genres}
+          selectedGenre={library.selectedGenre}
+          onSelectGenre={library.selectGenre}
+        />
       }
-      queuePanel={<WaitQueuePanel currentSong={currentSong} isPlaying={isPlaying} queue={queue} />}
+      queuePanel={
+        <WaitQueuePanel
+          currentSong={audio.currentSong}
+          isPlaying={audio.isPlaying}
+          queue={queue}
+        />
+      }
       playerBar={
         <PlayerBar
-          currentSong={currentSong}
-          isPlaying={isPlaying}
-          progress={35}
+          currentSong={audio.currentSong}
+          isPlaying={audio.isPlaying}
+          progress={audio.progress}
           credits={credits}
           queueCount={queue.length}
-          onTogglePlay={() => setIsPlaying((p) => !p)}
+          onTogglePlay={audio.togglePlay}
+          onInsertCredit={handleInsertCredit}
         />
       }
     >
       <div className="flex flex-1 min-h-0 min-w-0">
         <AlbumBrowser
-          albums={artists}
-          selectedAlbumId={selectedArtist?.id}
-          onSelectAlbum={(album) => setSelectedArtist(album)}
+          albums={library.albums}
+          selectedAlbumId={library.selectedAlbum?.id}
+          onSelectAlbum={library.selectAlbum}
         />
         <SongSidePanel
-          album={selectedArtist}
-          tracks={tracks}
-          playingTrackId={currentSong?.id}
+          album={library.selectedAlbum || library.selectedGenre}
+          tracks={library.tracks}
+          playingTrackId={audio.currentSong?.id}
           onPlay={handlePlay}
           onAddToQueue={handleAddToQueue}
         />
       </div>
     </JukeboxShell>
   );
+}
+
+function App() {
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return <MachineLoginCard />;
+  }
+
+  return <JukeboxApp />;
 }
 
 export default App;

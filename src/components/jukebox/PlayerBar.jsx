@@ -29,15 +29,21 @@ export default function PlayerBar({
   credits,
   queueCount,
   onTogglePlay,
+  onInsertCredit,
 }) {
   if (!currentSong) {
     return (
       <div className="fixed bottom-0 left-0 right-0 h-20 glass-surface border-t border-border flex items-center justify-between z-40 px-4 shrink-0">
-        <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onInsertCredit}
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          title="Inserir crédito (R$ 1,00)"
+        >
           <Coins size={28} className="text-primary" />
           <span className="text-2xl font-display text-primary neon-glow-amber font-bold">{credits}</span>
           <span className="text-sm text-muted-foreground">créditos</span>
-        </div>
+        </button>
         <p className="text-muted-foreground text-sm font-display">Selecione uma música para começar</p>
         <div className="flex items-center gap-2">
           <ListMusic size={28} className="text-secondary" />
