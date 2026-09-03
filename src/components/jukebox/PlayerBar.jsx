@@ -60,10 +60,15 @@ export default function PlayerBar({
         <div className="h-full bg-primary transition-all duration-150" style={{ width: `${progress}%` }} />
       </div>
       <div className="flex items-center gap-3 px-4 py-2 h-[72px]">
-        <div className="flex items-center gap-2 shrink-0 mr-2">
+        <button
+          type="button"
+          onClick={onInsertCredit}
+          className="flex items-center gap-2 shrink-0 mr-2 hover:opacity-80 transition-opacity"
+          title="Inserir crédito (R$ 1,00)"
+        >
           <Coins className="text-primary" size={26} />
           <span className="text-xl font-display text-primary neon-glow-amber font-bold">{credits}</span>
-        </div>
+        </button>
         <VinylThumb cover={currentSong.cover} isSpinning={isPlaying} />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground truncate">{currentSong.title}</p>

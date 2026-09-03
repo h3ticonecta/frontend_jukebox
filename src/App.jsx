@@ -12,7 +12,6 @@ import {
 } from './lib/storage';
 import MachineLoginCard from './components/auth/MachineLoginCard';
 import AlbumBrowser from './components/jukebox/AlbumBrowser';
-import CreditModal from './components/jukebox/CreditModal';
 import GenreCarousel from './components/jukebox/GenreCarousel';
 import JukeboxHeader from './components/jukebox/JukeboxHeader';
 import JukeboxShell from './components/jukebox/JukeboxShell';
@@ -20,6 +19,7 @@ import PlayerBar from './components/jukebox/PlayerBar';
 import SongSidePanel from './components/jukebox/SongSidePanel';
 import SyncBanner from './components/jukebox/SyncBanner';
 import WaitQueuePanel from './components/jukebox/WaitQueuePanel';
+import CreditToast from './components/shared/CreditToast';
 
 function JukeboxApp() {
   const { token, machine, teclas, refreshConfig } = useAuth();
@@ -31,12 +31,31 @@ function JukeboxApp() {
   const [actionError, setActionError] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [keysPanelOpen, setKeysPanelOpen] = useState(false);
-  const [creditModalOpen, setCreditModalOpen] = useState(false);
-  const [isRegisteringCredit, setIsRegisteringCredit] = useState(false);
   const [highlightQueue, setHighlightQueue] = useState(false);
+  const [creditToastVisible, setCreditToastVisible] = useState(false);
 
   const queueRef = useRef(queue);
+  const creditToastTimerRef = useRef(null);
   queueRef.current = queue;
+
+  const showCreditToast = useCallback(() => {
+    setCreditToastVisible(true);
+    if (creditToastTimerRef.current) {
+      window.clearTimeout(creditToastTimerRef.current);
+    }
+    creditToastTimerRef.current = window.setTimeout(() => {
+      setCreditToastVisible(false);
+      creditToastTimerRef.current = null;
+    }, 3000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (creditToastTimerRef.current) {
+        window.clearTimeout(creditToastTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleInsertCredit = useCallback(async () => {
     if (!token) return;
@@ -45,29 +64,11 @@ function JukeboxApp() {
       await registrarCredito(token, { valor: 1, origem: 'moeda' });
       const next = addCredits(1);
       setCredits(next);
+      showCreditToast();
     } catch (err) {
       setActionError(err.message || 'Erro ao registrar crédito');
     }
-  }, [token]);
-
-  const handleConfirmCredit = useCallback(
-    async (valor) => {
-      if (!token) return;
-      setIsRegisteringCredit(true);
-      setActionError(null);
-      try {
-        await registrarCredito(token, { valor, origem: 'moeda' });
-        const next = addCredits(valor);
-        setCredits(next);
-        setCreditModalOpen(false);
-      } catch (err) {
-        setActionError(err.message || 'Erro ao registrar crédito');
-      } finally {
-        setIsRegisteringCredit(false);
-      }
-    },
-    [token]
-  );
+  }, [token, showCreditToast]);
 
   const handleAddToQueue = useCallback(
     (track) => {
@@ -137,7 +138,6 @@ function JukeboxApp() {
 
   const handleCancel = useCallback(() => {
     setKeysPanelOpen(false);
-    setCreditModalOpen(false);
     setActionError(null);
   }, []);
 
@@ -157,7 +157,7 @@ function JukeboxApp() {
           library.navigateAlbum(1);
           break;
         case 'credito':
-          setCreditModalOpen(true);
+          handleInsertCredit();
           break;
         case 'hits':
           document.getElementById('hits-section')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -181,12 +181,11 @@ function JukeboxApp() {
           break;
       }
     },
-    [library, audio, handleSkip, handleCancel]
+    [library, audio, handleSkip, handleCancel, handleInsertCredit]
   );
 
   useKeyboardShortcuts({
     teclas,
-    enabled: !creditModalOpen,
     onAction: handleKeyboardAction,
   });
 
@@ -281,12 +280,7 @@ function JukeboxApp() {
         </div>
       </JukeboxShell>
 
-      <CreditModal
-        open={creditModalOpen}
-        onClose={() => setCreditModalOpen(false)}
-        onConfirm={handleConfirmCredit}
-        isLoading={isRegisteringCredit}
-      />
+      <CreditToast visible={creditToastVisible} />
     </>
   );
 }
