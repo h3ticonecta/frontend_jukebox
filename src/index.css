@@ -1,46 +1,85 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 220 20% 8%;
+  --foreground: 40 20% 92%;
+  --card: 220 18% 12%;
+  --card-foreground: 40 20% 92%;
+  --popover: 220 18% 14%;
+  --popover-foreground: 40 20% 92%;
+  --primary: 38 95% 55%;
+  --primary-foreground: 220 20% 8%;
+  --secondary: 185 85% 50%;
+  --secondary-foreground: 220 20% 8%;
+  --muted: 220 15% 16%;
+  --muted-foreground: 220 10% 55%;
+  --accent: 38 90% 45%;
+  --accent-foreground: 220 20% 8%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 15% 20%;
+  --input: 220 15% 18%;
+  --ring: 38 95% 55%;
+  --radius: 0.75rem;
+  --neon-amber: 38 95% 55%;
+  --neon-cyan: 185 85% 50%;
+  --neon-pink: 330 85% 60%;
+  --surface-glass: 220 18% 12%;
+  --browser-pad-x: 1.5rem;
+  --browser-pad-y: 1rem;
+  --browser-header-mb: 1rem;
+  --browser-scroll-pad: 0.75rem;
+  --browser-scroll-bottom: 8rem;
+  --browser-grid-gap-x: 1.5rem;
+  --browser-grid-gap-y: 2rem;
 }
 
-html,
-body,
-#root {
-  height: 100%;
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans overflow-hidden select-none;
+  }
 }
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #0d0d0f;
-  color: #e8e8ea;
-  -webkit-font-smoothing: antialiased;
-  overflow: hidden;
-}
+@layer utilities {
+  .neon-border-amber {
+    box-shadow:
+      0 0 5px hsl(var(--neon-amber) / 0.5),
+      0 0 15px hsl(var(--neon-amber) / 0.2),
+      inset 0 0 5px hsl(var(--neon-amber) / 0.1);
+  }
 
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-}
+  .neon-glow-amber {
+    text-shadow:
+      0 0 7px hsl(var(--neon-amber)),
+      0 0 20px hsl(var(--neon-amber) / 0.5),
+      0 0 40px hsl(var(--neon-amber) / 0.3);
+  }
 
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+  .neon-glow-cyan {
+    text-shadow:
+      0 0 7px hsl(var(--neon-cyan)),
+      0 0 20px hsl(var(--neon-cyan) / 0.5),
+      0 0 40px hsl(var(--neon-cyan) / 0.3);
+  }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+  .glass-surface {
+    background: hsl(var(--surface-glass) / 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
 
-::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 3px;
-}
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
