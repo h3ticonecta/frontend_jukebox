@@ -72,7 +72,9 @@ export default function PlayerBar({
         <VinylThumb cover={currentSong.cover} isSpinning={isPlaying} />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground truncate">{currentSong.title}</p>
-          <p className="text-xs text-muted-foreground truncate">{currentSong.artist}</p>
+          {currentSong.artist && currentSong.artist !== currentSong.title && (
+            <p className="text-xs text-muted-foreground truncate">{currentSong.artist}</p>
+          )}
         </div>
         <div className="flex items-center gap-1">
           <button type="button" className="p-2 text-foreground hover:text-primary active:scale-90 transition-colors">

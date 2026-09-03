@@ -1,5 +1,5 @@
 import { Disc, ListPlus, Play } from 'lucide-react';
-import { cn, formatDuration } from '../../lib/utils';
+import { cn } from '../../lib/utils';
 import EmptyState from '../shared/EmptyState';
 
 export default function SongSidePanel({ album, tracks, playingTrackId, onPlay, onAddToQueue }) {
@@ -20,12 +20,8 @@ export default function SongSidePanel({ album, tracks, playingTrackId, onPlay, o
           className="w-12 h-12 rounded-md object-cover shrink-0 neon-border-amber"
         />
         <div className="min-w-0">
-          <h3 className="text-sm font-display text-foreground truncate">
-            {album.album ? `${album.name} - ${album.album}` : album.name}
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            {album.songsCount ? `${album.songsCount} músicas` : 'Selecione uma faixa'}
-          </p>
+          <h3 className="text-sm font-display text-foreground truncate">{album.name}</h3>
+          <p className="text-xs text-muted-foreground">{album.countLabel}</p>
         </div>
       </div>
 
@@ -46,9 +42,9 @@ export default function SongSidePanel({ album, tracks, playingTrackId, onPlay, o
               </span>
               <div className="flex-1 min-w-0">
                 <p className={cn('text-sm truncate', isPlaying && 'text-primary font-semibold')}>{track.title}</p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {track.duration ? formatDuration(track.duration) : '...'}
-                </p>
+                {track.artist && track.artist !== track.title && (
+                  <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
+                )}
               </div>
               <button
                 type="button"

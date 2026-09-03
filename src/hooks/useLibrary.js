@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { MUSIC_ROOT_PREFIX } from '../api/config';
-import { fetchMusicas, getFoldersFromResponse, getTracksFromResponse } from '../api/musicas';
+import {
+  fetchMusicas,
+  getFoldersFromResponse,
+  getTracksFromResponse,
+  resolveFolderCover,
+} from '../api/musicas';
+import { formatFolderCountLabel, mapFolderFromApi, mapTrackFromApi } from '../lib/library';
 
 const GRADIENTS = [
   'from-amber-500 to-orange-700',
@@ -14,29 +20,21 @@ const GRADIENTS = [
 ];
 
 function mapFolder(folder, index) {
-  return {
-    id: folder.path,
-    path: folder.path,
-    name: folder.name,
-    cover: folder.cover_url || folder.cover?.media_url || null,
-    coverColor: GRADIENTS[index % GRADIENTS.length],
-    songsCount: folder.files_count || 0,
-  };
+  return mapFolderFromApi(folder, index, GRADIENTS);
 }
 
 function mapTrack(track, index) {
-  return {
-    id: track.key,
-    key: track.key,
-    number: String(index + 1).padStart(2, '0'),
-    title: track.title || track.name,
-    duration: 0,
-    media_url: track.media_url || track.audio_url,
-    cover_url: track.cover_url || track.cover?.media_url || null,
-    pasta: track.folder_path || '',
-    media_type: track.media_type || 'audio',
-    artist: track.folder_path?.split('/').filter(Boolean).slice(-1)[0] || '',
-  };
+  return mapTrackFromApi(track, index);
+}
+
+async function enrichFoldersWithCovers(token, folders, mapped) {
+  return Promise.all(
+    mapped.map(async (item, index) => {
+      if (item.cover) return item;
+      const cover = await resolveFolderCover(token, folders[index]);
+      return cover ? { ...item, cover } : item;
+    })
+  );
 }
 
 export function useLibrary(token) {
@@ -77,7 +75,14 @@ export function useLibrary(token) {
     if (mapped.length > 0) {
       setSelectedGenre((current) => current || mapped[0]);
     }
-  }, [loadPrefix]);
+
+    const enriched = await enrichFoldersWithCovers(token, folders, mapped);
+    setGenres(enriched);
+    setSelectedGenre((current) => {
+      if (!current) return enriched[0] || null;
+      return enriched.find((genre) => genre.id === current.id) || enriched[0] || null;
+    });
+  }, [loadPrefix, token]);
 
   const loadAlbums = useCallback(
     async (genre) => {
@@ -92,30 +97,25 @@ export function useLibrary(token) {
       const folderTracks = getTracksFromResponse(data);
 
       if (folders.length > 0) {
-        setAlbums(folders.map(mapFolder));
+        const mappedAlbums = folders.map(mapFolder);
+        const enrichedAlbums = await enrichFoldersWithCovers(token, folders, mappedAlbums);
+        setAlbums(enrichedAlbums);
         setTracks([]);
         setSelectedAlbum(null);
       } else if (folderTracks.length > 0) {
-        setAlbums([
-          {
-            id: genre.path,
-            path: genre.path,
-            name: genre.name,
-            album: genre.name,
-            cover: data.cover_url || genre.cover,
-            coverColor: genre.coverColor,
-            songsCount: folderTracks.length,
-          },
-        ]);
-        setSelectedAlbum({
+        const filesCount = data.files_count ?? folderTracks.length;
+        const albumEntry = {
           id: genre.path,
           path: genre.path,
           name: genre.name,
-          album: genre.name,
           cover: data.cover_url || genre.cover,
           coverColor: genre.coverColor,
-          songsCount: folderTracks.length,
-        });
+          subfoldersCount: 0,
+          filesCount,
+          countLabel: formatFolderCountLabel({ subfoldersCount: 0, filesCount }),
+        };
+        setAlbums([albumEntry]);
+        setSelectedAlbum(albumEntry);
         setTracks(folderTracks.map(mapTrack));
       } else {
         setAlbums([]);
@@ -123,7 +123,7 @@ export function useLibrary(token) {
         setSelectedAlbum(null);
       }
     },
-    [loadPrefix]
+    [loadPrefix, token]
   );
 
   const loadAlbumTracks = useCallback(

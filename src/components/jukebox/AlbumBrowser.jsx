@@ -60,11 +60,7 @@ export default function AlbumBrowser({ albums, selectedAlbumId, onSelectAlbum })
                   <AlbumCard
                     gradientClass={album.coverColor}
                     albumName={album.name}
-                    artistName={
-                      album.songsCount
-                        ? `${album.album || album.name} - ${album.songsCount} músicas`
-                        : album.album || album.name
-                    }
+                    artistName={album.countLabel}
                     coverImage={album.cover}
                     size="md"
                     isSelected={album.id === selectedAlbumId}

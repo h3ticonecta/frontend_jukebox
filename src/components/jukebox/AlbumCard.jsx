@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Disc } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -11,6 +11,10 @@ const SIZES = {
 function VinylCard({ gradientClass, albumName, coverImage, isSelected, onClick }) {
   const [imgOk, setImgOk] = useState(true);
   const hasImage = !!coverImage && imgOk;
+
+  useEffect(() => {
+    setImgOk(true);
+  }, [coverImage]);
 
   return (
     <button
@@ -33,7 +37,10 @@ function VinylCard({ gradientClass, albumName, coverImage, isSelected, onClick }
             <img
               src={coverImage}
               alt={albumName}
-              className="w-full h-full object-cover group-hover:animate-spin-vinyl-slow"
+              className={cn(
+                'w-full h-full object-cover',
+                isSelected ? 'animate-spin-vinyl' : 'group-hover:animate-spin-vinyl-slow'
+              )}
               onError={() => setImgOk(false)}
             />
           ) : (

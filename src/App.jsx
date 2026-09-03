@@ -70,20 +70,16 @@ function JukeboxApp() {
     }
   }, [token, showCreditToast]);
 
-  const handleAddToQueue = useCallback(
-    (track) => {
-      const album = library.selectedAlbum || library.selectedGenre;
-      setQueue((prev) => [
-        ...prev,
-        {
-          ...track,
-          artist: album?.name || track.artist || '',
-          cover: track.cover_url || album?.cover || null,
-        },
-      ]);
-    },
-    [library.selectedAlbum, library.selectedGenre]
-  );
+  const handleAddToQueue = useCallback((track) => {
+    const album = library.selectedAlbum || library.selectedGenre;
+    setQueue((prev) => [
+      ...prev,
+      {
+        ...track,
+        cover: track.cover_url || album?.cover || null,
+      },
+    ]);
+  }, [library.selectedAlbum, library.selectedGenre]);
 
   const handlePlay = useCallback(
     async (track) => {
@@ -114,7 +110,6 @@ function JukeboxApp() {
 
         const song = {
           ...track,
-          artist: album?.name || track.artist || '',
           cover: track.cover_url || album?.cover || null,
         };
 

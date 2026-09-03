@@ -21,9 +21,7 @@ export default function GenreCarousel({ genres, selectedGenre, onSelectGenre }) 
               onClick={() => onSelectGenre(genre)}
             />
             <span className="text-[10px] font-semibold text-foreground/80 text-center leading-tight">{genre.name}</span>
-            <span className="text-[9px] text-muted-foreground">
-              {genre.artistsCount != null ? `${genre.artistsCount} pastas` : 'gênero'}
-            </span>
+            <span className="text-[9px] text-muted-foreground">{genre.countLabel}</span>
           </div>
         ))}
       </div>
