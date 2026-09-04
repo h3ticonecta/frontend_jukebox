@@ -8,7 +8,9 @@
 
 ## Descrição
 
-Carrossel horizontal **SUCESSOS** com discos de vinil. Cada disco representa uma **categoria** (pasta de primeiro nível abaixo de `Musicas/`).
+Carrossel horizontal **SUCESSOS** com discos de vinil em tamanho grande (~180px). Cada disco representa uma **categoria** (pasta de primeiro nível abaixo de `Musicas/`).
+
+O carrossel rola **automaticamente da direita para a esquerda** em loop infinito. A animação pausa ao passar o mouse para permitir seleção.
 
 ## Status
 
@@ -18,6 +20,9 @@ Carrossel horizontal **SUCESSOS** com discos de vinil. Cada disco representa uma
 | Seleção de categoria | ✅ |
 | Contagem "N artistas" | ✅ |
 | Capa no centro do vinil | ✅ (depende de `cover_url` — ver contrato 10) |
+| Discos grandes (`size="xl"`, 180px) | ✅ |
+| Carrossel infinito automático | ✅ |
+| Pausa no hover | ✅ |
 | Rotação ao selecionar | ✅ |
 | Rotação lenta no hover | ✅ |
 
@@ -68,6 +73,30 @@ subfolders_count === 0 →  "{files_count} música(s)"
 ```
 
 Implementado em `formatFolderCountLabel()` (`src/lib/library.js`).
+
+---
+
+## Carrossel infinito
+
+Implementado em `GenreCarousel.jsx`:
+
+| Aspecto | Detalhe |
+|---------|---------|
+| Tamanho do disco | `AlbumCard` com `size="xl"` → **180×180px** |
+| Largura do item | 200px (disco + labels) |
+| Loop | Lista duplicada (`[...genres, ...genres]`) |
+| Animação | `animate-genre-marquee` — `translateX(0)` → `translateX(-50%)` |
+| Direção | Direita → esquerda |
+| Duração | 45s, linear, infinito |
+| Hover | `animation-play-state: paused` |
+| Bordas | Fade lateral via `.genre-marquee-mask` (`index.css`) |
+
+### Componentes envolvidos
+
+- `src/components/jukebox/GenreCarousel.jsx` — track duplicado e animação
+- `src/components/jukebox/AlbumCard.jsx` — tamanho `xl` do vinil
+- `tailwind.config.js` — keyframe `genre-marquee`
+- `src/index.css` — máscara de fade nas bordas
 
 ---
 
