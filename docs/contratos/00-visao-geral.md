@@ -1,85 +1,79 @@
 # Contrato 00 — Visão Geral
 
-## Contexto do sistema
-
-O JUKE-BOX é um sistema de música estilo jukebox com a seguinte arquitetura planejada:
+## Arquitetura
 
 ```
 ┌─────────────────┐     HTTP/REST      ┌─────────────────┐
 │  Frontend React │ ◄────────────────► │  Backend Django │
-│  (este repo)    │                     │  (API)          │
-└─────────────────┘                     └────────┬────────┘
-                                                 │
-                                    ┌────────────┼────────────┐
-                                    ▼            ▼            ▼
-                              PostgreSQL   Cloudflare R2   (futuro)
+│  (este repo)    │   Maquina <token>  │  (API v1)       │
+└────────┬────────┘                    └────────┬────────┘
+         │                                      │
+         │  <audio src=media_url>               ├── PostgreSQL (catálogo em cache)
+         └──────────────────────────────────────┤
+                                                └── Cloudflare R2 (áudio, capas)
 ```
 
-## Página inicial implementada no frontend
+O player usa `media_url` **diretamente do R2**, sem proxy pelo backend.
 
-A tela principal (`src/App.jsx`) é dividida em:
+## Layout da tela principal
+
+Arquivo: `src/App.jsx` → `JukeboxShell`
 
 | Região | Componente | Descrição |
 |--------|------------|-----------|
-| Topo | `Header` | Logo, status de registro, botões LEITURA/mensagens/atualizar |
-| Carrossel | `GenreCarousel` | Gêneros musicais estilo disco de vinil |
-| Coluna esquerda | `ArtistsGrid` | Grid de artistas/álbuns do gênero selecionado |
-| Coluna central | `TrackList` | Lista de faixas do álbum selecionado |
-| Coluna direita | `QueuePanel` | Fila de espera de reprodução |
-| Rodapé | `StatusBar` | Créditos, mensagem de status, contagem em espera |
+| Topo | `JukeboxHeader` | Logo, badge da máquina, Leitura, teclas, sync |
+| Banner | `SyncBanner` | Aviso quando `needs_sync === true` |
+| Carrossel | `GenreCarousel` | Categorias (SUCESSOS) — discos de vinil |
+| Esquerda | `AlbumBrowser` | Grid de artistas/bandas do gênero |
+| Centro | `SongSidePanel` | Lista de faixas do álbum selecionado |
+| Direita | `WaitQueuePanel` | Fila de espera + faixa tocando |
+| Rodapé | `PlayerBar` | Créditos, player, progresso, fila |
 
-## Fluxo do usuário (estado atual)
-
-```
-1. Usuário vê gêneros no carrossel
-2. Seleciona um gênero
-3. Vê artistas/álbuns daquele gênero
-4. Seleciona um artista/álbum
-5. Vê lista de faixas
-6. Clica em "play" em uma faixa → adiciona à fila local
-7. Fila e créditos são exibidos no rodapé
-```
-
-> **Nota:** hoje os passos 1–7 usam dados mockados em `src/data/mockData.js` e a fila existe apenas no estado React (não persiste).
-
-## Fluxo esperado com backend
+## Fluxo do usuário (integrado)
 
 ```
-1. GET /api/session          → status do dispositivo e créditos
-2. GET /api/genres           → carrossel de gêneros
-3. GET /api/genres/{id}/artists → grid de artistas
-4. GET /api/albums/{id}/tracks  → lista de faixas
-5. POST /api/queue           → adicionar música à fila
-6. GET /api/queue            → consultar fila atual
+1. Login → POST /maquinas/auth/ → salva token + teclas
+2. GET /musicas/?prefix=Musicas/ → carrossel SUCESSOS
+3. Seleciona categoria → GET /musicas/?prefix=Musicas/{Categoria}/
+4. Seleciona artista → GET /musicas/?prefix=Musicas/{Categoria}/{Artista}/
+5. Play em faixa → POST /maquinas/tocadas/ + debita crédito local + toca media_url
+6. Tecla crédito (K) → POST /maquinas/creditos/ + toast "+1 crédito inserido"
+7. Atalhos de teclado → navegação, fila, volume, pular (mapa do backend)
 ```
+
+## Navegação da biblioteca
+
+Não há endpoints separados de gêneros/artistas/faixas. Tudo é **navegação por pasta** via `GET /api/v1/musicas/?prefix=...`.
+
+| Nível | Exemplo de `prefix` | UI |
+|-------|---------------------|-----|
+| Raiz | `Musicas/` | Carrossel SUCESSOS |
+| Categoria | `Musicas/Pop/` | Grid Artistas/Bandas |
+| Artista | `Musicas/Pop/Beatles/` | Lista de faixas |
 
 ## Dependências entre contratos
 
 ```mermaid
 graph TD
-    A[01-sessao-dispositivo] --> F[05-fila-espera]
-    B[02-generos] --> C[03-artistas-albuns]
+    A[01-auth-maquina] --> B[02-generos]
+    A --> I[09-teclas]
+    B --> C[03-artistas]
     C --> D[04-faixas]
-    D --> F
-    G[07-midias-r2] --> C
-    G --> D
-    E[06-creditos] --> F
-    H[08-convencoes-api] --> A
+    D --> F[05-fila]
+    D --> G[07-midias]
+    A --> E[06-creditos]
+    B --> J[10-capas]
+    H[08-convencoes] --> A
     H --> B
-    H --> C
-    H --> D
-    H --> F
 ```
 
-## O que o backend NÃO precisa fazer neste repo
+## O que o backend NÃO faz neste repo
 
-- Servir arquivos estáticos do React (feito pelo Vite/Railway no frontend).
-- Implementar interface visual.
+- Servir o build React (Vite/Railway no frontend).
+- Implementar UI ou atalhos de teclado (só fornece configuração).
 
-## Próximos passos sugeridos para o backend
+## Pendências
 
-1. Definir prefixo global `/api/v1/`.
-2. Implementar contratos 02, 03 e 04 (catálogo musical).
-3. Implementar contrato 05 (fila) com persistência por dispositivo/sessão.
-4. Implementar contratos 01 e 06 (sessão e créditos).
-5. Configurar URLs de mídia via R2 (contrato 07).
+- [ ] API de fila de espera (hoje local no React)
+- [ ] `cover_url` pré-calculado no sync para categorias sem capa própria (contrato 10)
+- [ ] Botão LEITURA (faturamento) — sem endpoint definido

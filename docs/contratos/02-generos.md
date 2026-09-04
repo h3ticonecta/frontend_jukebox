@@ -1,119 +1,99 @@
-# Contrato 02 — Gêneros Musicais
+# Contrato 02 — Gêneros / Categorias (SUCESSOS)
 
-## Componente frontend
+## Componentes frontend
 
-- `src/components/GenreCarousel.jsx`
-- Dados mock: `src/data/mockData.js` → `genres`
+- `src/components/jukebox/GenreCarousel.jsx`
+- `src/hooks/useLibrary.js` → `loadGenres()`
+- `src/lib/library.js` → `mapFolderFromApi()`, `formatFolderCountLabel()`
 
 ## Descrição
 
-Exibe o carrossel horizontal **SUCESSOS** com discos de vinil representando categorias/gêneros musicais. Ao selecionar um gênero, o frontend deve carregar os artistas correspondentes (contrato 03).
+Carrossel horizontal **SUCESSOS** com discos de vinil. Cada disco representa uma **categoria** (pasta de primeiro nível abaixo de `Musicas/`).
 
-## Status atual no frontend
+## Status
 
-- ✅ UI implementada
-- ✅ Seleção de gênero funcional (estado local)
-- ❌ Não filtra artistas por gênero (todos os mocks são exibidos)
-- ❌ Sem chamada à API
+| Funcionalidade | Status |
+|----------------|--------|
+| Listagem via API | ✅ |
+| Seleção de categoria | ✅ |
+| Contagem "N artistas" | ✅ |
+| Capa no centro do vinil | ✅ (depende de `cover_url` — ver contrato 10) |
+| Rotação ao selecionar | ✅ |
+| Rotação lenta no hover | ✅ |
 
 ---
 
-## Endpoint: listar gêneros
+## Endpoint
 
-### `GET /api/v1/genres`
+### `GET /api/v1/musicas/?prefix=Musicas/`
 
-Retorna todos os gêneros disponíveis no catálogo.
+```
+Authorization: Maquina <token>
+```
 
-#### Query params
-
-| Param | Tipo | Obrigatório | Descrição |
-|-------|------|-------------|-----------|
-| `featured` | `boolean` | Não | Se `true`, retorna apenas gêneros da seção "SUCESSOS" |
-
-#### Response `200 OK`
+#### Item relevante em `folders[]`
 
 ```json
 {
-  "data": [
-    {
-      "id": "forro",
-      "name": "FORRÓ",
-      "artists_count": 102,
-      "color": "#e85d2a",
-      "cover_url": "https://r2.example.com/genres/forro.jpg",
-      "sort_order": 1
-    },
-    {
-      "id": "sertanejo",
-      "name": "SERTANEJO",
-      "artists_count": 207,
-      "color": "#c9a227",
-      "cover_url": null,
-      "sort_order": 2
-    }
-  ],
-  "meta": {
-    "total": 8
+  "name": "Pop",
+  "path": "Musicas/Pop/",
+  "subfolders_count": 2,
+  "files_count": 34,
+  "cover_url": "https://pub-xxxxx.r2.dev/Musicas/Pop/cover.jpg",
+  "cover": {
+    "name": "cover.jpg",
+    "media_url": "https://..."
   }
 }
 ```
 
-#### Schema: `Genre`
+---
 
-| Campo | Tipo | Obrigatório | Descrição |
-|-------|------|-------------|-----------|
-| `id` | `string` | Sim | Identificador único (slug) |
-| `name` | `string` | Sim | Nome exibido no carrossel |
-| `artists_count` | `integer` | Sim | Quantidade de artistas no gênero |
-| `color` | `string` | Não | Cor hexadecimal para o disco de vinil |
-| `cover_url` | `string \| null` | Não | Imagem do centro do vinil (R2) |
-| `sort_order` | `integer` | Não | Ordem de exibição |
+## Mapeamento API → UI
 
-#### Mapeamento na UI
+| Campo API | Estado React | UI |
+|-----------|--------------|-----|
+| `path` | `genre.id` | Chave de seleção |
+| `name` | `genre.name` | Texto abaixo do vinil |
+| `subfolders_count` | `genre.subfoldersCount` | — |
+| `files_count` | `genre.filesCount` | — |
+| `cover_url` | `genre.cover` | Imagem no círculo interno do vinil |
+| — | `genre.countLabel` | `"N artistas"` se `subfolders_count > 0` |
 
-| Campo API | Elemento UI |
-|-----------|-------------|
-| `name` | Texto abaixo do vinil |
-| `artists_count` | Texto "X artistas" |
-| `color` | Gradiente do label central do disco |
-| `cover_url` | Imagem no centro do vinil (futuro) |
+### Regra de contagem (subtítulo)
+
+```
+subfolders_count > 0  →  "{N} artista(s)"
+subfolders_count === 0 →  "{files_count} música(s)"
+```
+
+Implementado em `formatFolderCountLabel()` (`src/lib/library.js`).
 
 ---
 
-## Comportamento esperado no frontend (após integração)
+## Comportamento do vinil
+
+| Estado | Animação |
+|--------|----------|
+| Selecionado | `animate-spin-vinyl` |
+| Hover (não selecionado) | `animate-spin-vinyl-slow` |
+| Sem `cover_url` | Gradiente colorido + ícone `Disc` |
+
+---
+
+## Ao selecionar categoria
 
 ```javascript
-// Ao montar a tela
-const { data } = await fetch('/api/v1/genres?featured=true');
-
-// Ao selecionar gênero
-onSelectGenre(genre.id) → GET /api/v1/genres/{id}/artists
+selectGenre(genre) → loadAlbums(genre)
+// GET /api/v1/musicas/?prefix={genre.path}
 ```
 
-## Regras de negócio
+Ver contrato 03.
 
-1. Gêneros devem ser ordenados por `sort_order`.
-2. `artists_count` deve ser calculado dinamicamente pelo backend.
-3. Apenas gêneros com pelo menos 1 artista ativo devem ser exibidos (opcional, a confirmar).
-4. A seção "SUCESSOS" pode ser um subconjunto marcado como `featured: true` no banco.
+## Banner de sync
 
-## Erros
+Se `needs_sync === true` na response, `SyncBanner` exibe aviso para o admin sincronizar a biblioteca.
 
-| Código | Situação |
-|--------|----------|
-| `500` | Erro interno ao buscar catálogo |
+## Pendências
 
-## Dados mock de referência
-
-```json
-[
-  { "id": "forro", "name": "FORRÓ", "artists_count": 102, "color": "#e85d2a" },
-  { "id": "sertanejo", "name": "SERTANEJO", "artists_count": 207, "color": "#c9a227" },
-  { "id": "mpb", "name": "MPB", "artists_count": 189, "color": "#2a8f6e" },
-  { "id": "samba", "name": "SAMBA - PAGODE", "artists_count": 156, "color": "#8b4513" },
-  { "id": "pais", "name": "PAIS", "artists_count": 94, "color": "#4a7c59" },
-  { "id": "rap", "name": "RAP - REGGAE", "artists_count": 78, "color": "#6b3fa0" },
-  { "id": "anos", "name": "ANOS 60 70 80 e 90", "artists_count": 312, "color": "#b8860b" },
-  { "id": "internacional", "name": "INTERNACIONAL", "artists_count": 245, "color": "#3d5a80" }
-]
-```
+- [ ] `cover_url` herdado do primeiro artista quando categoria não tem capa (contrato 10 — backend)

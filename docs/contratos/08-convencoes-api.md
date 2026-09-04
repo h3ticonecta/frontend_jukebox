@@ -2,160 +2,105 @@
 
 ## Base URL
 
-| Ambiente | URL |
-|----------|-----|
-| Desenvolvimento | `http://localhost:8000/api/v1` |
-| Produção | `https://api.jukebox.example.com/api/v1` |
+| Ambiente | Configuração |
+|----------|--------------|
+| Desenvolvimento | `VITE_API_BASE_URL=https://backendjukebox-dev.up.railway.app` |
+| Produção | `VITE_API_BASE_URL` no Railway |
 
-No frontend, em desenvolvimento o Vite faz proxy de `/api` para `localhost:8000` (ver `vite.config.js`).
+Definido em `src/api/config.js` → `API_BASE_URL`.
 
 ---
 
-## Formato de resposta padrão
+## Autenticação
 
-### Sucesso com lista
+### App jukebox (este frontend)
 
-```json
-{
-  "data": [ ... ],
-  "meta": {
-    "total": 100,
-    "page": 1,
-    "per_page": 20
-  }
-}
+```
+Authorization: Maquina <token>
 ```
 
-### Sucesso com objeto único
+Token obtido em `POST /api/v1/maquinas/auth/`.
 
-```json
-{
-  "data": { ... }
-}
+Implementado em `src/api/client.js` (`tokenType: 'Maquina'` por padrão).
+
+### Admin Django (não usar no app jukebox)
+
+```
+Authorization: Token <jwt>
 ```
 
-### Erro
+---
+
+## Formato de erro
 
 ```json
 {
   "error": {
-    "code": "ERROR_CODE",
-    "message": "Descrição legível do erro.",
-    "details": {}
+    "message": "Descrição legível do erro."
   }
 }
 ```
 
----
+Ou campos Django REST padrão: `detail`, `non_field_errors`.
 
-## Headers padrão
-
-### Request
-
-| Header | Obrigatório | Descrição |
-|--------|-------------|-----------|
-| `Content-Type` | Sim (POST/PUT) | `application/json` |
-| `Accept` | Não | `application/json` |
-| `X-Device-Id` | Sim* | Identificador do terminal jukebox |
-| `Authorization` | Condicional | `Bearer {token}` após registro |
-
-### Response
-
-| Header | Descrição |
-|--------|-----------|
-| `Content-Type` | `application/json; charset=utf-8` |
+O client lança `ApiError` com `message`, `status` e `data`.
 
 ---
 
 ## Códigos HTTP
 
-| Código | Uso |
-|--------|-----|
-| `200` | Sucesso (GET, PUT) |
-| `201` | Recurso criado (POST) |
-| `204` | Sucesso sem corpo (DELETE) |
-| `400` | Request inválido |
-| `401` | Não autenticado |
-| `402` | Créditos insuficientes |
-| `403` | Sem permissão |
+| Código | Uso no app |
+|--------|------------|
+| `200` | Sucesso |
+| `400` | Credenciais inválidas, body incorreto |
+| `401` | Token inválido |
+| `402` | Créditos insuficientes (futuro) |
 | `404` | Recurso não encontrado |
-| `409` | Conflito (ex.: faixa indisponível) |
-| `422` | Validação falhou |
 | `500` | Erro interno |
 
 ---
 
-## Paginação
+## Endpoints utilizados pelo frontend
 
-Query params padrão:
+| Método | Endpoint | Contrato | Auth |
+|--------|----------|----------|------|
+| `POST` | `/api/v1/maquinas/auth/` | 01 | Público |
+| `GET` | `/api/v1/maquinas/config/` | 01, 09 | Maquina |
+| `GET` | `/api/v1/musicas/?prefix=...` | 02–04 | Maquina |
+| `POST` | `/api/v1/maquinas/creditos/` | 06 | Maquina |
+| `POST` | `/api/v1/maquinas/tocadas/` | 04 | Maquina |
 
-| Param | Tipo | Default |
-|-------|------|---------|
-| `page` | `integer` | `1` |
-| `per_page` | `integer` | `20` |
+### Não utilizados (legado dos contratos antigos)
 
-Response `meta`:
+Estes endpoints **não existem** na integração atual:
 
-```json
-{
-  "total": 189,
-  "page": 1,
-  "per_page": 20,
-  "total_pages": 10
-}
-```
+- `GET /api/v1/session`
+- `GET /api/v1/genres`
+- `GET /api/v1/genres/{id}/artists`
+- `GET /api/v1/albums/{id}/tracks`
+- `GET /api/v1/queue`
 
----
-
-## Identificadores
-
-- IDs devem ser **strings** (slugs ou UUIDs).
-- Preferir slugs legíveis para entidades de catálogo (`forro`, `14bis`, `as-20-mais`).
-- Preferir UUIDs para entidades transacionais (`queue-item`, transações de crédito).
+A biblioteca é navegada exclusivamente via `GET /musicas/?prefix=...`.
 
 ---
 
-## Datas
+## CORS
 
-- Formato: **ISO 8601** em UTC (`2026-09-01T19:30:00Z`).
-- Timezone de exibição: responsabilidade do frontend.
+O backend deve incluir a URL do frontend em `CORS_ALLOWED_ORIGINS`.
+
+Áudio/imagem do R2 (`media_url`, `cover_url`) é domínio diferente; `<audio src>` e `<img src>` funcionam sem CORS extra no fetch.
 
 ---
 
-## CORS (produção)
+## Variáveis de ambiente (frontend)
 
-O backend Django deve permitir:
-
-```
-Access-Control-Allow-Origin: https://jukebox.example.com
-Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
-Access-Control-Allow-Headers: Content-Type, Authorization, X-Device-Id
-```
-
-Em desenvolvimento, permitir `http://localhost:5173`.
+| Variável | Obrigatória | Descrição |
+|----------|-------------|-----------|
+| `VITE_API_BASE_URL` | Sim | URL base do backend Django |
 
 ---
 
 ## Versionamento
 
 - Prefixo atual: `/api/v1/`
-- Mudanças breaking devem incrementar para `/api/v2/`.
-- Campos novos em responses são retrocompatíveis.
-
----
-
-## Resumo de endpoints
-
-| Método | Endpoint | Contrato |
-|--------|----------|----------|
-| `GET` | `/api/v1/session` | 01 |
-| `POST` | `/api/v1/session/register` | 01 |
-| `GET` | `/api/v1/genres` | 02 |
-| `GET` | `/api/v1/genres/{id}/artists` | 03 |
-| `GET` | `/api/v1/albums/{id}/tracks` | 04 |
-| `GET` | `/api/v1/tracks/{id}` | 04 |
-| `GET` | `/api/v1/queue` | 05 |
-| `POST` | `/api/v1/queue` | 05 |
-| `DELETE` | `/api/v1/queue/{id}` | 05 |
-| `GET` | `/api/v1/credits` | 06 |
-| `POST` | `/api/v1/credits/recharge` | 06 |
+- Referência completa: `docs_para_front/` no repo `backend_jukebox` (branch `dev`)

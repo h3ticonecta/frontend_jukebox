@@ -32,8 +32,8 @@
   --browser-header-mb: 1rem;
   --browser-scroll-pad: 0.75rem;
   --browser-scroll-bottom: 8rem;
-  --browser-grid-gap-x: 1.5rem;
-  --browser-grid-gap-y: 2rem;
+  --browser-grid-gap-x: 1rem;
+  --browser-grid-gap-y: 1.25rem;
 }
 
 @layer base {

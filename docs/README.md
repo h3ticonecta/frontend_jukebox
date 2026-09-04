@@ -1,50 +1,69 @@
 # Documentação de Contratos — JUKE-BOX Frontend
 
-Esta pasta contém os contratos de integração entre o **frontend React** e o **backend Django**, baseados nas implementações já existentes na interface.
+Contratos de integração entre o **frontend React** (este repo) e o **backend Django** (`backend_jukebox`).
+
+A documentação canônica da API está no repositório do backend (`docs_para_front/`, branch `dev`). Os arquivos aqui descrevem **como o frontend consome** essa API e o status de cada área.
 
 ## Objetivo
 
-Cada documento descreve:
+Cada contrato documenta:
 
-- qual tela/componente do frontend depende do contrato;
-- quais endpoints o backend deve expor;
-- formatos de request/response;
-- regras de negócio esperadas;
-- status atual da integração.
+- componentes React envolvidos;
+- endpoints reais utilizados;
+- mapeamento request/response → UI;
+- regras de negócio no client;
+- status da integração.
 
-## Índice de contratos
+## Índice
 
-| # | Contrato | Arquivo | Prioridade |
-|---|----------|---------|------------|
-| 00 | Visão geral e arquitetura | [00-visao-geral.md](./contratos/00-visao-geral.md) | — |
-| 01 | Sessão e status do dispositivo | [01-sessao-dispositivo.md](./contratos/01-sessao-dispositivo.md) | Alta |
-| 02 | Gêneros (carrossel SUCESSOS) | [02-generos.md](./contratos/02-generos.md) | Alta |
-| 03 | Artistas e álbuns | [03-artistas-albuns.md](./contratos/03-artistas-albuns.md) | Alta |
-| 04 | Faixas (músicas) | [04-faixas.md](./contratos/04-faixas.md) | Alta |
-| 05 | Fila de espera | [05-fila-espera.md](./contratos/05-fila-espera.md) | Alta |
-| 06 | Créditos | [06-creditos.md](./contratos/06-creditos.md) | Média |
-| 07 | Mídias (Cloudflare R2) | [07-midias-r2.md](./contratos/07-midias-r2.md) | Alta |
+| # | Contrato | Arquivo | Status |
+|---|----------|---------|--------|
+| 00 | Visão geral | [00-visao-geral.md](./contratos/00-visao-geral.md) | — |
+| 01 | Autenticação da máquina | [01-sessao-dispositivo.md](./contratos/01-sessao-dispositivo.md) | ✅ Integrado |
+| 02 | Gêneros (SUCESSOS) | [02-generos.md](./contratos/02-generos.md) | ✅ Integrado |
+| 03 | Artistas / bandas | [03-artistas-albuns.md](./contratos/03-artistas-albuns.md) | ✅ Integrado |
+| 04 | Faixas (músicas) | [04-faixas.md](./contratos/04-faixas.md) | ✅ Integrado |
+| 05 | Fila de espera | [05-fila-espera.md](./contratos/05-fila-espera.md) | ⚠️ Local |
+| 06 | Créditos | [06-creditos.md](./contratos/06-creditos.md) | ✅ Integrado |
+| 07 | Mídias (R2) | [07-midias-r2.md](./contratos/07-midias-r2.md) | ✅ Integrado |
 | 08 | Convenções da API | [08-convencoes-api.md](./contratos/08-convencoes-api.md) | — |
+| 09 | Teclas da máquina | [09-teclas-maquina.md](./contratos/09-teclas-maquina.md) | ✅ Integrado |
+| 10 | Capas de pastas | [10-capas-pastas.md](./contratos/10-capas-pastas.md) | ⏳ Backend |
 
-## Status geral
+## Status geral (atualizado)
 
 | Área | Frontend | Backend |
 |------|----------|---------|
-| Layout da página inicial | ✅ Implementado | ⏳ Pendente |
-| Dados mockados | ✅ `src/data/mockData.js` | ⏳ Substituir por API |
-| Chamadas HTTP reais | ❌ Não iniciado | ⏳ Pendente |
-| Autenticação/sessão | ❌ UI estática | ⏳ Pendente |
-| Fila persistente | ❌ Estado local React | ⏳ Pendente |
+| Login máquina + token | ✅ | ✅ |
+| Biblioteca (`GET /musicas/`) | ✅ | ✅ |
+| Contagens (`subfolders_count`, `files_count`) | ✅ | ✅ |
+| Player (`media_url` direto do R2) | ✅ | ✅ |
+| Créditos (`POST /maquinas/creditos/`) | ✅ | ✅ |
+| Música tocada (`POST /maquinas/tocadas/`) | ✅ | ✅ |
+| Teclas configuráveis | ✅ | ✅ |
+| Fila persistente / API | ❌ Local | ⏳ Pendente |
+| Capas herdadas no sync | ⏳ Usa `cover_url` direto | ⏳ Pendente |
 
-## Como usar
+## Base URL
 
-1. Leia [00-visao-geral.md](./contratos/00-visao-geral.md) para entender o contexto.
-2. Implemente os contratos na ordem de prioridade (02 → 05).
-3. Quando um endpoint estiver pronto, o frontend substituirá os mocks correspondentes.
+| Ambiente | Variável | Valor |
+|----------|----------|-------|
+| Desenvolvimento | `VITE_API_BASE_URL` | `https://backendjukebox-dev.up.railway.app` |
+| Produção | `VITE_API_BASE_URL` | URL do deploy Railway |
 
-## Referência rápida de base URL
+## Código-fonte principal
 
-| Ambiente | Base URL |
-|----------|----------|
-| Desenvolvimento (proxy Vite) | `/api` → `http://localhost:8000` |
-| Produção | `VITE_API_URL` (a definir no frontend) |
+| Área | Arquivos |
+|------|----------|
+| API client | `src/api/client.js`, `src/api/config.js` |
+| Auth | `src/api/auth.js`, `src/context/AuthContext.jsx` |
+| Biblioteca | `src/api/musicas.js`, `src/hooks/useLibrary.js`, `src/lib/library.js` |
+| Eventos | `src/api/maquinas.js` |
+| Teclas | `src/lib/keyboard.js`, `src/hooks/useKeyboardShortcuts.js` |
+| UI | `src/components/jukebox/*` |
+
+## Referência backend
+
+- `docs_para_front/contratos/06-musicas-listar.md` — biblioteca
+- `docs_para_front/contratos/09-maquinas.md` — login, teclas, config
+- `docs_para_front/contratos/10-maquinas-eventos.md` — créditos, tocadas

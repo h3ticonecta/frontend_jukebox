@@ -1,146 +1,119 @@
-# Contrato 01 — Sessão e Status do Dispositivo
+# Contrato 01 — Autenticação da Máquina
 
-## Componente frontend
+## Componentes frontend
 
-- `src/components/Header.jsx`
-- `src/components/StatusBar.jsx` (parcialmente)
+- `src/components/auth/MachineLoginCard.jsx` — tela de login
+- `src/context/AuthContext.jsx` — estado de sessão
+- `src/components/jukebox/JukeboxHeader.jsx` — badge com nome da jukebox
+- `src/lib/storage.js` — persistência no `localStorage`
 
 ## Descrição
 
-O jukebox opera em um **dispositivo físico ou terminal** que precisa se identificar no sistema. O header exibe o status de registro e o rodapé exibe créditos disponíveis.
+Cada jukebox físico autentica com **usuário e senha** configurados no admin Django. O backend retorna um token estático usado em todas as requisições subsequentes.
 
-## Status atual no frontend
+> **Não usar** `Authorization: Token` (esse é só para admin Django).
 
-| Elemento | Valor mockado | Integrado com API |
-|----------|---------------|-------------------|
-| Badge "Não registrado" | Texto fixo | ❌ |
-| Botão LEITURA | Sem ação | ❌ |
-| Botão mensagens | Sem ação | ❌ |
-| Botão atualizar | Sem ação | ❌ |
-| Créditos | `7` fixo em `App.jsx` | ❌ |
+## Status
+
+| Elemento | Status |
+|----------|--------|
+| Tela de login | ✅ |
+| Persistência token + dados da máquina | ✅ |
+| Badge "Registrado" com `nome_jukebox` | ✅ |
+| Logout | ✅ |
+| Refresh de config (`GET /maquinas/config/`) | ✅ |
 
 ---
 
-## Endpoint: obter sessão do dispositivo
+## Endpoint: login
 
-### `GET /api/v1/session`
+### `POST /api/v1/maquinas/auth/`
 
-Retorna o estado atual do terminal conectado.
+Público (sem header de auth).
+
+#### Request
+
+```json
+{
+  "usuario": "jukebox01",
+  "senha": "senha123"
+}
+```
+
+#### Response `200 OK`
+
+```json
+{
+  "id": 1,
+  "nome_jukebox": "Bar Central",
+  "usuario": "jukebox01",
+  "token": "abc123...",
+  "teclas": [
+    { "acao": "cima", "label": "Cima", "tecla": "Q" },
+    { "acao": "credito", "label": "Crédito", "tecla": "K" }
+  ]
+}
+```
+
+#### Persistência no dispositivo
+
+| Campo | Chave localStorage |
+|-------|-------------------|
+| `token` | `jukebox_maquina_token` |
+| `id`, `nome_jukebox`, `usuario`, `teclas` | `jukebox_maquina_info` |
+
+---
+
+## Endpoint: configuração (sem relogar)
+
+### `GET /api/v1/maquinas/config/`
 
 #### Headers
 
-| Header | Obrigatório | Descrição |
-|--------|-------------|-----------|
-| `X-Device-Id` | Sim* | Identificador único do terminal |
-| `Authorization` | Não** | Token de sessão, se aplicável |
-
-> \* Em produção, o dispositivo deve ser identificado. Mecanismo exato a definir com o backend.
-> \** Pode ser necessário após registro.
+```
+Authorization: Maquina <token>
+```
 
 #### Response `200 OK`
 
 ```json
 {
-  "device_id": "jb-terminal-001",
-  "registered": false,
-  "registration_status": "unregistered",
-  "credits": 7,
-  "queue_count": 0,
-  "message": "Selecione uma música para começar"
+  "teclas": [ ... ]
 }
 ```
 
-#### Campos
+Chamado ao montar o app (se já autenticado) e ao abrir o painel TECLAS.
 
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| `device_id` | `string` | ID do terminal |
-| `registered` | `boolean` | Se o dispositivo está registrado no sistema |
-| `registration_status` | `string` | `unregistered` \| `pending` \| `active` \| `suspended` |
-| `credits` | `integer` | Créditos disponíveis para tocar músicas |
-| `queue_count` | `integer` | Quantidade de músicas na fila global do terminal |
-| `message` | `string` | Mensagem de status exibida no rodapé |
+---
 
-#### Mapeamento na UI
+## Mapeamento na UI
 
 | Campo API | Elemento UI |
 |-----------|-------------|
-| `registered: false` | Badge vermelho "Não registrado" |
-| `registered: true` | Badge verde "Registrado" (a implementar no frontend) |
-| `credits` | `StatusBar` → "X créditos" |
-| `queue_count` | `StatusBar` → "X em espera" |
-| `message` | `StatusBar` → texto central |
+| `nome_jukebox` | Badge verde no header |
+| Token ausente | Tela `MachineLoginCard` |
+| `teclas` | Painel TECLAS + listener global (contrato 09) |
 
 ---
 
-## Endpoint: registrar dispositivo
+## Código de referência
 
-### `POST /api/v1/session/register`
+```javascript
+// src/api/auth.js
+loginMaquina(usuario, senha) → POST /api/v1/maquinas/auth/
 
-Acionado futuramente pelo fluxo de registro (botão LEITURA ou onboarding).
-
-#### Request body
-
-```json
-{
-  "device_id": "jb-terminal-001",
-  "activation_code": "ABC123",
-  "location_name": "Bar do Zé"
-}
+// src/api/client.js — todas as requisições autenticadas
+Authorization: Maquina <token>
 ```
-
-#### Response `201 Created`
-
-```json
-{
-  "device_id": "jb-terminal-001",
-  "registered": true,
-  "registration_status": "active",
-  "credits": 0,
-  "token": "eyJhbGciOiJIUzI1NiIs..."
-}
-```
-
----
-
-## Endpoint: atualizar dados da sessão
-
-### `GET /api/v1/session/refresh`
-
-Acionado pelo botão de atualizar (ícone refresh no header).
-
-#### Response `200 OK`
-
-Mesmo formato de `GET /api/v1/session`.
-
----
-
-## Regras de negócio esperadas
-
-1. Cada terminal possui uma sessão independente.
-2. Créditos são vinculados ao dispositivo ou à conta do estabelecimento.
-3. `queue_count` deve refletir a fila real do backend, não apenas a fila local do browser.
-4. Dispositivos não registrados podem ter acesso limitado (ex.: apenas visualizar catálogo).
 
 ## Erros
 
 | Código | Situação |
 |--------|----------|
-| `401` | Dispositivo não autorizado |
-| `404` | Dispositivo não encontrado |
-| `403` | Dispositivo suspenso |
+| `400` | Credenciais inválidas |
+| `401` | Token expirado/inválido (em rotas protegidas) |
 
-```json
-{
-  "error": {
-    "code": "DEVICE_SUSPENDED",
-    "message": "Este terminal foi suspenso. Contate o suporte."
-  }
-}
-```
+## Pendências
 
-## Pendências para alinhamento
-
-- [ ] Definir mecanismo de identificação do dispositivo (`X-Device-Id`, cookie, token).
-- [ ] Definir fluxo do botão LEITURA.
-- [ ] Definir se mensagens (ícone envelope) terão endpoint próprio.
+- [ ] Botão LEITURA — endpoint de faturamento não definido
+- [ ] Renovação automática de token (hoje é estático)

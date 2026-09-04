@@ -5,7 +5,7 @@ import { cn } from '../../lib/utils';
 const SIZES = {
   sm: 'w-12 h-12',
   md: 'w-full h-full',
-  lg: 'w-[72px] h-[72px]',
+  lg: 'w-[100px] h-[100px]',
 };
 
 function VinylCard({ gradientClass, albumName, coverImage, isSelected, onClick }) {
@@ -45,7 +45,7 @@ function VinylCard({ gradientClass, albumName, coverImage, isSelected, onClick }
             />
           ) : (
             <div className={cn('w-full h-full bg-gradient-to-br flex items-center justify-center', gradientClass)}>
-              <Disc className="text-foreground/80" size={16} />
+              <Disc className="text-foreground/80" size={22} />
             </div>
           )}
         </div>
@@ -102,12 +102,12 @@ export default function AlbumCard({
         />
       ) : (
         <div className={cn('absolute inset-0 bg-gradient-to-br flex items-center justify-center', gradientClass)}>
-          <Disc className="text-foreground/80" size={32} />
+          <Disc className="text-foreground/80" size={22} />
         </div>
       )}
-      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent z-10">
-        <p className="text-foreground text-sm font-display truncate">{albumName}</p>
-        <p className="text-foreground/70 text-xs truncate">{artistName}</p>
+      <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/70 to-transparent z-10">
+        <p className="text-foreground text-xs font-display truncate">{albumName}</p>
+        <p className="text-foreground/70 text-[10px] truncate">{artistName}</p>
       </div>
     </button>
   );

@@ -1,151 +1,116 @@
 # Contrato 04 — Faixas (Músicas)
 
-## Componente frontend
+## Componentes frontend
 
-- `src/components/TrackList.jsx`
-- Dados mock: `src/data/mockData.js` → `tracks`
+- `src/components/jukebox/SongSidePanel.jsx`
+- `src/hooks/useAudioPlayer.js` — reprodução
+- `src/hooks/useLibrary.js` → `loadAlbumTracks()`
+- `src/lib/library.js` → `mapTrackFromApi()`
 
 ## Descrição
 
-Exibe a lista numerada de faixas do álbum selecionado. Cada faixa possui botão de play que adiciona a música à fila de espera (contrato 05).
+Lista numerada de faixas do artista/álbum selecionado. Ao tocar, registra evento no backend, debita crédito e reproduz via `media_url`.
 
-## Status atual no frontend
+## Status
 
-- ✅ UI implementada
-- ✅ Botão play adiciona à fila local
-- ❌ Faixas não mudam ao trocar de álbum (sempre exibe o mesmo mock)
-- ❌ Sem chamada à API
+| Funcionalidade | Status |
+|----------------|--------|
+| Listagem via API | ✅ |
+| Título sem duplicação | ✅ |
+| Subtítulo = pasta pai (`folder_path`) | ✅ |
+| Play + POST tocadas | ✅ |
+| Player com `media_url` direto | ✅ |
+| Duração da faixa | ❌ Backend não envia |
 
 ---
 
-## Endpoint: listar faixas de um álbum
+## Endpoint
 
-### `GET /api/v1/albums/{album_id}/tracks`
+### `GET /api/v1/musicas/?prefix=Musicas/{Categoria}/{Artista}/`
 
-#### Path params
+```
+Authorization: Maquina <token>
+```
 
-| Param | Tipo | Descrição |
-|-------|------|-----------|
-| `album_id` | `string` | ID do álbum selecionado |
-
-#### Response `200 OK`
+#### Item em `musicas` / `musicas_list`
 
 ```json
 {
-  "data": {
-    "album": {
-      "id": "as-20-mais",
-      "name": "As 20 Mais",
-      "artist_name": "14 Bis",
-      "cover_url": "https://r2.example.com/covers/14bis-as-20-mais.jpg",
-      "songs_count": 20
-    },
-    "tracks": [
-      {
-        "id": "track-001",
-        "number": "01",
-        "title": "Planeta Sonho",
-        "duration_seconds": 245,
-        "available": true
-      },
-      {
-        "id": "track-002",
-        "number": "02",
-        "title": "Caçador de Mim",
-        "duration_seconds": 198,
-        "available": true
-      }
-    ]
-  }
+  "name": "Yesterday.mp3",
+  "title": "Yesterday",
+  "key": "Musicas/Beatles/Yesterday.mp3",
+  "folder_path": "Musicas/Beatles/",
+  "media_type": "audio",
+  "media_url": "https://pub-xxxxx.r2.dev/Musicas/Beatles/Yesterday.mp3",
+  "cover_url": "https://pub-xxxxx.r2.dev/Musicas/Beatles/cover.jpg"
 }
 ```
 
-#### Schema: `Track`
-
-| Campo | Tipo | Obrigatório | Descrição |
-|-------|------|-------------|-----------|
-| `id` | `string` | Sim | ID único da faixa |
-| `number` | `string` | Sim | Número da faixa formatado (ex.: `"01"`) |
-| `title` | `string` | Sim | Título da música |
-| `duration_seconds` | `integer` | Não | Duração em segundos |
-| `available` | `boolean` | Sim | Se a faixa pode ser adicionada à fila |
-
-#### Mapeamento na UI
-
-| Campo API | Elemento UI |
-|-----------|-------------|
-| `album.artist_name` + `album.name` | Header "Artista - Álbum" |
-| `album.cover_url` | Thumbnail do header |
-| `album.songs_count` | Texto "X músicas" |
-| `number` | Número à esquerda da faixa |
-| `title` | Título da faixa |
-| `available: false` | Botão play desabilitado (a implementar) |
-
 ---
 
-## Endpoint: obter detalhe de uma faixa
+## Mapeamento API → UI
 
-### `GET /api/v1/tracks/{track_id}`
+| Campo API | Estado React | UI |
+|-----------|--------------|-----|
+| `title` | `track.title` | Linha principal (uma vez só) |
+| `name` | fallback sem extensão | — |
+| `folder_path` | `track.artist` | Subtítulo (última pasta, ex: `Beatles`) |
+| `key` | `track.key` | ID + envio em tocadas |
+| `media_url` | `track.media_url` | `<audio src>` |
+| `cover_url` | `track.cover_url` | Capa no player/fila |
 
-Útil para validação antes de adicionar à fila.
+### Regras de exibição
 
-#### Response `200 OK`
-
-```json
-{
-  "id": "track-001",
-  "number": "01",
-  "title": "Planeta Sonho",
-  "duration_seconds": 245,
-  "available": true,
-  "album": {
-    "id": "as-20-mais",
-    "name": "As 20 Mais",
-    "cover_url": "https://r2.example.com/covers/14bis-as-20-mais.jpg"
-  },
-  "artist": {
-    "id": "14bis",
-    "name": "14 Bis"
-  },
-  "audio_url": "https://r2.example.com/audio/track-001.mp3"
-}
-```
-
-> **Importante:** `audio_url` é para uso interno do player/sistema de reprodução do jukebox, **não** deve ser exposta diretamente ao usuário final no frontend público, se houver restrição de acesso. Avaliar se o frontend precisa deste campo ou se apenas o backend da fila o utiliza.
-
----
-
-## Comportamento esperado no frontend (após integração)
+1. Título: `title` (ou `name` sem extensão) — **nunca repetir** o nome do álbum no título.
+2. Subtítulo: artista extraído de `folder_path` — só exibe se diferente do título.
+3. **Não** usar nome da pasta selecionada como artista (evita textos incorretos como "(Na Na Na)").
 
 ```javascript
-// Ao selecionar álbum
-const { data } = await fetch(`/api/v1/albums/${albumId}/tracks`);
-setTracks(data.tracks);
-setSelectedAlbum(data.album);
+// src/lib/library.js
+getArtistFromFolderPath("Musicas/Beatles/") → "Beatles"
+```
 
-// Ao clicar em play
-onPlay(track) → POST /api/v1/queue (contrato 05)
+---
+
+## Endpoint: registrar música tocada
+
+### `POST /api/v1/maquinas/tocadas/`
+
+```
+Authorization: Maquina <token>
+```
+
+```json
+{
+  "musica_key": "Musicas/Beatles/Yesterday.mp3",
+  "musica_nome": "Yesterday",
+  "titulo": "Yesterday",
+  "pasta": "Musicas/Beatles/",
+  "media_type": "audio",
+  "media_url": "https://...",
+  "cover_url": "https://...",
+  "valor": 1.00
+}
+```
+
+Chamado em `handlePlay()` (`src/App.jsx`) antes de iniciar o áudio.
+
+---
+
+## Reprodução
+
+```javascript
+audio.play({ ...track, media_url })
+// Player usa media_url direto — sem proxy backend
 ```
 
 ## Regras de negócio
 
-1. Faixas devem ser retornadas ordenadas por `number`.
-2. Faixas indisponíveis (`available: false`) não podem ser adicionadas à fila.
-3. O campo `number` deve ser string com zero à esquerda (`"01"`, `"02"`).
-4. `songs_count` no header deve bater com o tamanho do array `tracks` retornado.
+1. Tocar consome `CREITS_PER_SONG` (1) crédito local.
+2. Se saldo insuficiente, exibe erro no header.
+3. Faixa tocada é adicionada à fila local (contrato 05).
 
-## Erros
+## Pendências
 
-| Código | Situação |
-|--------|----------|
-| `404` | Álbum não encontrado |
-
-## Dados mock de referência
-
-```json
-[
-  { "id": 1, "number": "01", "title": "Planeta Sonho" },
-  { "id": 2, "number": "02", "title": "Caçador de Mim" },
-  { "id": 3, "number": "03", "title": "Bola de Meia, Bola de Gude" }
-]
-```
+- [ ] `duration_seconds` na API para exibir duração na lista
+- [ ] Suporte a vídeo (`.mp4`) no player

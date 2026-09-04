@@ -8,9 +8,9 @@ export default function GenreCarousel({ genres, selectedGenre, onSelectGenre }) 
         <Star className="text-primary fill-primary" size={16} />
         <h2 className="text-sm font-display text-primary neon-glow-amber tracking-wider">SUCESSOS</h2>
       </div>
-      <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-1">
+      <div className="flex gap-6 overflow-x-auto scrollbar-hide pb-1">
         {genres.map((genre) => (
-          <div key={genre.id} className="flex flex-col items-center gap-1.5 shrink-0 w-[90px]">
+          <div key={genre.id} className="flex flex-col items-center gap-2 shrink-0 w-[118px]">
             <AlbumCard
               size="lg"
               gradientClass={genre.coverColor}
@@ -20,8 +20,8 @@ export default function GenreCarousel({ genres, selectedGenre, onSelectGenre }) 
               isSelected={selectedGenre?.id === genre.id}
               onClick={() => onSelectGenre(genre)}
             />
-            <span className="text-[10px] font-semibold text-foreground/80 text-center leading-tight">{genre.name}</span>
-            <span className="text-[9px] text-muted-foreground">{genre.countLabel}</span>
+            <span className="text-[11px] font-semibold text-foreground/80 text-center leading-tight">{genre.name}</span>
+            <span className="text-[10px] text-muted-foreground">{genre.countLabel}</span>
           </div>
         ))}
       </div>

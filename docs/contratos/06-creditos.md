@@ -1,137 +1,102 @@
 # Contrato 06 — Créditos
 
-## Componente frontend
+## Componentes frontend
 
-- `src/components/StatusBar.jsx`
-- Estado: `src/App.jsx` → `credits` (valor fixo `7`)
+- `src/components/jukebox/PlayerBar.jsx` — saldo + botão inserir
+- `src/components/shared/CreditToast.jsx` — confirmação "+1 crédito inserido"
+- `src/App.jsx` — `handleInsertCredit()`
+- `src/lib/storage.js` — saldo em `localStorage`
 
 ## Descrição
 
-Créditos representam a moeda do jukebox para adicionar músicas à fila. Exibidos no rodapé da tela.
+Créditos são a moeda para tocar músicas. O backend **registra inserções**; o saldo exibido é **gerenciado no frontend** (`localStorage`).
 
-## Status atual no frontend
+## Status
 
-- ✅ Exibição de créditos no rodapé
-- ❌ Valor fixo, sem integração
-- ❌ Sem fluxo de recarga
+| Funcionalidade | Status |
+|----------------|--------|
+| Exibição no rodapé | ✅ |
+| Inserir 1 crédito (botão) | ✅ |
+| Inserir via tecla configurada | ✅ |
+| Toast de confirmação | ✅ |
+| Débito ao tocar (1 crédito) | ✅ |
+| `GET` saldo no backend | ❌ Não existe |
 
 ---
 
-## Endpoint: consultar saldo de créditos
+## Endpoint: registrar crédito
 
-### `GET /api/v1/credits`
+### `POST /api/v1/maquinas/creditos/`
 
-#### Headers
-
-| Header | Descrição |
-|--------|-----------|
-| `X-Device-Id` | Identificador do terminal |
-
-#### Response `200 OK`
-
-```json
-{
-  "data": {
-    "balance": 7,
-    "cost_per_song": 1,
-    "currency_label": "créditos"
-  }
-}
+```
+Authorization: Maquina <token>
 ```
 
-#### Schema
-
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| `balance` | `integer` | Saldo atual |
-| `cost_per_song` | `integer` | Custo por música adicionada à fila |
-| `currency_label` | `string` | Label exibido na UI ("créditos") |
-
-#### Mapeamento na UI
-
-| Campo API | Elemento UI |
-|-----------|-------------|
-| `balance` | "**7** créditos" no rodapé |
-
----
-
-## Endpoint: recarregar créditos
-
-### `POST /api/v1/credits/recharge`
-
-Fluxo futuro (pagamento, código promocional, etc.).
-
-#### Request body
+#### Request
 
 ```json
 {
-  "device_id": "jb-terminal-001",
-  "amount": 10,
-  "payment_method": "pix",
-  "payment_reference": "pix-tx-abc123"
+  "valor": 1.00,
+  "origem": "moeda"
 }
 ```
 
 #### Response `200 OK`
 
-```json
-{
-  "data": {
-    "balance": 17,
-    "recharged": 10
-  }
-}
+Registro criado no backend. O front incrementa o saldo local:
+
+```javascript
+addCredits(1)  // localStorage: jukebox_credits_balance
+showCreditToast()  // "+1 crédito inserido"
 ```
 
 ---
 
-## Endpoint: histórico de créditos
+## Fluxos de inserção
 
-### `GET /api/v1/credits/history`
+| Origem | Comportamento |
+|--------|---------------|
+| Clique no ícone de moedas (`PlayerBar`) | Insere R$ 1,00 (1 crédito) direto |
+| Tecla `credito` (padrão K) | Mesmo fluxo |
+| Modal de valor | ❌ Removido — sempre 1 crédito |
 
-#### Response `200 OK`
+---
 
-```json
-{
-  "data": [
-    {
-      "id": "tx-001",
-      "type": "debit",
-      "amount": -1,
-      "description": "Planeta Sonho - 14 Bis",
-      "created_at": "2026-09-01T19:30:00Z"
-    },
-    {
-      "id": "tx-002",
-      "type": "credit",
-      "amount": 10,
-      "description": "Recarga via PIX",
-      "created_at": "2026-09-01T18:00:00Z"
-    }
-  ]
-}
+## Débito ao tocar
+
+```javascript
+// src/api/config.js
+CREDITS_PER_SONG = 1
+
+handlePlay(track)
+  → if (credits < 1) erro
+  → POST /maquinas/tocadas/
+  → deductCredits(1)
 ```
 
 ---
 
-## Regras de negócio
+## Persistência local
 
-1. Saldo nunca pode ser negativo.
-2. Ao adicionar música à fila, debitar `cost_per_song` créditos (ver contrato 05).
-3. Se `balance < cost_per_song`, bloquear adição à fila.
-4. O saldo também é retornado em `POST /api/v1/queue` via `meta.credits_remaining`.
+| Chave | Conteúdo |
+|-------|----------|
+| `jukebox_credits_balance` | Saldo numérico |
 
-## Integração sugerida
+Funções: `getCreditsBalance()`, `addCredits()`, `deductCredits()` em `src/lib/storage.js`.
 
-O frontend pode obter créditos de duas formas:
+---
 
-1. **Dedicado:** `GET /api/v1/credits` ao carregar a tela.
-2. **Embutido:** campo `credits` em `GET /api/v1/session` (contrato 01).
+## Mapeamento na UI
 
-Recomendação: usar o contrato 01 para carga inicial e atualizar via respostas da fila.
+| Estado | Elemento |
+|--------|----------|
+| `credits` | Número ao lado do ícone `Coins` no rodapé |
+| Toast visível | Canto inferior esquerdo, 3 segundos |
 
-## Pendências para alinhamento
+---
 
-- [ ] Créditos são por dispositivo ou por estabelecimento?
-- [ ] Existe tempo de expiração dos créditos?
-- [ ] Qual o fluxo de pagamento/recarga?
+## Pendências
+
+- [ ] Endpoint `GET` de saldo sincronizado com backend
+- [ ] Valores de crédito configuráveis por máquina
+- [ ] Fluxo LEITURA / faturamento
