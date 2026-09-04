@@ -116,16 +116,14 @@ audio.play({ ...track, media_url })
 
 ### Barra fixa (`PlayerBar`)
 
+Visual original do jukebox (`glass-surface`, vinil girando, barra de progresso no topo) com controles adicionais:
+
 | Região | Conteúdo |
 |--------|----------|
-| Esquerda | Capa circular (`cover_url`) |
-| | Título branco (`number`- `title`) |
-| | Subtítulo cinza `#9CA3AF` — `buildPlayerSubtitle()` |
-| Centro | Anterior · Play/Pause (círculo `#F8A428`) · Próximo |
-| Direita | `currentTime / duration_seconds` (tempo do `<audio>` / duração da API) |
-| | Ícone volume + slider (0–100%, `jukebox_volume_percent`) |
-
-**Fundo:** `#121619`
+| Topo | Barra de progresso (`currentTime / duration_seconds`) |
+| Esquerda | Créditos + vinil + título / subtítulo (`buildPlayerSubtitle()`) |
+| Centro | Anterior · Play/Pause · Próximo |
+| Direita | `currentTime / duration_seconds` · ícone volume + slider |
 
 ### Navegação
 
