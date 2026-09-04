@@ -88,4 +88,9 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  .genre-marquee-mask {
+    mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+  }
 }

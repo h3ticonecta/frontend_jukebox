@@ -53,10 +53,15 @@ export default {
           '50%': { height: '100%' },
           '100%': { height: '40%' },
         },
+        'genre-marquee': {
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(-50%)' },
+        },
       },
       animation: {
         'spin-vinyl': 'spin-vinyl 3s linear infinite',
         'spin-vinyl-slow': 'spin-vinyl 8s linear infinite',
+        'genre-marquee': 'genre-marquee 45s linear infinite',
       },
     },
   },

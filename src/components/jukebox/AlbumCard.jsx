@@ -6,11 +6,13 @@ const SIZES = {
   sm: 'w-12 h-12',
   md: 'w-full h-full',
   lg: 'w-[100px] h-[100px]',
+  xl: 'w-[180px] h-[180px]',
 };
 
-function VinylCard({ gradientClass, albumName, coverImage, isSelected, onClick }) {
+function VinylCard({ gradientClass, albumName, coverImage, isSelected, onClick, vinylSize = 'lg' }) {
   const [imgOk, setImgOk] = useState(true);
   const hasImage = !!coverImage && imgOk;
+  const isLarge = vinylSize === 'xl';
 
   useEffect(() => {
     setImgOk(true);
@@ -22,7 +24,7 @@ function VinylCard({ gradientClass, albumName, coverImage, isSelected, onClick }
       onClick={onClick}
       className={cn(
         'rounded-full relative transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 group',
-        SIZES.lg,
+        SIZES[vinylSize] || SIZES.lg,
         isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_18px_hsl(var(--primary)/0.5)]'
       )}
       style={{
@@ -45,11 +47,16 @@ function VinylCard({ gradientClass, albumName, coverImage, isSelected, onClick }
             />
           ) : (
             <div className={cn('w-full h-full bg-gradient-to-br flex items-center justify-center', gradientClass)}>
-              <Disc className="text-foreground/80" size={22} />
+              <Disc className="text-foreground/80" size={isLarge ? 36 : 22} />
             </div>
           )}
         </div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-zinc-900 z-10" />
+        <div
+          className={cn(
+            'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-900 z-10',
+            isLarge ? 'w-4 h-4' : 'w-3 h-3'
+          )}
+        />
       </div>
     </button>
   );
@@ -68,7 +75,7 @@ export default function AlbumCard({
   const [imgOk, setImgOk] = useState(true);
   const hasImage = !!coverImage && imgOk;
 
-  if (size === 'lg') {
+  if (size === 'lg' || size === 'xl') {
     return (
       <VinylCard
         gradientClass={gradientClass}
@@ -76,6 +83,7 @@ export default function AlbumCard({
         coverImage={coverImage}
         isSelected={isSelected}
         onClick={onClick}
+        vinylSize={size}
       />
     );
   }
