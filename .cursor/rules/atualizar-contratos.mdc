@@ -1,0 +1,49 @@
+---
+description: Manter docs/contratos/ sincronizado com mudanças de integração e UI do jukebox
+alwaysApply: true
+---
+
+# Atualizar contratos ao implementar
+
+Sempre que alterar comportamento de integração, API, UI do jukebox ou regras de negócio no frontend, **atualizar `docs/contratos/` no mesmo trabalho** — sem esperar o usuário pedir.
+
+## Quando atualizar
+
+- Novo endpoint, campo de API ou mudança de mapeamento
+- Novo componente, fluxo ou comportamento visível (player, fila, teclas, créditos, biblioteca)
+- Mudança de status (integrado, local, pendente backend)
+- Remoção ou renomeação de feature
+
+## Onde documentar
+
+| Área | Contrato |
+|------|----------|
+| Visão geral / fluxo | `00-visao-geral.md` |
+| Login, token, config | `01-sessao-dispositivo.md` |
+| SUCESSOS / categorias | `02-generos.md` |
+| Artistas / bandas | `03-artistas-albuns.md` |
+| Faixas / player / tocadas | `04-faixas.md` |
+| Fila de espera | `05-fila-espera.md` |
+| Créditos | `06-creditos.md` |
+| R2 / capas / media_url | `07-midias-r2.md` |
+| Auth, headers, endpoints | `08-convencoes-api.md` |
+| Teclas da máquina | `09-teclas-maquina.md` |
+| Capas no sync (backend) | `10-capas-pastas.md` |
+
+Índice e status geral: `docs/README.md`.
+
+## O que incluir no contrato
+
+1. Tabela **Status** (✅ / ⚠️ / ❌ / ⏳)
+2. Componentes e arquivos em `src/` afetados
+3. Endpoint real (`/api/v1/...`) e mapeamento API → UI
+4. Pendências do backend, se houver
+
+## Fonte de verdade
+
+- Documentação canônica deste repo: **`docs/contratos/`**
+- Não recriar `docs_para_front/` no frontend
+
+## Commit
+
+Incluir alterações de contrato no mesmo commit da feature, ou em commit imediato em seguida, com mensagem que mencione a documentação.
