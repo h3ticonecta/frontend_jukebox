@@ -77,4 +77,4 @@ Quando o backend implementar, as capas aparecem automaticamente sem alteração 
 
 ## Referência
 
-Prompt enviado ao backend em mar/2026. Documentação canônica: `docs_para_front/contratos/06-musicas-listar.md`.
+Ver também [02-generos.md](./02-generos.md) e [07-midias-r2.md](./07-midias-r2.md).

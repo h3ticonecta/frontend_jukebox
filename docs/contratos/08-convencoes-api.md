@@ -103,4 +103,4 @@ O backend deve incluir a URL do frontend em `CORS_ALLOWED_ORIGINS`.
 ## Versionamento
 
 - Prefixo atual: `/api/v1/`
-- Referência completa: `docs_para_front/` no repo `backend_jukebox` (branch `dev`)
+- Contratos deste repo: `docs/contratos/`

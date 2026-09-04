@@ -1,8 +1,8 @@
 # Documentação de Contratos — JUKE-BOX Frontend
 
-Contratos de integração entre o **frontend React** (este repo) e o **backend Django** (`backend_jukebox`).
+Contratos de integração entre o **frontend React** (este repo) e o **backend Django**.
 
-A documentação canônica da API está no repositório do backend (`docs_para_front/`, branch `dev`). Os arquivos aqui descrevem **como o frontend consome** essa API e o status de cada área.
+A pasta `docs/contratos/` é a **documentação canônica** deste projeto: endpoints, mapeamento UI e status da integração.
 
 ## Objetivo
 
@@ -62,8 +62,11 @@ Cada contrato documenta:
 | Teclas | `src/lib/keyboard.js`, `src/hooks/useKeyboardShortcuts.js` |
 | UI | `src/components/jukebox/*` |
 
-## Referência backend
+## Contratos por área
 
-- `docs_para_front/contratos/06-musicas-listar.md` — biblioteca
-- `docs_para_front/contratos/09-maquinas.md` — login, teclas, config
-- `docs_para_front/contratos/10-maquinas-eventos.md` — créditos, tocadas
+| Área | Contrato |
+|------|----------|
+| Biblioteca / pastas / faixas | [02](./contratos/02-generos.md), [03](./contratos/03-artistas-albuns.md), [04](./contratos/04-faixas.md) |
+| Login, teclas, config | [01](./contratos/01-sessao-dispositivo.md), [09](./contratos/09-teclas-maquina.md) |
+| Créditos e tocadas | [06](./contratos/06-creditos.md), [04](./contratos/04-faixas.md) |
+| Capas no sync | [10](./contratos/10-capas-pastas.md) |
