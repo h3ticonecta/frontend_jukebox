@@ -1,4 +1,4 @@
-import { Coins, Disc, ListMusic, Pause, Play, SkipBack, SkipForward, Volume2 } from 'lucide-react';
+import { Clock, Coins, Disc, ListMusic, Pause, Play, SkipBack, SkipForward, Volume2 } from 'lucide-react';
 import { cn, formatDuration } from '../../lib/utils';
 
 function VinylThumb({ cover, isSpinning }) {
@@ -41,14 +41,22 @@ function VolumeSlider({ volume, onChange }) {
   );
 }
 
-function QueueBadge({ queueCount, compact = false }) {
+function WaitingBadge({ queueCount, showLabel = false }) {
   return (
-    <div className="flex items-center gap-2">
-      <ListMusic size={compact ? 22 : 28} className="text-secondary" />
-      <span className={cn('font-display text-secondary font-bold', compact ? 'text-lg' : 'text-2xl')}>
-        {queueCount}
-      </span>
-      {!compact && <span className="text-sm text-muted-foreground">em espera</span>}
+    <div className="flex items-center gap-2 shrink-0">
+      <ListMusic size={showLabel ? 28 : 22} className="text-foreground/80" />
+      <div className="flex items-center gap-1.5">
+        <Clock size={showLabel ? 24 : 22} className="text-secondary" />
+        <span
+          className={cn(
+            'font-display text-secondary font-bold tabular-nums',
+            showLabel ? 'text-2xl' : 'text-lg'
+          )}
+        >
+          {queueCount}
+        </span>
+      </div>
+      {showLabel && <span className="text-sm text-muted-foreground">em espera</span>}
     </div>
   );
 }
@@ -92,7 +100,7 @@ export default function PlayerBar({
             <span className="text-sm text-muted-foreground">créditos</span>
           </button>
           <p className="text-muted-foreground text-sm font-display">Selecione uma música para começar</p>
-          <QueueBadge queueCount={queueCount} />
+          <WaitingBadge queueCount={queueCount} showLabel />
         </div>
       ) : (
         <div className="fixed bottom-0 left-0 right-0 glass-surface border-t border-primary/20 neon-border-amber z-40 shrink-0">
@@ -100,8 +108,8 @@ export default function PlayerBar({
             <div className="h-full bg-primary" style={{ width: `${progress}%` }} />
           </div>
 
-          <div className="relative flex items-center gap-3 px-4 py-2 h-[72px]">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="flex items-center gap-3 px-4 h-[72px]">
+            <div className="flex items-center gap-3 min-w-0 shrink-0">
               <button
                 type="button"
                 onClick={onInsertCredit}
@@ -114,7 +122,7 @@ export default function PlayerBar({
 
               <VinylThumb cover={currentSong.cover || currentSong.cover_url} isSpinning={isPlaying} />
 
-              <div className="min-w-0">
+              <div className="min-w-0 max-w-[220px]">
                 <p className="text-sm font-semibold text-foreground truncate">
                   {currentSong.number ? `${currentSong.number}- ${currentSong.title}` : currentSong.title}
                 </p>
@@ -124,12 +132,10 @@ export default function PlayerBar({
               </div>
             </div>
 
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-              <QueueBadge queueCount={queueCount} compact />
-            </div>
+            <div className="flex-1" />
 
-            <div className="flex items-center gap-2 flex-1 justify-end min-w-0">
-              <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={onPrevious}
@@ -141,10 +147,14 @@ export default function PlayerBar({
                 <button
                   type="button"
                   onClick={onTogglePlay}
-                  className="p-3 rounded-full bg-primary text-primary-foreground hover:brightness-110 active:scale-90 neon-border-amber transition-all"
+                  className="w-11 h-11 rounded-full bg-primary text-[#121619] flex items-center justify-center hover:brightness-110 active:scale-95 transition-all"
                   aria-label={isPlaying ? 'Pausar' : 'Tocar'}
                 >
-                  {isPlaying ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" />}
+                  {isPlaying ? (
+                    <Pause size={22} fill="currentColor" />
+                  ) : (
+                    <Play size={22} fill="currentColor" className="ml-0.5" />
+                  )}
                 </button>
                 <button
                   type="button"
@@ -161,6 +171,8 @@ export default function PlayerBar({
               </p>
 
               <VolumeSlider volume={volume} onChange={onVolumeChange} />
+
+              <WaitingBadge queueCount={queueCount} />
             </div>
           </div>
         </div>
