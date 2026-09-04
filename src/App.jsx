@@ -5,6 +5,7 @@ import { useAuth } from './context/AuthContext';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useLibrary } from './hooks/useLibrary';
+import { buildPlayerSubtitle } from './lib/library';
 import {
   addCredits,
   deductCredits,
@@ -23,7 +24,6 @@ import CreditToast from './components/shared/CreditToast';
 
 function JukeboxApp() {
   const { token, machine, teclas, refreshConfig } = useAuth();
-  const audio = useAudioPlayer();
   const library = useLibrary(token);
 
   const [queue, setQueue] = useState([]);
@@ -35,8 +35,77 @@ function JukeboxApp() {
   const [creditToastVisible, setCreditToastVisible] = useState(false);
 
   const queueRef = useRef(queue);
+  const tracksRef = useRef(library.tracks);
   const creditToastTimerRef = useRef(null);
+  const audioRefHolder = useRef(null);
   queueRef.current = queue;
+  tracksRef.current = library.tracks;
+
+  const getPlaylist = useCallback(() => {
+    if (queueRef.current.length > 0) return queueRef.current;
+    return tracksRef.current;
+  }, []);
+
+  const playFromPlaylist = useCallback((track) => {
+    if (!track) {
+      audioRefHolder.current?.clearCurrentSong();
+      return;
+    }
+
+    const album = library.selectedAlbum || library.selectedGenre;
+    audioRefHolder.current?.play({
+      ...track,
+      cover: track.cover || track.cover_url || album?.cover || null,
+    });
+  }, [library.selectedAlbum, library.selectedGenre]);
+
+  const handlePlayNext = useCallback(() => {
+    const player = audioRefHolder.current;
+    const current = player?.currentSong;
+    if (!current) return;
+
+    const playlist = getPlaylist();
+    const currentIndex = playlist.findIndex((track) => track.id === current.id);
+    const nextTrack = currentIndex >= 0 ? playlist[currentIndex + 1] : null;
+
+    if (nextTrack) {
+      playFromPlaylist(nextTrack);
+      setQueue((prev) => {
+        const index = prev.findIndex((track) => track.id === current.id);
+        if (index >= 0) return prev.slice(index + 1);
+        return prev;
+      });
+      return;
+    }
+
+    player.clearCurrentSong();
+    setQueue([]);
+  }, [getPlaylist, playFromPlaylist]);
+
+  const audio = useAudioPlayer({ onEnded: handlePlayNext });
+  audioRefHolder.current = audio;
+
+  const handleSkip = useCallback(() => {
+    handlePlayNext();
+  }, [handlePlayNext]);
+
+  const handlePlayPrevious = useCallback(() => {
+    const player = audioRefHolder.current;
+    if (!player?.currentSong) return;
+
+    if (player.currentTime > 3) {
+      player.seek(0);
+      return;
+    }
+
+    const playlist = getPlaylist();
+    const currentIndex = playlist.findIndex((track) => track.id === player.currentSong.id);
+    if (currentIndex > 0) {
+      playFromPlaylist(playlist[currentIndex - 1]);
+    } else {
+      player.seek(0);
+    }
+  }, [getPlaylist, playFromPlaylist]);
 
   const showCreditToast = useCallback(() => {
     setCreditToastVisible(true);
@@ -121,15 +190,6 @@ function JukeboxApp() {
     },
     [token, credits, library.selectedAlbum, library.selectedGenre, audio, handleAddToQueue]
   );
-
-  const handleSkip = useCallback(() => {
-    audio.skip();
-    const [, ...rest] = queueRef.current;
-    setQueue(rest);
-    if (rest.length > 0) {
-      audio.play(rest[0]);
-    }
-  }, [audio]);
 
   const handleCancel = useCallback(() => {
     setKeysPanelOpen(false);
@@ -249,12 +309,22 @@ function JukeboxApp() {
         }
         playerBar={
           <PlayerBar
+            audioRef={audio.audioRef}
             currentSong={audio.currentSong}
+            subtitle={buildPlayerSubtitle(
+              audio.currentSong,
+              library.selectedAlbum || library.selectedGenre
+            )}
             isPlaying={audio.isPlaying}
-            progress={audio.progress}
+            currentTime={audio.currentTime}
+            duration={audio.duration}
+            volume={audio.volume}
             credits={credits}
             queueCount={queue.length}
             onTogglePlay={audio.togglePlay}
+            onPrevious={handlePlayPrevious}
+            onNext={handlePlayNext}
+            onVolumeChange={audio.setVolume}
             onInsertCredit={handleInsertCredit}
           />
         }

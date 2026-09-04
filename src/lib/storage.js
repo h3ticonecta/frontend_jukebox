@@ -2,6 +2,7 @@ const KEYS = {
   TOKEN: 'jukebox_maquina_token',
   INFO: 'jukebox_maquina_info',
   CREDITS: 'jukebox_credits_balance',
+  VOLUME: 'jukebox_volume_percent',
 };
 
 export function getMaquinaToken() {
@@ -66,4 +67,14 @@ export function deductCredits(amount) {
   const next = Math.max(0, getCreditsBalance() - amount);
   setCreditsBalance(next);
   return next;
+}
+
+export function getVolumePercent() {
+  const raw = localStorage.getItem(KEYS.VOLUME);
+  const value = Number(raw);
+  return Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 100;
+}
+
+export function setVolumePercent(percent) {
+  localStorage.setItem(KEYS.VOLUME, String(Math.max(0, Math.min(100, percent))));
 }

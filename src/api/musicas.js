@@ -11,7 +11,7 @@ export async function fetchMusicas(token, { prefix = '', q = '' } = {}) {
 }
 
 export function getTracksFromResponse(data) {
-  return data?.musicas || data?.musicas_list || [];
+  return data?.musicas || data?.musicas_list || data?.files || data?.files_list || [];
 }
 
 export function getFoldersFromResponse(data) {

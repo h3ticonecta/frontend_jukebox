@@ -41,16 +41,34 @@ export function mapFolderFromApi(folder, index, gradients) {
 export function mapTrackFromApi(track, index) {
   const title = track.title || stripExtension(track.name);
 
+  const isMedia =
+    track.media_type === 'audio' || track.media_type === 'video' || !track.media_type;
+
   return {
     id: track.key,
     key: track.key,
     number: String(index + 1).padStart(2, '0'),
     title,
-    duration: 0,
+    duration_seconds:
+      isMedia && track.duration_seconds != null ? track.duration_seconds : null,
     media_url: track.media_url || track.audio_url,
     cover_url: track.cover_url || track.cover?.media_url || null,
     pasta: track.folder_path || '',
+    folder_path: track.folder_path || '',
     media_type: track.media_type || 'audio',
     artist: getArtistFromFolderPath(track.folder_path),
   };
+}
+
+export function buildPlayerSubtitle(song, album) {
+  if (!song) return '';
+
+  const artist = song.artist || getArtistFromFolderPath(song.pasta || song.folder_path);
+  const albumName = album?.name;
+
+  if (artist && albumName && artist !== albumName) {
+    return `${artist} - ${albumName}`;
+  }
+
+  return artist || albumName || '';
 }

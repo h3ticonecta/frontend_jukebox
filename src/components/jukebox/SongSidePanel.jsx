@@ -1,5 +1,5 @@
 import { Disc, ListPlus, Play } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { cn, formatDuration } from '../../lib/utils';
 import EmptyState from '../shared/EmptyState';
 
 export default function SongSidePanel({ album, tracks, playingTrackId, onPlay, onAddToQueue }) {
@@ -46,6 +46,11 @@ export default function SongSidePanel({ album, tracks, playingTrackId, onPlay, o
                   <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
                 )}
               </div>
+              {track.duration_seconds != null && (
+                <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+                  {formatDuration(track.duration_seconds)}
+                </span>
+              )}
               <button
                 type="button"
                 title="Adicionar à fila"

@@ -3,9 +3,10 @@
 ## Componentes frontend
 
 - `src/components/jukebox/SongSidePanel.jsx`
+- `src/components/jukebox/PlayerBar.jsx` — barra fixa inferior
 - `src/hooks/useAudioPlayer.js` — reprodução
 - `src/hooks/useLibrary.js` → `loadAlbumTracks()`
-- `src/lib/library.js` → `mapTrackFromApi()`
+- `src/lib/library.js` → `mapTrackFromApi()`, `buildPlayerSubtitle()`
 
 ## Descrição
 
@@ -19,8 +20,13 @@ Lista numerada de faixas do artista/álbum selecionado. Ao tocar, registra event
 | Título sem duplicação | ✅ |
 | Subtítulo = pasta pai (`folder_path`) | ✅ |
 | Play + POST tocadas | ✅ |
+| Player fixo inferior customizado | ✅ |
+| Tempo atual / duração (`duration_seconds` da API) | ✅ |
+| Volume 0–100% + `localStorage` | ✅ |
+| Anterior / Próximo (fila ou `tracks`) | ✅ |
+| Teclas `pular`, `vol_mais`, `vol_menos` | ✅ |
 | Player com `media_url` direto | ✅ |
-| Duração da faixa | ❌ Backend não envia |
+| Duração na lista lateral (`duration_seconds`) | ✅ |
 
 ---
 
@@ -42,7 +48,8 @@ Authorization: Maquina <token>
   "folder_path": "Musicas/Beatles/",
   "media_type": "audio",
   "media_url": "https://pub-xxxxx.r2.dev/Musicas/Beatles/Yesterday.mp3",
-  "cover_url": "https://pub-xxxxx.r2.dev/Musicas/Beatles/cover.jpg"
+  "cover_url": "https://pub-xxxxx.r2.dev/Musicas/Beatles/cover.jpg",
+  "duration_seconds": 261
 }
 ```
 
@@ -58,6 +65,7 @@ Authorization: Maquina <token>
 | `key` | `track.key` | ID + envio em tocadas |
 | `media_url` | `track.media_url` | `<audio src>` |
 | `cover_url` | `track.cover_url` | Capa no player/fila |
+| `duration_seconds` | `track.duration_seconds` | Duração na lista e player (`4:21`); `null` → `--:--` |
 
 ### Regras de exibição
 
@@ -99,10 +107,31 @@ Chamado em `handlePlay()` (`src/App.jsx`) antes de iniciar o áudio.
 
 ## Reprodução
 
+Elemento `<audio>` oculto em `PlayerBar.jsx`; controles na barra customizada.
+
 ```javascript
 audio.play({ ...track, media_url })
 // Player usa media_url direto — sem proxy backend
 ```
+
+### Barra fixa (`PlayerBar`)
+
+| Região | Conteúdo |
+|--------|----------|
+| Esquerda | Capa circular (`cover_url`) |
+| | Título branco (`number`- `title`) |
+| | Subtítulo cinza `#9CA3AF` — `buildPlayerSubtitle()` |
+| Centro | Anterior · Play/Pause (círculo `#F8A428`) · Próximo |
+| Direita | `currentTime / duration_seconds` (tempo do `<audio>` / duração da API) |
+| | Ícone volume + slider (0–100%, `jukebox_volume_percent`) |
+
+**Fundo:** `#121619`
+
+### Navegação
+
+- **Próximo / pular / fim da faixa:** próxima na fila local ou em `library.tracks`
+- **Anterior:** reinicia se `currentTime > 3s`; senão faixa anterior na playlist
+- **Volume:** persiste em `localStorage`; teclas `vol_mais` / `vol_menos` ajustam ±10%
 
 ## Regras de negócio
 
@@ -110,7 +139,15 @@ audio.play({ ...track, media_url })
 2. Se saldo insuficiente, exibe erro no header.
 3. Faixa tocada é adicionada à fila local (contrato 05).
 
+### `duration_seconds`
+
+- Inteiro em segundos (`261` → `4:21` via `formatDuration()` em `src/lib/utils.js`)
+- Pode ser `null` se a duração não foi extraída — UI exibe `--:--` no total do player
+- Presente apenas em `media_type: "audio"` ou `"video"`
+- **Não** ler duração do arquivo no front; usar só o valor da API
+
+Listas de faixas: `musicas`, `musicas_list`, `files` ou `files_list` (`getTracksFromResponse`).
+
 ## Pendências
 
-- [ ] `duration_seconds` na API para exibir duração na lista
 - [ ] Suporte a vídeo (`.mp4`) no player

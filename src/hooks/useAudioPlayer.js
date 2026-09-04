@@ -1,40 +1,44 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CREDITS_PER_SONG } from '../api/config';
+import { getVolumePercent, setVolumePercent } from '../lib/storage';
 
-export function useAudioPlayer() {
+export function useAudioPlayer({ onEnded } = {}) {
   const audioRef = useRef(null);
+  const onEndedRef = useRef(onEnded);
   const [currentSong, setCurrentSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [volume, setVolume] = useState(1);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(null);
+  const [volume, setVolumeState] = useState(() => getVolumePercent());
+
+  onEndedRef.current = onEnded;
 
   useEffect(() => {
-    const audio = new Audio();
-    audio.volume = 1;
-    audioRef.current = audio;
+    const audio = audioRef.current;
+    if (!audio) return undefined;
+
+    audio.volume = getVolumePercent() / 100;
 
     const onTimeUpdate = () => {
-      if (!audio.duration) return;
-      setProgress((audio.currentTime / audio.duration) * 100);
+      setCurrentTime(audio.currentTime || 0);
     };
 
-    const onEnded = () => {
+    const handleEnded = () => {
       setIsPlaying(false);
-      setProgress(100);
+      onEndedRef.current?.();
     };
 
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false);
 
     audio.addEventListener('timeupdate', onTimeUpdate);
-    audio.addEventListener('ended', onEnded);
+    audio.addEventListener('ended', handleEnded);
     audio.addEventListener('play', onPlay);
     audio.addEventListener('pause', onPause);
 
     return () => {
-      audio.pause();
       audio.removeEventListener('timeupdate', onTimeUpdate);
-      audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('play', onPlay);
       audio.removeEventListener('pause', onPause);
     };
@@ -45,7 +49,10 @@ export function useAudioPlayer() {
     if (!audio || !song?.media_url) return;
 
     setCurrentSong(song);
-    setProgress(0);
+    setCurrentTime(0);
+    setDuration(
+      song.duration_seconds != null && song.duration_seconds >= 0 ? song.duration_seconds : null
+    );
 
     if (audio.src !== song.media_url) {
       audio.src = song.media_url;
@@ -72,39 +79,55 @@ export function useAudioPlayer() {
       audio.currentTime = 0;
     }
     setIsPlaying(false);
-    setProgress(0);
+    setCurrentTime(0);
+    setDuration(null);
   }, []);
 
-  const skip = useCallback(() => {
+  const clearCurrentSong = useCallback(() => {
     stop();
     setCurrentSong(null);
   }, [stop]);
 
+  const seek = useCallback((time) => {
+    const audio = audioRef.current;
+    if (!audio || !Number.isFinite(time)) return;
+    audio.currentTime = Math.max(0, time);
+    setCurrentTime(audio.currentTime);
+  }, []);
+
+  const setVolume = useCallback((percent) => {
+    const next = Math.min(100, Math.max(0, percent));
+    setVolumeState(next);
+    setVolumePercent(next);
+    if (audioRef.current) {
+      audioRef.current.volume = next / 100;
+    }
+  }, []);
+
   const adjustVolume = useCallback((delta) => {
-    setVolume((current) => {
-      const next = Math.min(1, Math.max(0, current + delta));
+    setVolumeState((current) => {
+      const next = Math.min(100, Math.max(0, current + delta * 100));
+      setVolumePercent(next);
       if (audioRef.current) {
-        audioRef.current.volume = next;
+        audioRef.current.volume = next / 100;
       }
       return next;
     });
   }, []);
 
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
-    }
-  }, [volume]);
-
   return {
+    audioRef,
     currentSong,
     isPlaying,
-    progress,
+    currentTime,
+    duration,
     volume,
     play,
     togglePlay,
     stop,
-    skip,
+    clearCurrentSong,
+    seek,
+    setVolume,
     adjustVolume,
     creditsPerSong: CREDITS_PER_SONG,
   };
