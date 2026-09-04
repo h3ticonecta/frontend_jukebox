@@ -42,7 +42,7 @@ export function useAudioPlayer({ onEnded } = {}) {
       audio.removeEventListener('play', onPlay);
       audio.removeEventListener('pause', onPause);
     };
-  }, []);
+  }, [currentSong]);
 
   const play = useCallback((song) => {
     const audio = audioRef.current;
