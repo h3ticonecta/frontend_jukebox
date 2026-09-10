@@ -125,7 +125,7 @@ Visual original do jukebox (`glass-surface`, vinil girando, barra de progresso n
 | Topo | Barra de progresso (`currentTime / duration_seconds`) |
 | Esquerda | Créditos + vinil + título / subtítulo (`buildPlayerSubtitle()`) |
 | Centro | Espaço flexível |
-| Direita | Anterior · Play/Pause · Próximo · tempo · volume · `ListMusic` · `Clock` + contagem em espera |
+| Direita | Anterior · Play/Pause · Próximo · tempo · volume · `Clock` + contagem em espera |
 
 ### Navegação
 

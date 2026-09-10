@@ -1,4 +1,4 @@
-import { Clock, Coins, Disc, ListMusic, Pause, Play, SkipBack, SkipForward, Volume2 } from 'lucide-react';
+import { Clock, Coins, Disc, Pause, Play, SkipBack, SkipForward, Volume2 } from 'lucide-react';
 import { cn, formatDuration } from '../../lib/utils';
 
 function VinylThumb({ cover, isSpinning }) {
@@ -44,18 +44,15 @@ function VolumeSlider({ volume, onChange }) {
 function WaitingBadge({ queueCount, showLabel = false }) {
   return (
     <div className="flex items-center gap-2 shrink-0">
-      <ListMusic size={showLabel ? 28 : 22} className="text-foreground/80" />
-      <div className="flex items-center gap-1.5">
-        <Clock size={showLabel ? 24 : 22} className="text-secondary" />
-        <span
-          className={cn(
-            'font-display text-secondary font-bold tabular-nums',
-            showLabel ? 'text-2xl' : 'text-lg'
-          )}
-        >
-          {queueCount}
-        </span>
-      </div>
+      <Clock size={showLabel ? 24 : 22} className="text-secondary" />
+      <span
+        className={cn(
+          'font-display text-secondary font-bold tabular-nums',
+          showLabel ? 'text-2xl' : 'text-lg'
+        )}
+      >
+        {queueCount}
+      </span>
       {showLabel && <span className="text-sm text-muted-foreground">em espera</span>}
     </div>
   );
