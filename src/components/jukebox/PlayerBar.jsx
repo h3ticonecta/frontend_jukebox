@@ -139,7 +139,7 @@ export default function PlayerBar({
                 <button
                   type="button"
                   onClick={onPrevious}
-                  className="p-2 text-foreground hover:text-primary active:scale-90 transition-colors"
+                  className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary active:scale-90 transition-colors touch-manipulation"
                   aria-label="Anterior"
                 >
                   <SkipBack size={22} fill="currentColor" />
@@ -147,7 +147,7 @@ export default function PlayerBar({
                 <button
                   type="button"
                   onClick={onTogglePlay}
-                  className="w-11 h-11 rounded-full bg-primary text-[#121619] flex items-center justify-center hover:brightness-110 active:scale-95 transition-all"
+                  className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-primary text-[#121619] flex items-center justify-center hover:brightness-110 active:scale-95 transition-all touch-manipulation"
                   aria-label={isPlaying ? 'Pausar' : 'Tocar'}
                 >
                   {isPlaying ? (
@@ -159,7 +159,7 @@ export default function PlayerBar({
                 <button
                   type="button"
                   onClick={onNext}
-                  className="p-2 text-foreground hover:text-primary active:scale-90 transition-colors"
+                  className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary active:scale-90 transition-colors touch-manipulation"
                   aria-label="Próximo"
                 >
                   <SkipForward size={22} fill="currentColor" />

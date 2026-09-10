@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Star } from 'lucide-react';
+import { useInfiniteMarquee } from '../../hooks/useInfiniteMarquee';
 import AlbumCard from './AlbumCard';
 
-function GenreSlide({ genre, isSelected, onSelectGenre }) {
+function GenreSlide({ genre, isSelected, onActivate }) {
   return (
     <div className="flex flex-col items-center gap-2.5 shrink-0 w-[200px]">
       <AlbumCard
@@ -12,12 +13,22 @@ function GenreSlide({ genre, isSelected, onSelectGenre }) {
         coverImage={genre.cover}
         artistName=""
         isSelected={isSelected}
-        onClick={() => onSelectGenre(genre)}
+        onClick={() => onActivate(genre)}
       />
-      <span className="text-sm font-semibold text-foreground/80 text-center leading-tight max-w-full px-1">
+      <button
+        type="button"
+        onClick={() => onActivate(genre)}
+        className="text-sm font-semibold text-foreground/80 text-center leading-tight max-w-full px-1 touch-manipulation hover:text-foreground active:scale-[0.98] transition-colors"
+      >
         {genre.name}
-      </span>
-      <span className="text-xs text-muted-foreground">{genre.countLabel}</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => onActivate(genre)}
+        className="text-xs text-muted-foreground touch-manipulation hover:text-foreground/80 active:scale-[0.98] transition-colors"
+      >
+        {genre.countLabel}
+      </button>
     </div>
   );
 }
@@ -27,6 +38,16 @@ export default function GenreCarousel({ genres, selectedGenre, onSelectGenre }) 
     if (genres.length === 0) return [];
     return [...genres, ...genres];
   }, [genres]);
+
+  const { scrollerRef, wasDragged } = useInfiniteMarquee({ enabled: genres.length > 0 });
+
+  const handleActivate = useCallback(
+    (genre) => {
+      if (wasDragged()) return;
+      onSelectGenre(genre);
+    },
+    [onSelectGenre, wasDragged]
+  );
 
   if (genres.length === 0) {
     return (
@@ -46,14 +67,18 @@ export default function GenreCarousel({ genres, selectedGenre, onSelectGenre }) 
         <h2 className="text-sm font-display text-primary neon-glow-amber tracking-wider">SUCESSOS</h2>
       </div>
 
-      <div className="genre-marquee-mask overflow-hidden">
-        <div className="flex w-max gap-8 animate-genre-marquee hover:[animation-play-state:paused]">
+      <div
+        ref={scrollerRef}
+        className="genre-marquee-mask overflow-x-auto overflow-y-hidden scrollbar-hide cursor-grab active:cursor-grabbing touch-pan-x select-none"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        <div className="flex w-max gap-8 pr-8">
           {loopGenres.map((genre, index) => (
             <GenreSlide
               key={`${genre.id}-${index}`}
               genre={genre}
               isSelected={selectedGenre?.id === genre.id}
-              onSelectGenre={onSelectGenre}
+              onActivate={handleActivate}
             />
           ))}
         </div>

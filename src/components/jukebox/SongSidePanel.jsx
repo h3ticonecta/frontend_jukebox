@@ -5,14 +5,14 @@ import EmptyState from '../shared/EmptyState';
 export default function SongSidePanel({ album, tracks, playingTrackId, onPlay, onAddToQueue }) {
   if (!album) {
     return (
-      <div className="hidden md:flex w-[380px] shrink-0 flex-col border-l-2 border-primary/30 min-h-0">
+      <div className="flex w-full md:w-[380px] h-[38vh] md:h-full shrink-0 flex-col border-t-2 md:border-t-0 md:border-l-2 border-primary/30 min-h-0">
         <EmptyState icon={Disc} message="Selecione uma pasta" />
       </div>
     );
   }
 
   return (
-    <div className="hidden md:flex w-[380px] shrink-0 flex-col border-l-2 border-primary/30 min-h-0 overflow-hidden">
+    <div className="flex w-full md:w-[380px] h-[38vh] md:h-full shrink-0 flex-col border-t-2 md:border-t-0 md:border-l-2 border-primary/30 min-h-0 overflow-hidden">
       <div className="px-4 py-3 flex items-center gap-3 border-b border-border shrink-0">
         <img
           src={album.cover}
@@ -32,10 +32,19 @@ export default function SongSidePanel({ album, tracks, playingTrackId, onPlay, o
             <li
               key={track.id}
               className={cn(
-                'flex items-center gap-2 p-2 rounded-lg cursor-pointer group transition-colors mb-0.5',
+                'flex items-center gap-2 p-2 min-h-[48px] rounded-lg cursor-pointer group transition-colors mb-0.5 touch-manipulation',
                 isPlaying && 'bg-primary/15 border border-primary/30',
-                !isPlaying && 'hover:bg-muted/50'
+                !isPlaying && 'hover:bg-muted/50 active:bg-muted/70'
               )}
+              onClick={() => onPlay(track)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  onPlay(track);
+                }
+              }}
+              role="button"
+              tabIndex={0}
             >
               <span className="text-xs w-5 text-center text-muted-foreground shrink-0">
                 {track.number || String(index + 1).padStart(2, '0')}
@@ -54,18 +63,24 @@ export default function SongSidePanel({ album, tracks, playingTrackId, onPlay, o
               <button
                 type="button"
                 title="Adicionar à fila"
-                className="p-1.5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-secondary transition-opacity"
-                onClick={() => onAddToQueue(track)}
+                className="p-2 min-w-[40px] min-h-[40px] flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 text-muted-foreground hover:text-secondary active:scale-95 transition-all touch-manipulation"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onAddToQueue(track);
+                }}
               >
-                <ListPlus size={14} />
+                <ListPlus size={16} />
               </button>
               <button
                 type="button"
                 title="Tocar"
-                className="p-1.5 text-primary hover:text-primary/80 transition-colors"
-                onClick={() => onPlay(track)}
+                className="p-2 min-w-[40px] min-h-[40px] flex items-center justify-center text-primary hover:text-primary/80 active:scale-95 transition-colors touch-manipulation"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onPlay(track);
+                }}
               >
-                <Play size={14} fill="currentColor" />
+                <Play size={16} fill="currentColor" />
               </button>
             </li>
           );

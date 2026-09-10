@@ -27,6 +27,8 @@ Lista numerada de faixas do artista/álbum selecionado. Ao tocar, registra event
 | Teclas `pular`, `vol_mais`, `vol_menos` | ✅ |
 | Player com `media_url` direto | ✅ |
 | Duração na lista lateral (`duration_seconds`) | ✅ |
+| Linha inteira clicável (touch/mouse) | ✅ |
+| Botões da fila visíveis em touch | ✅ |
 
 ---
 

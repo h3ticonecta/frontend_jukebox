@@ -23,7 +23,7 @@ function VinylCard({ gradientClass, albumName, coverImage, isSelected, onClick, 
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-full relative transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 group',
+        'rounded-full relative transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 group touch-manipulation',
         SIZES[vinylSize] || SIZES.lg,
         isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_18px_hsl(var(--primary)/0.5)]'
       )}
@@ -96,7 +96,7 @@ export default function AlbumCard({
         SIZES[size],
         'rounded-lg flex flex-col items-center justify-center gap-1',
         'transition-all duration-300 hover:scale-105 active:scale-95',
-        'neon-border-amber cursor-pointer shrink-0 overflow-hidden relative group',
+        'neon-border-amber cursor-pointer shrink-0 overflow-hidden relative group touch-manipulation',
         isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_18px_hsl(var(--primary)/0.5)]',
         isFocused && 'ring-2 ring-primary/60 ring-offset-2 ring-offset-background'
       )}

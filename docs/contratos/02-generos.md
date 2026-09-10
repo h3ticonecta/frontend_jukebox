@@ -85,17 +85,19 @@ Implementado em `GenreCarousel.jsx`:
 | Tamanho do disco | `AlbumCard` com `size="xl"` → **180×180px** |
 | Largura do item | 200px (disco + labels) |
 | Loop | Lista duplicada (`[...genres, ...genres]`) |
-| Animação | `animate-genre-marquee` — `translateX(0)` → `translateX(-50%)` |
+| Animação | `useInfiniteMarquee` — scroll automático via `requestAnimationFrame` |
 | Direção | Direita → esquerda |
-| Duração | 45s, linear, infinito |
-| Hover | `animation-play-state: paused` |
+| Arrastar | Mouse e touch (`pointer` + scroll nativo); cursor `grab` / `grabbing` |
+| Pausa | Durante arraste, rolagem manual ou wheel |
+| Retomada | **3s** após interação (`MARQUEE_RESUME_DELAY_MS`) |
+| Clique | Disco, nome e contagem selecionam gênero; ignorado se houve arraste |
 | Bordas | Fade lateral via `.genre-marquee-mask` (`index.css`) |
 
 ### Componentes envolvidos
 
-- `src/components/jukebox/GenreCarousel.jsx` — track duplicado e animação
+- `src/components/jukebox/GenreCarousel.jsx` — track duplicado e scroll infinito
+- `src/hooks/useInfiniteMarquee.js` — auto-scroll, drag e delay de retomada
 - `src/components/jukebox/AlbumCard.jsx` — tamanho `xl` do vinil
-- `tailwind.config.js` — keyframe `genre-marquee`
 - `src/index.css` — máscara de fade nas bordas
 
 ---
