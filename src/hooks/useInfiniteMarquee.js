@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from 'react';
 const SCROLL_SPEED = 0.65;
 const DRAG_THRESHOLD = 8;
 
-export const MARQUEE_RESUME_DELAY_MS = 3000;
+export const MARQUEE_RESUME_DELAY_MS = 5000;
 
 function isInteractiveTarget(target) {
   return target instanceof Element && Boolean(target.closest('button, a, input, label'));
@@ -36,6 +36,11 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
   }, [resumeDelayMs]);
 
   const wasDragged = useCallback(() => dragRef.current.moved, []);
+
+  const pauseForInteraction = useCallback(() => {
+    pauseAuto();
+    scheduleResume();
+  }, [pauseAuto, scheduleResume]);
 
   useEffect(() => {
     if (!enabled) return undefined;
@@ -142,5 +147,5 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     };
   }, [enabled, pauseAuto, scheduleResume, wrapScroll]);
 
-  return { scrollerRef, wasDragged };
+  return { scrollerRef, wasDragged, pauseForInteraction };
 }

@@ -39,14 +39,17 @@ export default function GenreCarousel({ genres, selectedGenre, onSelectGenre }) 
     return [...genres, ...genres];
   }, [genres]);
 
-  const { scrollerRef, wasDragged } = useInfiniteMarquee({ enabled: genres.length > 0 });
+  const { scrollerRef, wasDragged, pauseForInteraction } = useInfiniteMarquee({
+    enabled: genres.length > 0,
+  });
 
   const handleActivate = useCallback(
     (genre) => {
       if (wasDragged()) return;
+      pauseForInteraction();
       onSelectGenre(genre);
     },
-    [onSelectGenre, wasDragged]
+    [onSelectGenre, pauseForInteraction, wasDragged]
   );
 
   if (genres.length === 0) {
