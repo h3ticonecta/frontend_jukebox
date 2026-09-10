@@ -88,8 +88,8 @@ Implementado em `GenreCarousel.jsx`:
 | Animação | `useInfiniteMarquee` — scroll automático via `requestAnimationFrame` |
 | Direção | Direita → esquerda |
 | Arrastar | Mouse e touch (`pointer` + scroll nativo); cursor `grab` / `grabbing` |
-| Pausa | Durante arraste, rolagem manual ou wheel |
-| Retomada | **3s** após interação (`MARQUEE_RESUME_DELAY_MS`) |
+| Pausa | Durante arraste, toque, rolagem manual ou wheel |
+| Retomada | **3s** após soltar (`pointerup` / `touchend` / `scrollend`); scroll automático não reativa pausa |
 | Clique | Disco, nome e contagem selecionam gênero; ignorado se houve arraste |
 | Bordas | Fade lateral via `.genre-marquee-mask` (`index.css`) |
 
