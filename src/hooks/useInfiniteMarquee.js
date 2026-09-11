@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 
 const SCROLL_SPEED = 0.65;
 const DRAG_THRESHOLD = 8;
+const CLICK_SUPPRESS_MS = 400;
 
 export const MARQUEE_RESUME_DELAY_MS = 5000;
 
@@ -19,6 +20,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
   const resumeTimerRef = useRef(null);
   const rafRef = useRef(null);
   const dragRef = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
+  const suppressClickUntilRef = useRef(0);
 
   const wrapScroll = useCallback((el) => {
     const half = el.scrollWidth / 2;
@@ -39,7 +41,10 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     }, resumeDelayMs);
   }, [resumeDelayMs]);
 
-  const wasDragged = useCallback(() => dragRef.current.moved, []);
+  const wasDragged = useCallback(
+    () => dragRef.current.moved || Date.now() < suppressClickUntilRef.current,
+    []
+  );
 
   const pauseForInteraction = useCallback(() => {
     pauseAuto();
@@ -72,13 +77,24 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
         startScroll: el.scrollLeft,
         moved: false,
       };
-      el.setPointerCapture(event.pointerId);
     };
 
     const onPointerMove = (event) => {
       if (!dragRef.current.active) return;
       const delta = event.clientX - dragRef.current.startX;
-      if (Math.abs(delta) > DRAG_THRESHOLD) dragRef.current.moved = true;
+
+      if (!dragRef.current.moved) {
+        if (Math.abs(delta) <= DRAG_THRESHOLD) return;
+        dragRef.current.moved = true;
+        if (typeof el.setPointerCapture === 'function') {
+          try {
+            el.setPointerCapture(event.pointerId);
+          } catch {
+            // Capture is optional; drag still works while the pointer stays over the scroller.
+          }
+        }
+      }
+
       el.scrollLeft = dragRef.current.startScroll - delta;
       wrapScroll(el);
     };
@@ -92,11 +108,17 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
       const hadDrag = dragRef.current.moved;
       scheduleResume();
       if (hadDrag) {
+        suppressClickUntilRef.current = Date.now() + CLICK_SUPPRESS_MS;
         window.setTimeout(() => {
           dragRef.current.moved = false;
-        }, 150);
-      } else {
-        dragRef.current.moved = false;
+        }, CLICK_SUPPRESS_MS);
+      }
+    };
+
+    const onClickCapture = (event) => {
+      if (dragRef.current.moved || Date.now() < suppressClickUntilRef.current) {
+        event.preventDefault();
+        event.stopPropagation();
       }
     };
 
@@ -129,6 +151,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     el.addEventListener('pointermove', onPointerMove);
     el.addEventListener('pointerup', onPointerUp);
     el.addEventListener('pointercancel', onPointerUp);
+    el.addEventListener('click', onClickCapture, true);
     el.addEventListener('scroll', onScroll, { passive: true });
     el.addEventListener('wheel', onWheel, { passive: true });
     el.addEventListener('touchstart', onTouchStart, { passive: true });
@@ -144,6 +167,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
       el.removeEventListener('pointermove', onPointerMove);
       el.removeEventListener('pointerup', onPointerUp);
       el.removeEventListener('pointercancel', onPointerUp);
+      el.removeEventListener('click', onClickCapture, true);
       el.removeEventListener('scroll', onScroll);
       el.removeEventListener('wheel', onWheel);
       el.removeEventListener('touchstart', onTouchStart);
