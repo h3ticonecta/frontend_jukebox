@@ -33,6 +33,7 @@ export function useLibrary(token) {
   const [albums, setAlbums] = useState([]);
   const [tracks, setTracks] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState(null);
+  const [genreSelectionKey, setGenreSelectionKey] = useState(0);
   const [selectedAlbum, setSelectedAlbum] = useState(null);
   const [needsSync, setNeedsSync] = useState(false);
   const [loading, setLoading] = useState(EMPTY_LOADING);
@@ -48,6 +49,8 @@ export function useLibrary(token) {
     albums: 0,
     tracks: 0,
   });
+  const selectedGenrePathRef = useRef(null);
+  const selectedAlbumPathRef = useRef(null);
 
   const isLoading = useMemo(
     () => loading.genres || loading.albums || loading.tracks,
@@ -91,20 +94,29 @@ export function useLibrary(token) {
     const folders = getFoldersFromResponse(result.data);
     const mapped = folders.map(mapFolder);
     setGenres(mapped);
+
     if (mapped.length > 0) {
-      setSelectedGenre((current) => current || mapped[0]);
+      setSelectedGenre((current) => {
+        if (current) {
+          selectedGenrePathRef.current = current.path;
+          return current;
+        }
+        selectedGenrePathRef.current = mapped[0].path;
+        return mapped[0];
+      });
     }
   }, [loadPrefix]);
 
   const loadAlbums = useCallback(
     async (genre) => {
-      if (!genre?.path) {
+      const genrePath = genre?.path;
+      if (!genrePath) {
         setAlbums([]);
         return;
       }
 
-      const result = await loadPrefix(genre.path, 'albums');
-      if (!result) return;
+      const result = await loadPrefix(genrePath, 'albums');
+      if (!result || selectedGenrePathRef.current !== genrePath) return;
 
       const { data } = result;
       const folders = getFoldersFromResponse(data);
@@ -128,11 +140,13 @@ export function useLibrary(token) {
         };
         setAlbums([albumEntry]);
         setSelectedAlbum(albumEntry);
+        selectedAlbumPathRef.current = albumEntry.path;
         setTracks(folderTracks.map(mapTrack));
       } else {
         setAlbums([]);
         setTracks([]);
         setSelectedAlbum(null);
+        selectedAlbumPathRef.current = null;
       }
     },
     [loadPrefix]
@@ -140,13 +154,14 @@ export function useLibrary(token) {
 
   const loadAlbumTracks = useCallback(
     async (album) => {
-      if (!album?.path) {
+      const albumPath = album?.path;
+      if (!albumPath) {
         setTracks([]);
         return;
       }
 
-      const result = await loadPrefix(album.path, 'tracks');
-      if (!result) return;
+      const result = await loadPrefix(albumPath, 'tracks');
+      if (!result || selectedAlbumPathRef.current !== albumPath) return;
 
       const folderTracks = getTracksFromResponse(result.data);
       setTracks(folderTracks.map(mapTrack));
@@ -171,32 +186,38 @@ export function useLibrary(token) {
     }
 
     return () => {
-      Object.values(abortControllersRef.current).forEach((controller) => controller?.abort());
+      abortControllersRef.current.genres?.abort();
     };
   }, [token, loadGenres]);
 
   useEffect(() => {
-    if (token && selectedGenre) {
+    if (token && selectedGenre?.path) {
       loadAlbums(selectedGenre);
     }
-  }, [token, selectedGenre, loadAlbums]);
+  }, [token, selectedGenre?.path, genreSelectionKey, loadAlbums]);
 
   const selectGenre = useCallback((genre) => {
-    if (selectedGenre?.id === genre?.id) return;
+    if (!genre?.path) return;
+
+    selectedGenrePathRef.current = genre.path;
+    selectedAlbumPathRef.current = null;
     setSelectedGenre(genre);
     setSelectedAlbum(null);
     setTracks([]);
     setAlbums([]);
-  }, [selectedGenre?.id]);
+    setGenreSelectionKey((key) => key + 1);
+  }, []);
 
   const selectAlbum = useCallback(
     (album) => {
-      if (selectedAlbum?.id === album?.id && tracks.length > 0) return;
+      if (!album?.path) return;
+
+      selectedAlbumPathRef.current = album.path;
       setSelectedAlbum(album);
       setTracks([]);
       loadAlbumTracks(album);
     },
-    [loadAlbumTracks, selectedAlbum?.id, tracks.length]
+    [loadAlbumTracks]
   );
 
   const navigateGenre = useCallback(

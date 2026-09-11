@@ -23,7 +23,7 @@ Grid 2–3 colunas com cards quadrados de **artistas/bandas** dentro da categori
 
 ### Troca rápida de SUCESSOS
 
-`useLibrary` cancela (`AbortController`) a requisição anterior de `albums` ao selecionar outro gênero. Respostas obsoletas são ignoradas (sequência + abort), evitando flicker entre listas e liberando banda só para o último clique.
+`useLibrary` cancela (`AbortController`) a requisição anterior de `albums` ao selecionar outro gênero. Respostas obsoletas são ignoradas (sequência + abort + `selectedGenrePathRef`), evitando flicker entre listas e liberando banda só para o último clique. `selectGenre` sempre dispara nova carga (`genreSelectionKey`), inclusive ao re-clicar o mesmo SUCESSO.
 
 ---
 
