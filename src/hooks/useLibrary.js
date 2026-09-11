@@ -35,6 +35,7 @@ export function useLibrary(token) {
   const [selectedGenre, setSelectedGenre] = useState(null);
   const [genreSelectionKey, setGenreSelectionKey] = useState(0);
   const [selectedAlbum, setSelectedAlbum] = useState(null);
+  const [selectedTrack, setSelectedTrack] = useState(null);
   const [needsSync, setNeedsSync] = useState(false);
   const [loading, setLoading] = useState(EMPTY_LOADING);
   const [error, setError] = useState(null);
@@ -203,6 +204,7 @@ export function useLibrary(token) {
     selectedAlbumPathRef.current = null;
     setSelectedGenre(genre);
     setSelectedAlbum(null);
+    setSelectedTrack(null);
     setTracks([]);
     setAlbums([]);
     setGenreSelectionKey((key) => key + 1);
@@ -214,6 +216,7 @@ export function useLibrary(token) {
 
       selectedAlbumPathRef.current = album.path;
       setSelectedAlbum(album);
+      setSelectedTrack(null);
       setTracks([]);
       loadAlbumTracks(album);
     },
@@ -246,20 +249,42 @@ export function useLibrary(token) {
     [albums, selectedAlbum, selectAlbum]
   );
 
+  const navigateTrack = useCallback(
+    (delta) => {
+      if (!tracks.length) return null;
+      const currentIndex = tracks.findIndex((track) => track.id === selectedTrack?.id);
+      const start = currentIndex < 0 ? 0 : currentIndex;
+      const nextIndex = Math.max(0, Math.min(tracks.length - 1, start + delta));
+      const nextTrack = tracks[nextIndex];
+      if (nextTrack) {
+        setSelectedTrack(nextTrack);
+      }
+      return nextTrack || null;
+    },
+    [tracks, selectedTrack]
+  );
+
+  const selectTrack = useCallback((track) => {
+    setSelectedTrack(track);
+  }, []);
+
   return {
     genres,
     albums,
     tracks,
     selectedGenre,
     selectedAlbum,
+    selectedTrack,
     needsSync,
     loading,
     isLoading,
     error,
     selectGenre,
     selectAlbum,
+    selectTrack,
     navigateGenre,
     navigateAlbum,
+    navigateTrack,
     refreshLibrary,
     setError,
   };

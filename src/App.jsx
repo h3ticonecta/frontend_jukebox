@@ -239,9 +239,43 @@ function JukeboxApp() {
     [library, audio, handleSkip, handleCancel, handleInsertCredit]
   );
 
+  // Track keyboard navigation: cima/baixo navigate tracks when an album is selected
+  const handleTrackKeyboardAction = useCallback(
+    (acao) => {
+      if (!library.selectedAlbum || !library.tracks.length) return;
+
+      switch (acao) {
+        case 'cima':
+          library.navigateTrack(-1);
+          break;
+        case 'baixo':
+          library.navigateTrack(1);
+          break;
+        default:
+          break;
+      }
+    },
+    [library]
+  );
+
+  // Use track navigation when album is selected, otherwise use genre navigation
+  const activeKeyboardHandler = library.selectedAlbum && library.tracks.length > 0
+    ? handleTrackKeyboardAction
+    : handleKeyboardAction;
+
+  // Scroll selected track into view when navigating with keyboard
+  useEffect(() => {
+    if (!library.selectedTrack?.id) return;
+
+    const trackElement = document.querySelector(`[data-track-id="${library.selectedTrack.id}"]`);
+    if (trackElement) {
+      trackElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [library.selectedTrack?.id]);
+
   useKeyboardShortcuts({
     teclas,
-    onAction: handleKeyboardAction,
+    onAction: activeKeyboardHandler,
   });
 
   useEffect(() => {
@@ -341,6 +375,7 @@ function JukeboxApp() {
             album={library.selectedAlbum || library.selectedGenre}
             tracks={library.tracks}
             playingTrackId={audio.currentSong?.id}
+            selectedTrackId={library.selectedTrack?.id}
             onPlay={handlePlay}
             onAddToQueue={handleAddToQueue}
             isLoading={library.loading.tracks}
