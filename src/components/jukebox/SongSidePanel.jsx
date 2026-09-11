@@ -1,8 +1,16 @@
 import { Disc, ListPlus, Play } from 'lucide-react';
 import { cn, formatDuration } from '../../lib/utils';
 import EmptyState from '../shared/EmptyState';
+import { TrackListSkeleton } from '../shared/Skeleton';
 
-export default function SongSidePanel({ album, tracks, playingTrackId, onPlay, onAddToQueue }) {
+export default function SongSidePanel({
+  album,
+  tracks,
+  playingTrackId,
+  onPlay,
+  onAddToQueue,
+  isLoading = false,
+}) {
   if (!album) {
     return (
       <div className="flex w-full md:w-[380px] h-[38vh] md:h-full shrink-0 flex-col border-t-2 md:border-t-0 md:border-l-2 border-primary/30 min-h-0">
@@ -14,17 +22,26 @@ export default function SongSidePanel({ album, tracks, playingTrackId, onPlay, o
   return (
     <div className="flex w-full md:w-[380px] h-[38vh] md:h-full shrink-0 flex-col border-t-2 md:border-t-0 md:border-l-2 border-primary/30 min-h-0 overflow-hidden">
       <div className="px-4 py-3 flex items-center gap-3 border-b border-border shrink-0">
-        <img
-          src={album.cover}
-          alt={album.name}
-          className="w-12 h-12 rounded-md object-cover shrink-0 neon-border-amber"
-        />
+        {album.cover ? (
+          <img
+            src={album.cover}
+            alt={album.name}
+            className="w-12 h-12 rounded-md object-cover shrink-0 neon-border-amber"
+          />
+        ) : (
+          <div className="w-12 h-12 rounded-md shrink-0 skeleton-shimmer" aria-hidden="true" />
+        )}
         <div className="min-w-0">
           <h3 className="text-sm font-display text-foreground truncate">{album.name}</h3>
           <p className="text-xs text-muted-foreground">{album.countLabel}</p>
         </div>
       </div>
 
+      {isLoading ? (
+        <div className="flex-1 overflow-hidden">
+          <TrackListSkeleton />
+        </div>
+      ) : (
       <ul className="flex-1 overflow-y-auto scrollbar-hide" style={{ padding: 'var(--browser-scroll-pad)' }}>
         {tracks.map((track, index) => {
           const isPlaying = playingTrackId === track.id;
@@ -86,6 +103,7 @@ export default function SongSidePanel({ album, tracks, playingTrackId, onPlay, o
           );
         })}
       </ul>
+      )}
     </div>
   );
 }

@@ -29,6 +29,7 @@ Lista numerada de faixas do artista/álbum selecionado. Ao tocar, registra event
 | Duração na lista lateral (`duration_seconds`) | ✅ |
 | Linha inteira clicável (touch/mouse) | ✅ |
 | Botões da fila visíveis em touch | ✅ |
+| Skeleton ao carregar faixas (`TrackListSkeleton`) | ✅ |
 
 ---
 

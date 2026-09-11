@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { Star } from 'lucide-react';
 import { useInfiniteMarquee } from '../../hooks/useInfiniteMarquee';
+import { GenreCarouselSkeleton } from '../shared/Skeleton';
 import AlbumCard from './AlbumCard';
 
 function GenreSlide({ genre, isSelected, onActivate }) {
@@ -33,7 +34,7 @@ function GenreSlide({ genre, isSelected, onActivate }) {
   );
 }
 
-export default function GenreCarousel({ genres, selectedGenre, onSelectGenre }) {
+export default function GenreCarousel({ genres, selectedGenre, onSelectGenre, isLoading = false }) {
   const loopGenres = useMemo(() => {
     if (genres.length === 0) return [];
     return [...genres, ...genres];
@@ -51,6 +52,10 @@ export default function GenreCarousel({ genres, selectedGenre, onSelectGenre }) 
     },
     [onSelectGenre, pauseForInteraction, wasDragged]
   );
+
+  if (isLoading && genres.length === 0) {
+    return <GenreCarouselSkeleton />;
+  }
 
   if (genres.length === 0) {
     return (

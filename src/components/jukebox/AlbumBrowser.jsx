@@ -2,8 +2,9 @@ import { FolderOpen, Users } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import AlbumCard from './AlbumCard';
 import EmptyState from '../shared/EmptyState';
+import { AlbumGridSkeleton } from '../shared/Skeleton';
 
-export default function AlbumBrowser({ albums, selectedAlbumId, onSelectAlbum }) {
+export default function AlbumBrowser({ albums, selectedAlbumId, onSelectAlbum, isLoading = false }) {
   return (
     <div
       className="flex-1 flex min-h-0"
@@ -38,7 +39,9 @@ export default function AlbumBrowser({ albums, selectedAlbumId, onSelectAlbum })
             paddingBottom: 'var(--browser-scroll-bottom)',
           }}
         >
-          {albums.length === 0 ? (
+          {isLoading ? (
+            <AlbumGridSkeleton />
+          ) : albums.length === 0 ? (
             <EmptyState icon={FolderOpen} message="Nenhuma pasta encontrada" />
           ) : (
             <div

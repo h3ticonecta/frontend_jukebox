@@ -16,6 +16,7 @@ O carrossel rola **automaticamente da direita para a esquerda** em loop infinito
 
 | Funcionalidade | Status |
 |----------------|--------|
+| Skeleton ao carregar (`GenreCarouselSkeleton`) | ✅ |
 | Listagem via API | ✅ |
 | Seleção de categoria | ✅ |
 | Contagem "N artistas" | ✅ |

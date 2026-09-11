@@ -297,6 +297,7 @@ function JukeboxApp() {
             genres={library.genres}
             selectedGenre={library.selectedGenre}
             onSelectGenre={library.selectGenre}
+            isLoading={library.loading.genres}
           />
         }
         queuePanel={
@@ -334,6 +335,7 @@ function JukeboxApp() {
             albums={library.albums}
             selectedAlbumId={library.selectedAlbum?.id}
             onSelectAlbum={library.selectAlbum}
+            isLoading={library.loading.albums}
           />
           <SongSidePanel
             album={library.selectedAlbum || library.selectedGenre}
@@ -341,6 +343,7 @@ function JukeboxApp() {
             playingTrackId={audio.currentSong?.id}
             onPlay={handlePlay}
             onAddToQueue={handleAddToQueue}
+            isLoading={library.loading.tracks}
           />
         </div>
       </JukeboxShell>

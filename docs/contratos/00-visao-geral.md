@@ -29,6 +29,18 @@ Arquivo: `src/App.jsx` → `JukeboxShell`
 | Direita | `WaitQueuePanel` | Fila de espera + faixa tocando |
 | Rodapé | `PlayerBar` | Créditos, player, progresso, fila |
 
+## Placeholders (loading)
+
+Enquanto a API responde, cada região exibe skeleton com shimmer (`src/components/shared/Skeleton.jsx`):
+
+| Região | Quando | Componente |
+|--------|--------|------------|
+| SUCESSOS | `loading.genres` e lista vazia | `GenreCarouselSkeleton` |
+| Artistas/Bandas | `loading.albums` | `AlbumGridSkeleton` |
+| Faixas | `loading.tracks` | `TrackListSkeleton` |
+
+Estados em `useLibrary.loading` (`genres` / `albums` / `tracks`); `isLoading` agrega os três para o botão sync do header.
+
 ## Fluxo do usuário (integrado)
 
 ```

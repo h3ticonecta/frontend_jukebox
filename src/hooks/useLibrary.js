@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MUSIC_ROOT_PREFIX } from '../api/config';
 import { fetchMusicas, getFoldersFromResponse, getTracksFromResponse } from '../api/musicas';
 import { formatFolderCountLabel, mapFolderFromApi, mapTrackFromApi } from '../lib/library';
@@ -13,6 +13,8 @@ const GRADIENTS = [
   'from-rose-400 to-pink-600',
   'from-indigo-500 to-purple-700',
 ];
+
+const EMPTY_LOADING = { genres: false, albums: false, tracks: false };
 
 function mapFolder(folder, index) {
   return mapFolderFromApi(folder, index, GRADIENTS);
@@ -29,13 +31,18 @@ export function useLibrary(token) {
   const [selectedGenre, setSelectedGenre] = useState(null);
   const [selectedAlbum, setSelectedAlbum] = useState(null);
   const [needsSync, setNeedsSync] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(EMPTY_LOADING);
   const [error, setError] = useState(null);
 
+  const isLoading = useMemo(
+    () => loading.genres || loading.albums || loading.tracks,
+    [loading]
+  );
+
   const loadPrefix = useCallback(
-    async (prefix) => {
+    async (prefix, scope) => {
       if (!token) return null;
-      setIsLoading(true);
+      setLoading((current) => ({ ...current, [scope]: true }));
       setError(null);
       try {
         const data = await fetchMusicas(token, { prefix });
@@ -45,14 +52,14 @@ export function useLibrary(token) {
         setError(err.message || 'Erro ao carregar biblioteca');
         return null;
       } finally {
-        setIsLoading(false);
+        setLoading((current) => ({ ...current, [scope]: false }));
       }
     },
     [token]
   );
 
   const loadGenres = useCallback(async () => {
-    const data = await loadPrefix(MUSIC_ROOT_PREFIX);
+    const data = await loadPrefix(MUSIC_ROOT_PREFIX, 'genres');
     if (!data) return;
     const folders = getFoldersFromResponse(data);
     const mapped = folders.map(mapFolder);
@@ -68,7 +75,7 @@ export function useLibrary(token) {
         setAlbums([]);
         return;
       }
-      const data = await loadPrefix(genre.path);
+      const data = await loadPrefix(genre.path, 'albums');
       if (!data) return;
 
       const folders = getFoldersFromResponse(data);
@@ -108,7 +115,7 @@ export function useLibrary(token) {
         setTracks([]);
         return;
       }
-      const data = await loadPrefix(album.path);
+      const data = await loadPrefix(album.path, 'tracks');
       if (!data) return;
       const folderTracks = getTracksFromResponse(data);
       setTracks(folderTracks.map(mapTrack));
@@ -143,11 +150,13 @@ export function useLibrary(token) {
     setSelectedGenre(genre);
     setSelectedAlbum(null);
     setTracks([]);
+    setAlbums([]);
   }, []);
 
   const selectAlbum = useCallback(
     (album) => {
       setSelectedAlbum(album);
+      setTracks([]);
       loadAlbumTracks(album);
     },
     [loadAlbumTracks]
@@ -186,6 +195,7 @@ export function useLibrary(token) {
     selectedGenre,
     selectedAlbum,
     needsSync,
+    loading,
     isLoading,
     error,
     selectGenre,

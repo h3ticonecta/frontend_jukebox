@@ -18,6 +18,7 @@ Grid 2–3 colunas com cards quadrados de **artistas/bandas** dentro da categori
 | Capa no card | ✅ |
 | Contagem "N músicas" | ✅ |
 | Seleção carrega faixas | ✅ |
+| Skeleton ao carregar (`AlbumGridSkeleton`) | ✅ |
 
 ---
 
