@@ -19,6 +19,11 @@ Grid 2–3 colunas com cards quadrados de **artistas/bandas** dentro da categori
 | Contagem "N músicas" | ✅ |
 | Seleção carrega faixas | ✅ |
 | Skeleton ao carregar (`AlbumGridSkeleton`) | ✅ |
+| Cancelamento de requisição ao trocar categoria | ✅ |
+
+### Troca rápida de SUCESSOS
+
+`useLibrary` cancela (`AbortController`) a requisição anterior de `albums` ao selecionar outro gênero. Respostas obsoletas são ignoradas (sequência + abort), evitando flicker entre listas e liberando banda só para o último clique.
 
 ---
 

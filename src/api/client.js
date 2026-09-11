@@ -31,6 +31,7 @@ export async function apiRequest(path, options = {}) {
     ...rest,
     headers: requestHeaders,
     body: body !== undefined ? (body instanceof FormData ? body : JSON.stringify(body)) : undefined,
+    signal: rest.signal,
   });
 
   const contentType = response.headers.get('content-type') || '';

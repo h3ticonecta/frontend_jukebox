@@ -19,6 +19,7 @@ O carrossel rola **automaticamente da direita para a esquerda** em loop infinito
 | Skeleton ao carregar (`GenreCarouselSkeleton`, largura total) | ✅ |
 | Listagem via API | ✅ |
 | Seleção de categoria | ✅ |
+| Cancela fetch anterior ao trocar SUCESSO | ✅ |
 | Contagem "N artistas" | ✅ |
 | Capa no centro do vinil | ✅ (depende de `cover_url` — ver contrato 10) |
 | Discos grandes (`size="xl"`, 180px) | ✅ |
