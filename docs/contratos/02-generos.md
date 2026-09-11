@@ -85,6 +85,7 @@ Implementado em `GenreCarousel.jsx`:
 | Aspecto | Detalhe |
 |---------|---------|
 | Tamanho do disco | `AlbumCard` com `size="xl"` → **180×180px** |
+| Espaço do brilho | `pt-8` na faixa do carrossel — o `overflow-y-hidden` não corta o glow/`box-shadow` acima dos vinis |
 | Largura do item | 200px (disco + labels) |
 | Loop | Lista duplicada (`[...genres, ...genres]`) |
 | Animação | `useInfiniteMarquee` — scroll automático via `requestAnimationFrame` |

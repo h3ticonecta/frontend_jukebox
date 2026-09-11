@@ -81,7 +81,7 @@ export default function GenreCarousel({ genres, selectedGenre, onSelectGenre, is
         style={{ WebkitOverflowScrolling: 'touch' }}
         onDragStart={(event) => event.preventDefault()}
       >
-        <div className="flex w-max gap-8 pr-8">
+        <div className="flex w-max gap-8 pr-8 pt-8 pb-3">
           {loopGenres.map((genre, index) => (
             <GenreSlide
               key={`${genre.id}-${index}`}

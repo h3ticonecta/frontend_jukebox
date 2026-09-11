@@ -45,7 +45,7 @@ export function GenreCarouselSkeleton() {
         <Skeleton className="h-4 w-24" />
       </div>
       <div ref={containerRef} className="genre-marquee-mask overflow-hidden w-full">
-        <div className="flex gap-8 w-max min-w-full">
+        <div className="flex gap-8 w-max min-w-full pt-8 pb-3">
           {Array.from({ length: count }).map((_, index) => (
             <GenreSlideSkeleton key={index} />
           ))}
