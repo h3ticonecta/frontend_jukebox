@@ -5,8 +5,8 @@ const DRAG_THRESHOLD = 8;
 
 export const MARQUEE_RESUME_DELAY_MS = 5000;
 
-function isInteractiveTarget(target) {
-  return target instanceof Element && Boolean(target.closest('button, a, input, textarea, select, label'));
+function isFormControl(target) {
+  return target instanceof Element && Boolean(target.closest('input, textarea, select'));
 }
 
 function preventNativeDrag(event) {
@@ -64,10 +64,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
 
     const onPointerDown = (event) => {
       if (event.pointerType === 'mouse' && event.button !== 0) return;
-      if (isInteractiveTarget(event.target)) {
-        dragRef.current.moved = false;
-        return;
-      }
+      if (isFormControl(event.target)) return;
       pauseAuto();
       dragRef.current = {
         active: true,
@@ -113,7 +110,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     };
 
     const onTouchStart = (event) => {
-      if (isInteractiveTarget(event.target)) return;
+      if (isFormControl(event.target)) return;
       pauseAuto();
     };
 

@@ -23,7 +23,7 @@ function VinylCard({ gradientClass, albumName, coverImage, isSelected, onClick, 
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-full relative transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 group touch-manipulation',
+        'rounded-full relative transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 group touch-manipulation cursor-grab active:cursor-grabbing',
         SIZES[vinylSize] || SIZES.lg,
         isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_18px_hsl(var(--primary)/0.5)]'
       )}
