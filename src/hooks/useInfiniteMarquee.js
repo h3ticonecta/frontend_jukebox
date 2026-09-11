@@ -5,8 +5,12 @@ const DRAG_THRESHOLD = 8;
 
 export const MARQUEE_RESUME_DELAY_MS = 5000;
 
-function isInteractiveTarget(target) {
-  return target instanceof Element && Boolean(target.closest('button, a, input, label'));
+function isFormControl(target) {
+  return target instanceof Element && Boolean(target.closest('input, textarea, select'));
+}
+
+function preventNativeDrag(event) {
+  event.preventDefault();
 }
 
 export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RESUME_DELAY_MS } = {}) {
@@ -60,7 +64,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
 
     const onPointerDown = (event) => {
       if (event.pointerType === 'mouse' && event.button !== 0) return;
-      if (isInteractiveTarget(event.target)) return;
+      if (isFormControl(event.target)) return;
       pauseAuto();
       dragRef.current = {
         active: true,
@@ -106,7 +110,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     };
 
     const onTouchStart = (event) => {
-      if (isInteractiveTarget(event.target)) return;
+      if (isFormControl(event.target)) return;
       pauseAuto();
     };
 
@@ -120,6 +124,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
       }
     };
 
+    el.addEventListener('dragstart', preventNativeDrag);
     el.addEventListener('pointerdown', onPointerDown);
     el.addEventListener('pointermove', onPointerMove);
     el.addEventListener('pointerup', onPointerUp);
@@ -134,6 +139,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     return () => {
       cancelAnimationFrame(rafRef.current);
       clearTimeout(resumeTimerRef.current);
+      el.removeEventListener('dragstart', preventNativeDrag);
       el.removeEventListener('pointerdown', onPointerDown);
       el.removeEventListener('pointermove', onPointerMove);
       el.removeEventListener('pointerup', onPointerUp);

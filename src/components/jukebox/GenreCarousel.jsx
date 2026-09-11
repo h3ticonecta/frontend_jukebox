@@ -79,6 +79,7 @@ export default function GenreCarousel({ genres, selectedGenre, onSelectGenre, is
         ref={scrollerRef}
         className="genre-marquee-mask overflow-x-auto overflow-y-hidden scrollbar-hide cursor-grab active:cursor-grabbing touch-pan-x select-none"
         style={{ WebkitOverflowScrolling: 'touch' }}
+        onDragStart={(event) => event.preventDefault()}
       >
         <div className="flex w-max gap-8 pr-8">
           {loopGenres.map((genre, index) => (

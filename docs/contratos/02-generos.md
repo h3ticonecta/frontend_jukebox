@@ -88,7 +88,8 @@ Implementado em `GenreCarousel.jsx`:
 | Loop | Lista duplicada (`[...genres, ...genres]`) |
 | Animação | `useInfiniteMarquee` — scroll automático via `requestAnimationFrame` |
 | Direção | Direita → esquerda |
-| Arrastar | Mouse e touch (`pointer` + scroll nativo); cursor `grab` / `grabbing` |
+| Arrastar | Mouse e touch (`pointer` + scroll nativo); cursor `grab` / `grabbing`; inicia também sobre o disco |
+| Imagens | `draggable={false}` + `img-no-drag` — evita arrastar fantasma da capa |
 | Pausa | Durante arraste, toque, rolagem manual ou wheel |
 | Retomada | **5s** após soltar (`pointerup` / `touchend` / `scrollend`) ou clique em gênero (`MARQUEE_RESUME_DELAY_MS`) |
 | Clique | Disco, nome e contagem selecionam gênero, pausam o carrossel por 5s; ignorado se houve arraste |

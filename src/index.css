@@ -109,6 +109,16 @@
     }
   }
 
+  .img-no-drag {
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+
+  .genre-marquee-mask img {
+    -webkit-user-drag: none;
+    pointer-events: none;
+  }
+
   .genre-marquee-mask {
     mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
     -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);

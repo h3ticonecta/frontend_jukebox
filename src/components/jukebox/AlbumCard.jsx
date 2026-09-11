@@ -39,10 +39,12 @@ function VinylCard({ gradientClass, albumName, coverImage, isSelected, onClick, 
             <img
               src={coverImage}
               alt={albumName}
+              draggable={false}
               className={cn(
-                'w-full h-full object-cover',
+                'w-full h-full object-cover img-no-drag pointer-events-none select-none',
                 isSelected ? 'animate-spin-vinyl' : 'group-hover:animate-spin-vinyl-slow'
               )}
+              onDragStart={(event) => event.preventDefault()}
               onError={() => setImgOk(false)}
             />
           ) : (
@@ -105,7 +107,9 @@ export default function AlbumCard({
         <img
           src={coverImage}
           alt={albumName}
-          className="absolute inset-0 w-full h-full object-cover"
+          draggable={false}
+          className="absolute inset-0 w-full h-full object-cover img-no-drag pointer-events-none select-none"
+          onDragStart={(event) => event.preventDefault()}
           onError={() => setImgOk(false)}
         />
       ) : (
