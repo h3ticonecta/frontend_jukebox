@@ -1,24 +1,53 @@
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/utils';
+
+const GENRE_SLIDE_WIDTH = 200;
+const GENRE_SLIDE_GAP = 32;
 
 export function Skeleton({ className }) {
   return <div className={cn('skeleton-shimmer rounded-md', className)} aria-hidden="true" />;
 }
 
-export function GenreCarouselSkeleton({ count = 6 }) {
+function GenreSlideSkeleton() {
+  return (
+    <div className="flex flex-col items-center gap-2.5 shrink-0 w-[200px]">
+      <Skeleton className="w-[180px] h-[180px] rounded-full" />
+      <Skeleton className="h-4 w-28" />
+      <Skeleton className="h-3 w-20" />
+    </div>
+  );
+}
+
+export function GenreCarouselSkeleton() {
+  const containerRef = useRef(null);
+  const [count, setCount] = useState(10);
+
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return undefined;
+
+    const updateCount = () => {
+      const width = node.getBoundingClientRect().width;
+      const perItem = GENRE_SLIDE_WIDTH + GENRE_SLIDE_GAP;
+      setCount(Math.max(5, Math.ceil(width / perItem) + 1));
+    };
+
+    updateCount();
+    const observer = new ResizeObserver(updateCount);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <section className="px-4 py-4 border-b border-border shrink-0">
       <div className="flex items-center gap-2 mb-4">
         <Skeleton className="h-4 w-4 rounded-full" />
         <Skeleton className="h-4 w-24" />
       </div>
-      <div className="genre-marquee-mask overflow-hidden">
-        <div className="flex gap-8 w-max pr-8">
+      <div ref={containerRef} className="genre-marquee-mask overflow-hidden w-full">
+        <div className="flex gap-8 w-max min-w-full">
           {Array.from({ length: count }).map((_, index) => (
-            <div key={index} className="flex flex-col items-center gap-2.5 shrink-0 w-[200px]">
-              <Skeleton className="w-[180px] h-[180px] rounded-full" />
-              <Skeleton className="h-4 w-28" />
-              <Skeleton className="h-3 w-20" />
-            </div>
+            <GenreSlideSkeleton key={index} />
           ))}
         </div>
       </div>
