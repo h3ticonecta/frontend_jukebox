@@ -24,6 +24,7 @@ import JukeboxHeader from './components/jukebox/JukeboxHeader';
 import JukeboxShell from './components/jukebox/JukeboxShell';
 import PlayerBar from './components/jukebox/PlayerBar';
 import SongSidePanel from './components/jukebox/SongSidePanel';
+import PrefetchBanner from './components/jukebox/PrefetchBanner';
 import SyncBanner from './components/jukebox/SyncBanner';
 import WaitQueuePanel from './components/jukebox/WaitQueuePanel';
 import CreditToast from './components/shared/CreditToast';
@@ -267,6 +268,7 @@ function JukeboxApp() {
             <JukeboxHeader
               isPlaying={audio.isPlaying}
               isSyncing={isSyncing || library.isLoading}
+              isPrefetching={library.isPrefetching}
               isRegistered={Boolean(token)}
               machineName={machine?.nome_jukebox}
               errorMessage={headerError}
@@ -275,7 +277,9 @@ function JukeboxApp() {
               onOpenBilling={() => setBillingOpen(true)}
               onToggleKeysPanel={handleToggleKeysPanel}
               onSyncLibrary={handleSyncLibrary}
+              onPrefetchCatalog={library.prefetchCatalog}
             />
+            <PrefetchBanner progress={library.prefetchProgress} />
             <SyncBanner needsSync={library.needsSync} />
           </>
         }

@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
-import { Disc3, Keyboard, Loader2, RefreshCw } from 'lucide-react';
+import { Disc3, Download, Keyboard, Loader2, RefreshCw } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import KeysPanel from './KeysPanel';
 
 export default function JukeboxHeader({
   isPlaying = false,
   isSyncing = false,
+  isPrefetching = false,
   isRegistered = false,
   machineName,
   errorMessage,
@@ -14,6 +15,7 @@ export default function JukeboxHeader({
   onOpenBilling,
   onToggleKeysPanel,
   onSyncLibrary,
+  onPrefetchCatalog,
 }) {
   const keysPanelRef = useRef(null);
 
@@ -72,8 +74,18 @@ export default function JukeboxHeader({
           </div>
           <button
             type="button"
+            onClick={onPrefetchCatalog}
+            disabled={isSyncing || isPrefetching}
+            className="p-1.5 text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+            title="Preparar cache offline (catálogo e capas)"
+            aria-label="Preparar cache offline"
+          >
+            {isPrefetching ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+          </button>
+          <button
+            type="button"
             onClick={onSyncLibrary}
-            disabled={isSyncing}
+            disabled={isSyncing || isPrefetching}
             className="p-1.5 text-muted-foreground hover:text-secondary transition-colors disabled:opacity-50"
             title="Atualizar Biblioteca"
             aria-label="Atualizar Biblioteca"

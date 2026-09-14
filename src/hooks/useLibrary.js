@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MUSIC_ROOT_PREFIX } from '../api/config';
 import { fetchMusicas, getFoldersFromResponse, getTracksFromResponse } from '../api/musicas';
 import { buildAlbumsStateFromApi, mapFolderFromApi, mapTrackFromApi } from '../lib/library';
+import { runCatalogPrefetch } from '../lib/catalogPrefetch';
 import { createLibraryCache } from '../lib/libraryCache';
 import {
   getLastAlbumPath,
@@ -87,8 +88,11 @@ export function useLibrary(token) {
   const [needsSync, setNeedsSync] = useState(() => getStoredNeedsSync());
   const [loading, setLoading] = useState(EMPTY_LOADING);
   const [error, setError] = useState(null);
+  const [isPrefetching, setIsPrefetching] = useState(false);
+  const [prefetchProgress, setPrefetchProgress] = useState(null);
 
   const cacheRef = useRef(createLibraryCache());
+  const prefetchAbortRef = useRef(null);
 
   const abortControllersRef = useRef({
     genres: null,
@@ -240,6 +244,7 @@ export function useLibrary(token) {
   );
 
   const refreshLibrary = useCallback(async () => {
+    prefetchAbortRef.current?.abort();
     await cacheRef.current.clear({ persist: true });
     await loadGenres();
     if (selectedGenre) {
@@ -249,6 +254,60 @@ export function useLibrary(token) {
       }
     }
   }, [loadGenres, loadAlbums, loadAlbumTracks, selectedGenre, selectedAlbum]);
+
+  const prefetchCatalog = useCallback(async () => {
+    if (!token || prefetchAbortRef.current) return;
+
+    const controller = new AbortController();
+    prefetchAbortRef.current = controller;
+    setIsPrefetching(true);
+    setPrefetchProgress({ phase: 'genres', current: 0, total: 1, label: 'SUCESSOS' });
+    setError(null);
+
+    try {
+      await runCatalogPrefetch({
+        token,
+        cache: cacheRef.current,
+        signal: controller.signal,
+        onProgress: setPrefetchProgress,
+        mapFolder,
+        mapTrack,
+        parseAlbumsPayload,
+      });
+
+      const cachedGenres = cacheRef.current.getGenres();
+      if (cachedGenres?.length) {
+        setGenres(cachedGenres);
+        const genre = pickInitialGenre(cachedGenres, selectedGenre);
+        if (genre) {
+          selectedGenrePathRef.current = genre.path;
+          setSelectedGenre(genre);
+          const cachedAlbums = cacheRef.current.getAlbums(genre.path);
+          if (cachedAlbums) {
+            applyAlbumsState(
+              preserveSelectedAlbum(
+                cachedAlbums,
+                selectedAlbumPathRef.current || getLastAlbumPath(),
+                cacheRef.current
+              )
+            );
+          }
+        }
+      }
+    } catch (err) {
+      if (!isAbortError(err)) {
+        setError(err.message || 'Erro ao preparar cache offline');
+      }
+    } finally {
+      prefetchAbortRef.current = null;
+      setIsPrefetching(false);
+      setPrefetchProgress(null);
+    }
+  }, [token, selectedGenre, applyAlbumsState]);
+
+  const cancelPrefetch = useCallback(() => {
+    prefetchAbortRef.current?.abort();
+  }, []);
 
   useEffect(() => {
     if (!token) {
@@ -288,6 +347,7 @@ export function useLibrary(token) {
     return () => {
       cancelled = true;
       abortControllersRef.current.genres?.abort();
+      prefetchAbortRef.current?.abort();
     };
   }, [token, loadGenres, applyAlbumsState]);
 
@@ -406,6 +466,10 @@ export function useLibrary(token) {
     navigateAlbum,
     navigateTrack,
     refreshLibrary,
+    prefetchCatalog,
+    cancelPrefetch,
+    isPrefetching,
+    prefetchProgress,
     setError,
   };
 }

@@ -23,6 +23,7 @@ O player usa `media_url` **diretamente do R2**, sem proxy pelo backend.
 | `sessionStorage` | Metadados da fila de espera (mesma aba) | `src/lib/storage.js` |
 | IndexedDB | Catálogo JSON (gêneros, artistas, faixas — **sem áudio**) | `src/lib/idbCatalog.js` |
 | Cache Storage (SW) | Capas R2 + áudio da faixa atual e das **próximas 5** da fila | `public/sw.js` |
+| Pré-cache manual | Botão download no header — catálogo completo + capas R2 (**sem** áudio em lote) | `src/lib/catalogPrefetch.js` |
 
 ## Layout da tela principal
 
@@ -30,7 +31,8 @@ Arquivo: `src/App.jsx` → `JukeboxShell`
 
 | Região | Componente | Descrição |
 |--------|------------|-----------|
-| Topo | `JukeboxHeader` | Logo, badge da máquina, Leitura, teclas, sync |
+| Topo | `JukeboxHeader` | Logo, badge da máquina, Leitura, teclas, download (cache), sync |
+| Banner | `PrefetchBanner` | Progresso do pré-cache offline (catálogo + capas) |
 | Banner | `SyncBanner` | Aviso quando `needs_sync === true` |
 | Carrossel | `GenreCarousel` | Categorias (SUCESSOS) — discos de vinil |
 | Esquerda | `AlbumBrowser` | Grid de artistas/bandas do gênero |

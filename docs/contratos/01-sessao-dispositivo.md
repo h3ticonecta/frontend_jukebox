@@ -4,7 +4,7 @@
 
 - `src/components/auth/MachineLoginCard.jsx` — tela de login
 - `src/context/AuthContext.jsx` — estado de sessão
-- `src/components/jukebox/JukeboxHeader.jsx` — badge com nome da jukebox
+- `src/components/jukebox/JukeboxHeader.jsx` — badge com nome da jukebox, download (cache) e sync
 - `src/lib/storage.js` — persistência no `localStorage`
 
 ## Descrição
