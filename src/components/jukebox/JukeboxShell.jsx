@@ -6,6 +6,11 @@ export default function JukeboxShell({ header, genreCarousel, children, queuePan
       <div className="flex-1 flex min-h-0">
         <div className="flex-1 min-w-0 flex min-h-0">{children}</div>
         {queuePanel}
+        <aside
+          className="hidden md:block shrink-0 border-l border-border/30 bg-background"
+          style={{ width: 'var(--shell-right-reserve)' }}
+          aria-hidden="true"
+        />
       </div>
       {playerBar}
     </div>

@@ -34,6 +34,7 @@
   --browser-scroll-bottom: 8rem;
   --browser-grid-gap-x: 1rem;
   --browser-grid-gap-y: 1.25rem;
+  --shell-right-reserve: 18rem;
 }
 
 @layer base {

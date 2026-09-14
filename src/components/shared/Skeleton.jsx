@@ -58,7 +58,7 @@ export function GenreCarouselSkeleton() {
 export function AlbumGridSkeleton({ count = 10 }) {
   return (
     <div
-      className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 auto-rows-fr"
+      className="grid grid-cols-3 auto-rows-fr"
       style={{
         columnGap: 'var(--browser-grid-gap-x)',
         rowGap: 'var(--browser-grid-gap-y)',

@@ -8,7 +8,7 @@
 
 ## Descrição
 
-Grid 2–3 colunas com cards quadrados de **artistas/bandas** dentro da categoria selecionada. Cada card é uma subpasta do gênero.
+Grid fixo de **3 colunas** com cards quadrados de **artistas/bandas** dentro da categoria selecionada. Cada card é uma subpasta do gênero.
 
 ## Status
 

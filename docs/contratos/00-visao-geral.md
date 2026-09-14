@@ -27,6 +27,7 @@ Arquivo: `src/App.jsx` → `JukeboxShell`
 | Esquerda | `AlbumBrowser` | Grid de artistas/bandas do gênero |
 | Centro | `SongSidePanel` | Lista de faixas do álbum selecionado |
 | Direita | `WaitQueuePanel` | Fila de espera + faixa tocando |
+| Extrema direita | Área reservada (`JukeboxShell`) | Espaço vazio (`--shell-right-reserve`, 18rem) para banner/anúncio futuro |
 | Rodapé | `PlayerBar` | Créditos, player, progresso, fila |
 
 ## Placeholders (loading)
