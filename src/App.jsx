@@ -3,6 +3,7 @@ import { CREDITS_PER_SONG, DEFAULT_SONG_PRICE } from './api/config';
 import { registrarCredito, registrarMusicaTocada } from './api/maquinas';
 import { useAuth } from './context/AuthContext';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
+import { useJukeboxKeyboard } from './hooks/useJukeboxKeyboard';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useLibrary } from './hooks/useLibrary';
 import { buildPlayerSubtitle } from './lib/library';
@@ -196,86 +197,20 @@ function JukeboxApp() {
     setActionError(null);
   }, []);
 
-  const handleKeyboardAction = useCallback(
-    (acao) => {
-      switch (acao) {
-        case 'cima':
-          library.navigateGenre(-1);
-          break;
-        case 'baixo':
-          library.navigateGenre(1);
-          break;
-        case 'esquerda':
-          library.navigateAlbum(-1);
-          break;
-        case 'direita':
-          library.navigateAlbum(1);
-          break;
-        case 'credito':
-          handleInsertCredit();
-          break;
-        case 'hits':
-          document.getElementById('hits-section')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          break;
-        case 'fila':
-          setHighlightQueue(true);
-          break;
-        case 'pular':
-          handleSkip();
-          break;
-        case 'vol_mais':
-          audio.adjustVolume(0.1);
-          break;
-        case 'vol_menos':
-          audio.adjustVolume(-0.1);
-          break;
-        case 'cancelar':
-          handleCancel();
-          break;
-        default:
-          break;
-      }
-    },
-    [library, audio, handleSkip, handleCancel, handleInsertCredit]
-  );
-
-  // Track keyboard navigation: cima/baixo navigate tracks when an album is selected
-  const handleTrackKeyboardAction = useCallback(
-    (acao) => {
-      if (!library.selectedAlbum || !library.tracks.length) return;
-
-      switch (acao) {
-        case 'cima':
-          library.navigateTrack(-1);
-          break;
-        case 'baixo':
-          library.navigateTrack(1);
-          break;
-        default:
-          break;
-      }
-    },
-    [library]
-  );
-
-  // Use track navigation when album is selected, otherwise use genre navigation
-  const activeKeyboardHandler = library.selectedAlbum && library.tracks.length > 0
-    ? handleTrackKeyboardAction
-    : handleKeyboardAction;
-
-  // Scroll selected track into view when navigating with keyboard
-  useEffect(() => {
-    if (!library.selectedTrack?.id) return;
-
-    const trackElement = document.querySelector(`[data-track-id="${library.selectedTrack.id}"]`);
-    if (trackElement) {
-      trackElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-  }, [library.selectedTrack?.id]);
+  const keyboard = useJukeboxKeyboard({
+    library,
+    onAddToQueue: handleAddToQueue,
+    onHighlightQueue: () => setHighlightQueue(true),
+    onHits: () => document.getElementById('hits-section')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }),
+    onCredit: handleInsertCredit,
+    onSkip: handleSkip,
+    onVolume: (delta) => audio.adjustVolume(delta),
+    onCancel: handleCancel,
+  });
 
   useKeyboardShortcuts({
     teclas,
-    onAction: activeKeyboardHandler,
+    onAction: keyboard.handleKeyboardAction,
   });
 
   useEffect(() => {
@@ -330,7 +265,11 @@ function JukeboxApp() {
           <GenreCarousel
             genres={library.genres}
             selectedGenre={library.selectedGenre}
-            onSelectGenre={library.selectGenre}
+            focusedGenreId={keyboard.focusedGenreId}
+            onSelectGenre={(genre) => {
+              library.selectGenre(genre);
+              keyboard.setFocusZone('genres');
+            }}
             isLoading={library.loading.genres}
           />
         }
@@ -368,15 +307,23 @@ function JukeboxApp() {
           <AlbumBrowser
             albums={library.albums}
             selectedAlbumId={library.selectedAlbum?.id}
-            onSelectAlbum={library.selectAlbum}
+            focusedAlbumId={keyboard.focusedAlbumId}
+            onSelectAlbum={(album) => {
+              library.selectAlbum(album);
+              keyboard.setFocusZone('albums');
+            }}
             isLoading={library.loading.albums}
           />
           <SongSidePanel
             album={library.selectedAlbum || library.selectedGenre}
             tracks={library.tracks}
             playingTrackId={audio.currentSong?.id}
-            selectedTrackId={library.selectedTrack?.id}
-            onPlay={handlePlay}
+            focusedTrackId={keyboard.focusedTrackId}
+            onPlay={(track) => {
+              library.selectTrack(track);
+              keyboard.setFocusZone('tracks');
+              handlePlay(track);
+            }}
             onAddToQueue={handleAddToQueue}
             isLoading={library.loading.tracks}
           />

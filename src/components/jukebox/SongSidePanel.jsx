@@ -7,7 +7,7 @@ export default function SongSidePanel({
   album,
   tracks,
   playingTrackId,
-  selectedTrackId,
+  focusedTrackId,
   onPlay,
   onAddToQueue,
   isLoading = false,
@@ -46,7 +46,7 @@ export default function SongSidePanel({
       <ul className="flex-1 overflow-y-auto scrollbar-hide" style={{ padding: 'var(--browser-scroll-pad)' }}>
         {tracks.map((track, index) => {
           const isPlaying = playingTrackId === track.id;
-          const isSelected = selectedTrackId === track.id;
+          const isFocused = focusedTrackId === track.id;
           return (
             <li
               key={track.id}
@@ -55,7 +55,7 @@ export default function SongSidePanel({
                 'flex items-center gap-2 p-2 min-h-[48px] rounded-lg cursor-pointer group transition-colors mb-0.5 touch-manipulation',
                 isPlaying && 'bg-primary/15 border border-primary/30',
                 !isPlaying && 'hover:bg-muted/50 active:bg-muted/70',
-                isSelected && !isPlaying && 'bg-primary/10 border border-primary/20 ring-1 ring-primary/30'
+                isFocused && !isPlaying && 'bg-secondary/10 border border-secondary/30 ring-1 ring-secondary/40'
               )}
               onClick={() => onPlay(track)}
               onKeyDown={(event) => {

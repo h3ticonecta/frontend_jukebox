@@ -4,9 +4,9 @@ import { useInfiniteMarquee } from '../../hooks/useInfiniteMarquee';
 import { GenreCarouselSkeleton } from '../shared/Skeleton';
 import AlbumCard from './AlbumCard';
 
-function GenreSlide({ genre, isSelected, onActivate }) {
+function GenreSlide({ genre, isSelected, isFocused, onActivate }) {
   return (
-    <div className="flex flex-col items-center gap-2.5 shrink-0 w-[200px]">
+    <div className="flex flex-col items-center gap-2.5 shrink-0 w-[200px]" data-genre-id={genre.id}>
       <AlbumCard
         size="xl"
         gradientClass={genre.coverColor}
@@ -14,6 +14,7 @@ function GenreSlide({ genre, isSelected, onActivate }) {
         coverImage={genre.cover}
         artistName=""
         isSelected={isSelected}
+        isFocused={isFocused}
         onClick={() => onActivate(genre)}
       />
       <button
@@ -34,7 +35,13 @@ function GenreSlide({ genre, isSelected, onActivate }) {
   );
 }
 
-export default function GenreCarousel({ genres, selectedGenre, onSelectGenre, isLoading = false }) {
+export default function GenreCarousel({
+  genres,
+  selectedGenre,
+  focusedGenreId,
+  onSelectGenre,
+  isLoading = false,
+}) {
   const loopGenres = useMemo(() => {
     if (genres.length === 0) return [];
     return [...genres, ...genres];
@@ -87,6 +94,7 @@ export default function GenreCarousel({ genres, selectedGenre, onSelectGenre, is
               key={`${genre.id}-${index}`}
               genre={genre}
               isSelected={selectedGenre?.id === genre.id}
+              isFocused={focusedGenreId === genre.id}
               onActivate={handleActivate}
             />
           ))}

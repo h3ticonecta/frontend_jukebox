@@ -113,6 +113,7 @@ Implementado em `GenreCarousel.jsx`:
 | Selecionado | `animate-spin-vinyl` |
 | Hover (não selecionado) | `animate-spin-vinyl-slow` |
 | Sem `cover_url` | Gradiente colorido + ícone `Disc` |
+| Sulcos do vinil | Anéis concêntricos + textura radial em `AlbumCard` (`VinylCard`) |
 
 ---
 

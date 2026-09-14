@@ -1,10 +1,15 @@
 import { FolderOpen, Users } from 'lucide-react';
-import { cn } from '../../lib/utils';
 import AlbumCard from './AlbumCard';
 import EmptyState from '../shared/EmptyState';
 import { AlbumGridSkeleton } from '../shared/Skeleton';
 
-export default function AlbumBrowser({ albums, selectedAlbumId, onSelectAlbum, isLoading = false }) {
+export default function AlbumBrowser({
+  albums,
+  selectedAlbumId,
+  focusedAlbumId,
+  onSelectAlbum,
+  isLoading = false,
+}) {
   return (
     <div
       className="flex-1 flex min-h-0"
@@ -54,11 +59,8 @@ export default function AlbumBrowser({ albums, selectedAlbumId, onSelectAlbum, i
               {albums.map((album, index) => (
                 <div
                   key={album.id}
-                  className={cn(
-                    'w-full aspect-square rounded-lg relative transition-all duration-200',
-                    album.id === selectedAlbumId &&
-                      'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_18px_hsl(var(--primary)/0.5)]'
-                  )}
+                  data-album-id={album.id}
+                  className="w-full aspect-square rounded-lg relative transition-all duration-200"
                 >
                   <AlbumCard
                     gradientClass={album.coverColor}
@@ -67,6 +69,7 @@ export default function AlbumBrowser({ albums, selectedAlbumId, onSelectAlbum, i
                     coverImage={album.cover}
                     size="md"
                     isSelected={album.id === selectedAlbumId}
+                    isFocused={album.id === focusedAlbumId}
                     onClick={() => onSelectAlbum(album, index)}
                   />
                 </div>
