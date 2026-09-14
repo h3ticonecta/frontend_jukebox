@@ -95,8 +95,28 @@ Funções: `getCreditsBalance()`, `addCredits()`, `deductCredits()` em `src/lib/
 
 ---
 
+## Leitura de faturamento
+
+- `src/components/jukebox/BillingModal.jsx`
+- `src/components/jukebox/PeriodCalendar.jsx`
+- Botão **Leitura** no `JukeboxHeader`
+
+### `GET /api/v1/maquinas/leitura/?data_inicio=YYYY-MM-DD&data_fim=YYYY-MM-DD`
+
+```
+Authorization: Maquina <token>
+```
+
+Campos aceitos: `faturamento` / `total_faturamento`, `creditos` / `total_creditos`, `transacoes` / `count`.
+
+Se a API não responder, o modal soma o histórico local `jukebox_billing_events` (cada inserção de crédito).
+
+Presets: Hoje, Esta semana, Este mês, Este ano, Todo período. Período personalizado abre calendário de **dois meses** (intervalo: 1º toque = início, 2º = fim).
+
+---
+
 ## Pendências
 
 - [ ] Endpoint `GET` de saldo sincronizado com backend
 - [ ] Valores de crédito configuráveis por máquina
-- [ ] Fluxo LEITURA / faturamento
+- [x] Fluxo LEITURA / faturamento (UI; API `GET /leitura/` se o backend responder)

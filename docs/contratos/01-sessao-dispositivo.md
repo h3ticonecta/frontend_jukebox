@@ -123,5 +123,5 @@ Authorization: Maquina <token>
 
 ## Pendências
 
-- [ ] Botão LEITURA — endpoint de faturamento não definido
+- [x] Botão LEITURA — modal de faturamento (`BillingModal`)
 - [ ] Renovação automática de token (hoje é estático)

@@ -67,7 +67,7 @@ O client lança `ApiError` com `message`, `status` e `data`.
 | `POST` | `/api/v1/maquinas/auth/` | 01 | Público |
 | `GET` | `/api/v1/maquinas/config/` | 01, 09 | Maquina |
 | `GET` | `/api/v1/musicas/?prefix=...` | 02–04 | Maquina |
-| `POST` | `/api/v1/maquinas/creditos/` | 06 | Maquina |
+| `GET` | `/api/v1/maquinas/leitura/` | 06 | Maquina |
 | `POST` | `/api/v1/maquinas/tocadas/` | 04 | Maquina |
 
 ### Não utilizados (legado dos contratos antigos)

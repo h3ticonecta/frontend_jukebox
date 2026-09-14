@@ -98,4 +98,4 @@ graph TD
 
 - [ ] API de fila de espera (hoje local no React)
 - [ ] `cover_url` pré-calculado no sync para categorias sem capa própria (contrato 10)
-- [ ] Botão LEITURA (faturamento) — sem endpoint definido
+- [x] Botão LEITURA (faturamento) — modal + calendário; `GET /maquinas/leitura/` se o backend responder

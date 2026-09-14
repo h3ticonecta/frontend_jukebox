@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CREDITS_PER_SONG, DEFAULT_SONG_PRICE } from './api/config';
 import { registrarCredito, registrarMusicaTocada } from './api/maquinas';
+import { addBillingEvent } from './lib/billing';
 import { useAuth } from './context/AuthContext';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { useJukeboxKeyboard } from './hooks/useJukeboxKeyboard';
@@ -17,6 +18,7 @@ import {
 import { syncQueueMediaCache } from './lib/queueMediaCache';
 import MachineLoginCard from './components/auth/MachineLoginCard';
 import AlbumBrowser from './components/jukebox/AlbumBrowser';
+import BillingModal from './components/jukebox/BillingModal';
 import GenreCarousel from './components/jukebox/GenreCarousel';
 import JukeboxHeader from './components/jukebox/JukeboxHeader';
 import JukeboxShell from './components/jukebox/JukeboxShell';
@@ -35,6 +37,7 @@ function JukeboxApp() {
   const [actionError, setActionError] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [keysPanelOpen, setKeysPanelOpen] = useState(false);
+  const [billingOpen, setBillingOpen] = useState(false);
   const [highlightQueue, setHighlightQueue] = useState(false);
   const [creditToastVisible, setCreditToastVisible] = useState(false);
 
@@ -148,6 +151,7 @@ function JukeboxApp() {
       await registrarCredito(token, { valor: 1, origem: 'moeda' });
       const next = addCredits(1);
       setCredits(next);
+      addBillingEvent({ type: 'credito', valor: 1, creditos: 1 });
       showCreditToast();
     } catch (err) {
       setActionError(err.message || 'Erro ao registrar crédito');
@@ -208,6 +212,7 @@ function JukeboxApp() {
 
   const handleCancel = useCallback(() => {
     setKeysPanelOpen(false);
+    setBillingOpen(false);
     setActionError(null);
   }, []);
 
@@ -268,7 +273,7 @@ function JukeboxApp() {
               errorMessage={headerError}
               teclas={teclas}
               keysPanelOpen={keysPanelOpen}
-              onOpenBilling={() => {}}
+              onOpenBilling={() => setBillingOpen(true)}
               onToggleKeysPanel={handleToggleKeysPanel}
               onSyncLibrary={handleSyncLibrary}
             />
@@ -345,6 +350,13 @@ function JukeboxApp() {
       </JukeboxShell>
 
       <CreditToast visible={creditToastVisible} />
+      {billingOpen && (
+        <BillingModal
+          token={token}
+          machineName={machine?.nome_jukebox}
+          onClose={() => setBillingOpen(false)}
+        />
+      )}
     </>
   );
 }
