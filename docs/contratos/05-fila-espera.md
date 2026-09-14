@@ -17,7 +17,7 @@ Exibe músicas aguardando reprodução e a faixa **tocando agora** com equalizad
 | Funcionalidade | Status |
 |----------------|--------|
 | UI da fila | ✅ |
-| Adicionar ao tocar | ✅ |
+| Adicionar via tecla/botão "fila" | ✅ |
 | Destaque ao pressionar tecla "fila" | ✅ |
 | Pular faixa (tecla + player) | ✅ |
 | Persistência / API backend | ❌ |
@@ -61,12 +61,15 @@ Exibe músicas aguardando reprodução e a faixa **tocando agora** com equalizad
 handlePlay(track)
   → POST /maquinas/tocadas/
   → audio.play(song)
-  → handleAddToQueue(track)  // adiciona à fila local
+  // não adiciona à fila — "Tocando agora" é separado da fila de espera
 
-handleSkip()  // tecla "pular"
-  → audio.skip()
-  → remove primeiro da fila
-  → toca próximo se houver
+handleAddToQueue(track)  // tecla "fila" / botão na lista
+  → adiciona à fila local (sem tocar)
+
+handlePlayNext()  // fim da faixa, botão próximo ou tecla "pular"
+  → se fila.length > 0: toca fila[0] (POST tocadas + débito) e remove da fila
+  → senão: próxima faixa em library.tracks do álbum atual
+  → senão: para o player
 ```
 
 ---

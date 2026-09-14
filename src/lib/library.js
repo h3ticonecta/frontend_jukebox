@@ -1,3 +1,5 @@
+import { parseDurationSeconds } from './utils';
+
 function stripExtension(filename) {
   if (!filename) return '';
   return filename.replace(/\.[^.]+$/, '');
@@ -89,8 +91,7 @@ export function mapTrackFromApi(track, index) {
     key: track.key,
     number: String(index + 1).padStart(2, '0'),
     title,
-    duration_seconds:
-      isMedia && track.duration_seconds != null ? track.duration_seconds : null,
+    duration_seconds: isMedia ? parseDurationSeconds(track.duration_seconds) : null,
     media_url: track.media_url || track.audio_url,
     cover_url: track.cover_url || track.cover?.media_url || null,
     pasta: track.folder_path || '',

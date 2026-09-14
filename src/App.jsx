@@ -52,11 +52,6 @@ function JukeboxApp() {
     setSessionQueue(queue);
   }, [queue]);
 
-  const getPlaylist = useCallback(() => {
-    if (queueRef.current.length > 0) return queueRef.current;
-    return tracksRef.current;
-  }, []);
-
   const playFromPlaylist = useCallback((track) => {
     if (!track) {
       audioRefHolder.current?.clearCurrentSong();
@@ -70,28 +65,77 @@ function JukeboxApp() {
     });
   }, [library.selectedAlbum, library.selectedGenre]);
 
-  const handlePlayNext = useCallback(() => {
+  const playTrack = useCallback(
+    async (track) => {
+      if (!token || !track?.media_url) return false;
+
+      if (getCreditsBalance() < CREDITS_PER_SONG) {
+        setActionError('Créditos insuficientes. Insira créditos para tocar músicas.');
+        return false;
+      }
+
+      setActionError(null);
+      const album = library.selectedAlbum || library.selectedGenre;
+
+      try {
+        await registrarMusicaTocada(token, {
+          musica_key: track.key,
+          musica_nome: track.title,
+          titulo: track.title,
+          pasta: track.pasta || album?.path || '',
+          media_type: track.media_type || 'audio',
+          media_url: track.media_url,
+          cover_url: track.cover_url || album?.cover || null,
+          valor: DEFAULT_SONG_PRICE,
+        });
+
+        const nextCredits = deductCredits(CREDITS_PER_SONG);
+        setCredits(nextCredits);
+
+        playFromPlaylist({
+          ...track,
+          cover: track.cover || track.cover_url || album?.cover || null,
+        });
+        return true;
+      } catch (err) {
+        setActionError(err.message || 'Erro ao registrar música tocada');
+        return false;
+      }
+    },
+    [token, library.selectedAlbum, library.selectedGenre, playFromPlaylist]
+  );
+
+  const handlePlayNext = useCallback(async () => {
     const player = audioRefHolder.current;
     const current = player?.currentSong;
     if (!current) return;
 
-    const playlist = getPlaylist();
-    const currentIndex = playlist.findIndex((track) => track.id === current.id);
-    const nextTrack = currentIndex >= 0 ? playlist[currentIndex + 1] : null;
+    const waiting = queueRef.current;
+    if (waiting.length > 0) {
+      const [nextTrack, ...rest] = waiting;
+      setQueue(rest);
+      const played = await playTrack(nextTrack);
+      if (!played) {
+        setQueue((prev) => [nextTrack, ...prev]);
+        player.clearCurrentSong();
+      }
+      return;
+    }
+
+    const tracks = tracksRef.current;
+    const currentIndex = tracks.findIndex((track) => track.id === current.id);
+    const nextTrack = currentIndex >= 0 ? tracks[currentIndex + 1] : null;
 
     if (nextTrack) {
-      playFromPlaylist(nextTrack);
-      setQueue((prev) => {
-        const index = prev.findIndex((track) => track.id === current.id);
-        if (index >= 0) return prev.slice(index + 1);
-        return prev;
-      });
+      const played = await playTrack(nextTrack);
+      if (!played) {
+        player.clearCurrentSong();
+      }
       return;
     }
 
     player.clearCurrentSong();
-    setQueue([]);
-  }, [getPlaylist, playFromPlaylist]);
+  }, [playTrack]);
 
   const audio = useAudioPlayer({ onEnded: handlePlayNext });
   audioRefHolder.current = audio;
@@ -116,14 +160,14 @@ function JukeboxApp() {
       return;
     }
 
-    const playlist = getPlaylist();
-    const currentIndex = playlist.findIndex((track) => track.id === player.currentSong.id);
+    const tracks = tracksRef.current;
+    const currentIndex = tracks.findIndex((track) => track.id === player.currentSong.id);
     if (currentIndex > 0) {
-      playFromPlaylist(playlist[currentIndex - 1]);
+      playFromPlaylist(tracks[currentIndex - 1]);
     } else {
       player.seek(0);
     }
-  }, [getPlaylist, playFromPlaylist]);
+  }, [playFromPlaylist]);
 
   const showCreditToast = useCallback(() => {
     setCreditToastVisible(true);
@@ -172,42 +216,9 @@ function JukeboxApp() {
   const handlePlay = useCallback(
     async (track) => {
       if (!token) return;
-
-      if (credits < CREDITS_PER_SONG) {
-        setActionError('Créditos insuficientes. Insira créditos para tocar músicas.');
-        return;
-      }
-
-      setActionError(null);
-      const album = library.selectedAlbum || library.selectedGenre;
-
-      try {
-        await registrarMusicaTocada(token, {
-          musica_key: track.key,
-          musica_nome: track.title,
-          titulo: track.title,
-          pasta: track.pasta || album?.path || '',
-          media_type: track.media_type || 'audio',
-          media_url: track.media_url,
-          cover_url: track.cover_url || album?.cover || null,
-          valor: DEFAULT_SONG_PRICE,
-        });
-
-        const nextCredits = deductCredits(CREDITS_PER_SONG);
-        setCredits(nextCredits);
-
-        const song = {
-          ...track,
-          cover: track.cover_url || album?.cover || null,
-        };
-
-        audio.play(song);
-        handleAddToQueue(track);
-      } catch (err) {
-        setActionError(err.message || 'Erro ao registrar música tocada');
-      }
+      await playTrack(track);
     },
-    [token, credits, library.selectedAlbum, library.selectedGenre, audio, handleAddToQueue]
+    [token, playTrack]
   );
 
   const handleCancel = useCallback(() => {

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Disc, Keyboard, Loader2, RefreshCw } from 'lucide-react';
+import { Disc3, Keyboard, Loader2, RefreshCw } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import KeysPanel from './KeysPanel';
 
@@ -33,7 +33,7 @@ export default function JukeboxHeader({
   return (
     <>
       <header className="relative z-10 px-4 py-3 flex items-center gap-3 border-b border-border shrink-0">
-        <Disc className={cn('text-primary shrink-0', isPlaying && 'animate-spin-vinyl')} size={32} />
+        <Disc3 className={cn('text-primary shrink-0', isPlaying && 'animate-spin-vinyl')} size={32} />
         <h1 className="text-2xl font-display text-primary neon-glow-amber tracking-wider">JUKE-BOX</h1>
         {isRegistered ? (
           <span className="text-[10px] font-semibold text-secondary bg-secondary/10 border border-secondary/30 px-2.5 py-0.5 rounded-full uppercase tracking-wide">

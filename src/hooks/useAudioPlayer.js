@@ -1,9 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CREDITS_PER_SONG } from '../api/config';
 import { getVolumePercent, setVolumePercent } from '../lib/storage';
+import { parseDurationSeconds } from '../lib/utils';
+
+function resolveMediaUrl(url) {
+  if (!url) return '';
+  try {
+    return new URL(url, window.location.href).href;
+  } catch {
+    return url;
+  }
+}
 
 export function useAudioPlayer({ onEnded } = {}) {
   const audioRef = useRef(null);
+  const listenersCleanupRef = useRef(null);
   const onEndedRef = useRef(onEnded);
   const [currentSong, setCurrentSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -13,14 +24,22 @@ export function useAudioPlayer({ onEnded } = {}) {
 
   onEndedRef.current = onEnded;
 
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return undefined;
+  const bindAudioRef = useCallback((node) => {
+    listenersCleanupRef.current?.();
+    listenersCleanupRef.current = null;
+    audioRef.current = node;
+    if (!node) return;
 
-    audio.volume = getVolumePercent() / 100;
+    node.volume = getVolumePercent() / 100;
 
     const onTimeUpdate = () => {
-      setCurrentTime(audio.currentTime || 0);
+      setCurrentTime(node.currentTime || 0);
+    };
+
+    const syncDurationFromAudio = () => {
+      if (Number.isFinite(node.duration) && node.duration > 0) {
+        setDuration((current) => current ?? node.duration);
+      }
     };
 
     const handleEnded = () => {
@@ -31,31 +50,39 @@ export function useAudioPlayer({ onEnded } = {}) {
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false);
 
-    audio.addEventListener('timeupdate', onTimeUpdate);
-    audio.addEventListener('ended', handleEnded);
-    audio.addEventListener('play', onPlay);
-    audio.addEventListener('pause', onPause);
+    node.addEventListener('timeupdate', onTimeUpdate);
+    node.addEventListener('loadedmetadata', syncDurationFromAudio);
+    node.addEventListener('durationchange', syncDurationFromAudio);
+    node.addEventListener('ended', handleEnded);
+    node.addEventListener('play', onPlay);
+    node.addEventListener('pause', onPause);
 
-    return () => {
-      audio.removeEventListener('timeupdate', onTimeUpdate);
-      audio.removeEventListener('ended', handleEnded);
-      audio.removeEventListener('play', onPlay);
-      audio.removeEventListener('pause', onPause);
+    listenersCleanupRef.current = () => {
+      node.removeEventListener('timeupdate', onTimeUpdate);
+      node.removeEventListener('loadedmetadata', syncDurationFromAudio);
+      node.removeEventListener('durationchange', syncDurationFromAudio);
+      node.removeEventListener('ended', handleEnded);
+      node.removeEventListener('play', onPlay);
+      node.removeEventListener('pause', onPause);
     };
-  }, [currentSong]);
+  }, []);
+
+  useEffect(() => () => listenersCleanupRef.current?.(), []);
 
   const play = useCallback((song) => {
     const audio = audioRef.current;
     if (!audio || !song?.media_url) return;
 
+    const nextSrc = resolveMediaUrl(song.media_url);
+    const nextDuration = parseDurationSeconds(song.duration_seconds);
+
     setCurrentSong(song);
     setCurrentTime(0);
-    setDuration(
-      song.duration_seconds != null && song.duration_seconds >= 0 ? song.duration_seconds : null
-    );
+    setDuration(nextDuration);
 
-    if (audio.src !== song.media_url) {
+    if (audio.src !== nextSrc) {
       audio.src = song.media_url;
+      audio.load();
     }
 
     audio.play().catch(() => setIsPlaying(false));
@@ -116,7 +143,7 @@ export function useAudioPlayer({ onEnded } = {}) {
   }, []);
 
   return {
-    audioRef,
+    audioRef: bindAudioRef,
     currentSong,
     isPlaying,
     currentTime,

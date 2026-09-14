@@ -138,14 +138,16 @@ Visual original do jukebox (`glass-surface`, vinil girando, barra de progresso n
 
 1. Tocar consome `CREITS_PER_SONG` (1) crédito local.
 2. Se saldo insuficiente, exibe erro no header.
-3. Faixa tocada é adicionada à fila local (contrato 05).
+3. Fila de espera é independente do play imediato (contrato 05).
 
 ### `duration_seconds`
 
 - Inteiro em segundos (`261` → `4:21` via `formatDuration()` em `src/lib/utils.js`)
+- Valor da API é normalizado com `parseDurationSeconds()` (aceita string numérica)
 - Pode ser `null` se a duração não foi extraída — UI exibe `--:--` no total do player
+- Fallback: `loadedmetadata` / `durationchange` do `<audio>` preenchem o total quando a API não envia duração
 - Presente apenas em `media_type: "audio"` ou `"video"`
-- **Não** ler duração do arquivo no front; usar só o valor da API
+- `timeupdate` no `<audio>` atualiza o tempo corrente no player
 
 Listas de faixas: `musicas`, `musicas_list`, `files` ou `files_list` (`getTracksFromResponse`).
 
