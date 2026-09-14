@@ -11,7 +11,10 @@ import {
   addCredits,
   deductCredits,
   getCreditsBalance,
+  getSessionQueue,
+  setSessionQueue,
 } from './lib/storage';
+import { syncQueueMediaCache } from './lib/queueMediaCache';
 import MachineLoginCard from './components/auth/MachineLoginCard';
 import AlbumBrowser from './components/jukebox/AlbumBrowser';
 import GenreCarousel from './components/jukebox/GenreCarousel';
@@ -27,7 +30,7 @@ function JukeboxApp() {
   const { token, machine, teclas, refreshConfig } = useAuth();
   const library = useLibrary(token);
 
-  const [queue, setQueue] = useState([]);
+  const [queue, setQueue] = useState(() => getSessionQueue());
   const [credits, setCredits] = useState(() => getCreditsBalance());
   const [actionError, setActionError] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -41,6 +44,10 @@ function JukeboxApp() {
   const audioRefHolder = useRef(null);
   queueRef.current = queue;
   tracksRef.current = library.tracks;
+
+  useEffect(() => {
+    setSessionQueue(queue);
+  }, [queue]);
 
   const getPlaylist = useCallback(() => {
     if (queueRef.current.length > 0) return queueRef.current;
@@ -85,6 +92,13 @@ function JukeboxApp() {
 
   const audio = useAudioPlayer({ onEnded: handlePlayNext });
   audioRefHolder.current = audio;
+
+  useEffect(() => {
+    syncQueueMediaCache({
+      currentSong: audio.currentSong,
+      queue,
+    });
+  }, [queue, audio.currentSong]);
 
   const handleSkip = useCallback(() => {
     handlePlayNext();

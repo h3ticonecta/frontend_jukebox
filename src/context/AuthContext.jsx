@@ -9,6 +9,7 @@ import {
   setMaquinaSession,
   updateMaquinaTeclas,
 } from '../lib/storage';
+import { idbClearCatalog } from '../lib/idbCatalog';
 
 const AuthContext = createContext(null);
 
@@ -60,6 +61,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(() => {
     clearMaquinaSession();
+    idbClearCatalog();
     setToken(null);
     setMachine(null);
     setTeclas([]);

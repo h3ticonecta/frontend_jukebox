@@ -3,6 +3,14 @@ import { MUSIC_ROOT_PREFIX } from '../api/config';
 import { fetchMusicas, getFoldersFromResponse, getTracksFromResponse } from '../api/musicas';
 import { buildAlbumsStateFromApi, mapFolderFromApi, mapTrackFromApi } from '../lib/library';
 import { createLibraryCache } from '../lib/libraryCache';
+import {
+  getLastAlbumPath,
+  getLastGenrePath,
+  getStoredNeedsSync,
+  setLastAlbumPath,
+  setLastGenrePath,
+  setStoredNeedsSync,
+} from '../lib/storage';
 
 const GRADIENTS = [
   'from-amber-500 to-orange-700',
@@ -43,6 +51,31 @@ function parseAlbumsPayload(data, genre) {
   );
 }
 
+function preserveSelectedAlbum(state, albumPath, cache) {
+  if (!albumPath) return state;
+  const album = state.albums.find((item) => item.path === albumPath);
+  if (!album) return state;
+
+  const tracks =
+    state.tracks.length > 0 ? state.tracks : cache.getTracks(albumPath) || [];
+
+  return {
+    ...state,
+    selectedAlbum: album,
+    tracks,
+  };
+}
+
+function pickInitialGenre(mapped, current) {
+  if (current) {
+    const stillThere = mapped.find((genre) => genre.path === current.path);
+    if (stillThere) return stillThere;
+  }
+
+  const savedPath = getLastGenrePath();
+  return mapped.find((genre) => genre.path === savedPath) || mapped[0] || null;
+}
+
 export function useLibrary(token) {
   const [genres, setGenres] = useState([]);
   const [albums, setAlbums] = useState([]);
@@ -51,7 +84,7 @@ export function useLibrary(token) {
   const [genreSelectionKey, setGenreSelectionKey] = useState(0);
   const [selectedAlbum, setSelectedAlbum] = useState(null);
   const [selectedTrack, setSelectedTrack] = useState(null);
-  const [needsSync, setNeedsSync] = useState(false);
+  const [needsSync, setNeedsSync] = useState(() => getStoredNeedsSync());
   const [loading, setLoading] = useState(EMPTY_LOADING);
   const [error, setError] = useState(null);
 
@@ -80,6 +113,9 @@ export function useLibrary(token) {
     setTracks(state.tracks);
     setSelectedAlbum(state.selectedAlbum);
     selectedAlbumPathRef.current = state.selectedAlbum?.path ?? null;
+    if (state.selectedAlbum?.path) {
+      setLastAlbumPath(state.selectedAlbum.path);
+    }
   }, []);
 
   const loadPrefix = useCallback(
@@ -99,7 +135,9 @@ export function useLibrary(token) {
       try {
         const data = await fetchMusicas(token, { prefix, signal: controller.signal });
         if (controller.signal.aborted || seq !== loadSeqRef.current[scope]) return null;
-        setNeedsSync(Boolean(data?.needs_sync));
+        const nextNeedsSync = Boolean(data?.needs_sync);
+        setNeedsSync(nextNeedsSync);
+        setStoredNeedsSync(nextNeedsSync);
         return { data, seq };
       } catch (err) {
         if (isAbortError(err) || seq !== loadSeqRef.current[scope]) return null;
@@ -117,21 +155,23 @@ export function useLibrary(token) {
   );
 
   const loadGenres = useCallback(async () => {
-    const result = await loadPrefix(MUSIC_ROOT_PREFIX, 'genres');
+    const cachedGenres = cacheRef.current.getGenres();
+    const result = await loadPrefix(MUSIC_ROOT_PREFIX, 'genres', {
+      silent: Boolean(cachedGenres?.length),
+    });
     if (!result) return;
 
     const folders = getFoldersFromResponse(result.data);
     const mapped = folders.map(mapFolder);
+    cacheRef.current.setGenres(mapped);
     setGenres(mapped);
 
     if (mapped.length > 0) {
       setSelectedGenre((current) => {
-        if (current) {
-          selectedGenrePathRef.current = current.path;
-          return current;
-        }
-        selectedGenrePathRef.current = mapped[0].path;
-        return mapped[0];
+        const next = pickInitialGenre(mapped, current);
+        selectedGenrePathRef.current = next?.path ?? null;
+        if (next?.path) setLastGenrePath(next.path);
+        return next;
       });
     }
   }, [loadPrefix]);
@@ -148,15 +188,26 @@ export function useLibrary(token) {
       const silent = Boolean(cached);
 
       if (cached) {
-        applyAlbumsState(cached);
+        applyAlbumsState(preserveSelectedAlbum(cached, selectedAlbumPathRef.current || getLastAlbumPath(), cacheRef.current));
       }
 
       const result = await loadPrefix(genrePath, 'albums', { silent });
       if (!result || selectedGenrePathRef.current !== genrePath) return;
 
-      const state = parseAlbumsPayload(result.data, genre);
+      const state = preserveSelectedAlbum(
+        parseAlbumsPayload(result.data, genre),
+        selectedAlbumPathRef.current || getLastAlbumPath(),
+        cacheRef.current
+      );
       cacheRef.current.setAlbums(genrePath, state);
       applyAlbumsState(state);
+
+      if (state.selectedAlbum?.path && !state.tracks.length) {
+        const cachedTracks = cacheRef.current.getTracks(state.selectedAlbum.path);
+        if (cachedTracks) {
+          setTracks(cachedTracks);
+        }
+      }
     },
     [loadPrefix, applyAlbumsState]
   );
@@ -189,7 +240,7 @@ export function useLibrary(token) {
   );
 
   const refreshLibrary = useCallback(async () => {
-    cacheRef.current.clear();
+    await cacheRef.current.clear({ persist: true });
     await loadGenres();
     if (selectedGenre) {
       await loadAlbums(selectedGenre);
@@ -200,18 +251,45 @@ export function useLibrary(token) {
   }, [loadGenres, loadAlbums, loadAlbumTracks, selectedGenre, selectedAlbum]);
 
   useEffect(() => {
-    cacheRef.current.clear();
-  }, [token]);
-
-  useEffect(() => {
-    if (token) {
-      loadGenres();
+    if (!token) {
+      cacheRef.current.clear({ persist: true });
+      return undefined;
     }
 
+    let cancelled = false;
+
+    const boot = async () => {
+      await cacheRef.current.hydrate();
+      if (cancelled) return;
+
+      const cachedGenres = cacheRef.current.getGenres();
+      if (cachedGenres?.length) {
+        setGenres(cachedGenres);
+        const genre = pickInitialGenre(cachedGenres, null);
+        if (genre) {
+          selectedGenrePathRef.current = genre.path;
+          setSelectedGenre(genre);
+          setLastGenrePath(genre.path);
+
+          const cachedAlbums = cacheRef.current.getAlbums(genre.path);
+          if (cachedAlbums) {
+            const albumPath = getLastAlbumPath();
+            selectedAlbumPathRef.current = albumPath;
+            applyAlbumsState(preserveSelectedAlbum(cachedAlbums, albumPath, cacheRef.current));
+          }
+        }
+      }
+
+      loadGenres();
+    };
+
+    boot();
+
     return () => {
+      cancelled = true;
       abortControllersRef.current.genres?.abort();
     };
-  }, [token, loadGenres]);
+  }, [token, loadGenres, applyAlbumsState]);
 
   useEffect(() => {
     if (token && selectedGenre?.path) {
@@ -227,6 +305,8 @@ export function useLibrary(token) {
       selectedAlbumPathRef.current = null;
       setSelectedGenre(genre);
       setSelectedTrack(null);
+      setLastGenrePath(genre.path);
+      setLastAlbumPath(null);
 
       const cached = cacheRef.current.getAlbums(genre.path);
       if (cached) {
@@ -249,6 +329,7 @@ export function useLibrary(token) {
       selectedAlbumPathRef.current = album.path;
       setSelectedAlbum(album);
       setSelectedTrack(null);
+      setLastAlbumPath(album.path);
 
       const cachedTracks = cacheRef.current.getTracks(album.path);
       if (cachedTracks) {

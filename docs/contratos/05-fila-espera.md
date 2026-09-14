@@ -4,7 +4,9 @@
 
 - `src/components/jukebox/WaitQueuePanel.jsx`
 - `src/components/jukebox/PlayerBar.jsx` — contador "em espera"
-- `src/App.jsx` — `queue` (estado React)
+- `src/App.jsx` — `queue` (estado React + `sessionStorage`)
+- `src/lib/queueMediaCache.js` — pré-cache das próximas 5 faixas
+- `public/sw.js` — Cache Storage (áudios da fila + capas R2)
 
 ## Descrição
 
@@ -19,9 +21,11 @@ Exibe músicas aguardando reprodução e a faixa **tocando agora** com equalizad
 | Destaque ao pressionar tecla "fila" | ✅ |
 | Pular faixa (tecla + player) | ✅ |
 | Persistência / API backend | ❌ |
+| Fila na sessão (`sessionStorage`) | ✅ |
+| Pré-cache das próximas 5 faixas (Cache Storage) | ✅ |
 | Sincronização entre terminais | ❌ |
 
-> A fila existe **apenas no estado React** e é perdida ao recarregar a página. O backend ainda não expõe endpoints de fila.
+> A fila **não** está no backend. Metadados da fila ficam em `sessionStorage` (`jukebox_session_queue`) e sobrevivem a F5 na mesma aba. O áudio das próximas **5** faixas (+ a que está tocando) é pré-baixado no Cache Storage via Service Worker — **não** a biblioteca inteira.
 
 ---
 

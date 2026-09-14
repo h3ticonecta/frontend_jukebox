@@ -22,6 +22,8 @@ Arquivos ficam no **Cloudflare R2**. O backend indexa no PostgreSQL no sync e re
 | Áudio via `media_url` direto | ✅ |
 | Fallback gradiente sem capa | ✅ |
 | CORS para `<audio src>` | ✅ (domínio R2 separado) |
+| Cache Storage de capas R2 (Service Worker) | ✅ |
+| Pré-cache de áudio só da fila (próximas 5 + atual) | ✅ |
 
 ---
 
@@ -63,7 +65,12 @@ audio.src = track.media_url;
 audio.play();
 ```
 
-Sem token, sem proxy, sem CORS extra no fetch (o elemento `<audio>` carrega direto).
+Sem token, sem proxy. O Service Worker (`public/sw.js`) intercepta GET de áudio/capa:
+
+- **Capas** (`jpg/png/webp…` fora da origem): cache-first no `jukebox-covers-v1`
+- **Áudio da fila**: cache-first no `jukebox-queue-audio-v1` **somente** se a página pediu pré-cache (`JUKEBOX_SYNC_QUEUE_MEDIA`). Faixas que não estão na fila vão direto à rede, sem gravar o MP3.
+
+`syncQueueMediaCache` envia a faixa atual + as próximas 5 da fila (`QUEUE_PRECACHE_COUNT`). Áudios que saíram da fila são removidos do cache.
 
 ---
 

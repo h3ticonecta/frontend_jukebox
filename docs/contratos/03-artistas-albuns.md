@@ -21,6 +21,7 @@ Grid fixo de **3 colunas** com cards quadrados de **artistas/bandas** dentro da 
 | Skeleton ao carregar (`AlbumGridSkeleton`) | ✅ |
 | Cancelamento de requisição ao trocar categoria | ✅ |
 | Cache em memória por SUCESSO (sem áudio) | ✅ |
+| Persistência IndexedDB do catálogo | ✅ |
 
 ### Troca rápida de SUCESSOS
 
@@ -31,7 +32,10 @@ Grid fixo de **3 colunas** com cards quadrados de **artistas/bandas** dentro da 
 - **Por gênero** (`genre.path`): artistas/bandas, faixas “flat” (quando o SUCESSO não tem subpastas) e álbum virtual selecionado.
 - **Por álbum** (`album.path`): lista de faixas (somente metadados da API — `title`, `key`, `duration_seconds`, `cover_url`; **não** baixa `media_url`).
 - Ao voltar a um SUCESSO já visitado, a grade aparece **na hora** a partir do cache; a API é consultada em **segundo plano** (`silent`) para atualizar se necessário.
-- Cache é limpo ao trocar token ou ao sincronizar biblioteca (`refreshLibrary`).
+- Cache de memória é hidratado do **IndexedDB** (`src/lib/idbCatalog.js`) no boot — sobrevive a F5.
+- Cache é limpo ao trocar token/logout ou ao sincronizar biblioteca (`refreshLibrary`).
+
+Último SUCESSO e artista ficam no `localStorage` (`jukebox_last_genre_path`, `jukebox_last_album_path`) para reabrir a mesma pasta.
 
 ---
 

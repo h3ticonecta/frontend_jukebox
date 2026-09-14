@@ -61,6 +61,14 @@ Público (sem header de auth).
 |-------|-------------------|
 | `token` | `jukebox_maquina_token` |
 | `id`, `nome_jukebox`, `usuario`, `teclas` | `jukebox_maquina_info` |
+| Último SUCESSO (`genre.path`) | `jukebox_last_genre_path` |
+| Último artista/banda (`album.path`) | `jukebox_last_album_path` |
+| `needs_sync` da última resposta | `jukebox_needs_sync` |
+| Timestamp da última consulta à biblioteca | `jukebox_library_fetched_at` |
+| Volume | `jukebox_volume_percent` |
+| Créditos locais | `jukebox_credits_balance` |
+
+Logout (`clearMaquinaSession`) remove token, info, último foco e flags de sync. O catálogo IndexedDB também é apagado (`idbClearCatalog`).
 
 ---
 

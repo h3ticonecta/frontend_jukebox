@@ -15,6 +15,15 @@
 
 O player usa `media_url` **diretamente do R2**, sem proxy pelo backend.
 
+## Cache no dispositivo
+
+| Camada | O quê | Arquivo |
+|--------|-------|---------|
+| `localStorage` | Token, teclas, volume, créditos, último SUCESSO/artista, `needs_sync` | `src/lib/storage.js` |
+| `sessionStorage` | Metadados da fila de espera (mesma aba) | `src/lib/storage.js` |
+| IndexedDB | Catálogo JSON (gêneros, artistas, faixas — **sem áudio**) | `src/lib/idbCatalog.js` |
+| Cache Storage (SW) | Capas R2 + áudio da faixa atual e das **próximas 5** da fila | `public/sw.js` |
+
 ## Layout da tela principal
 
 Arquivo: `src/App.jsx` → `JukeboxShell`
