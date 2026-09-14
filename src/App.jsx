@@ -122,18 +122,6 @@ function JukeboxApp() {
       return;
     }
 
-    const tracks = tracksRef.current;
-    const currentIndex = tracks.findIndex((track) => track.id === current.id);
-    const nextTrack = currentIndex >= 0 ? tracks[currentIndex + 1] : null;
-
-    if (nextTrack) {
-      const played = await playTrack(nextTrack);
-      if (!played) {
-        player.clearCurrentSong();
-      }
-      return;
-    }
-
     player.clearCurrentSong();
   }, [playTrack]);
 

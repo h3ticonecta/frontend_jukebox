@@ -68,8 +68,7 @@ handleAddToQueue(track)  // tecla "fila" / botão na lista
 
 handlePlayNext()  // fim da faixa, botão próximo ou tecla "pular"
   → se fila.length > 0: toca fila[0] (POST tocadas + débito) e remove da fila
-  → senão: próxima faixa em library.tracks do álbum atual
-  → senão: para o player
+  → senão: para o player (não avança no álbum — jukebox pago)
 ```
 
 ---

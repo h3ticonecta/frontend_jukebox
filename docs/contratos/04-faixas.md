@@ -130,7 +130,7 @@ Visual original do jukebox (`glass-surface`, vinil girando, barra de progresso n
 
 ### Navegação
 
-- **Próximo / pular / fim da faixa:** próxima na fila local ou em `library.tracks`
+- **Próximo / pular / fim da faixa:** próxima na fila local (com débito); sem fila, para o player
 - **Anterior:** reinicia se `currentTime > 3s`; senão faixa anterior na playlist
 - **Volume:** persiste em `localStorage`; teclas `vol_mais` / `vol_menos` ajustam ±10%
 
