@@ -176,16 +176,28 @@ export function summarizeBillingEvents({ start, end }) {
   };
 }
 
+export function parseMoney(value) {
+  if (value == null || value === '') return 0;
+  const parsed = parseFloat(String(value).replace(',', '.'));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 export function normalizeLeituraResponse(data) {
   if (!data || typeof data !== 'object') return null;
-  const faturamento = data.faturamento ?? data.total_faturamento ?? data.valor_total ?? data.valor;
-  const creditos = data.creditos ?? data.total_creditos ?? data.creditos_inseridos;
-  const transacoes = data.transacoes ?? data.total_transacoes ?? data.count ?? data.quantidade;
-  if (faturamento == null && creditos == null && transacoes == null) return null;
+
+  const faturamentoRaw =
+    data.faturamento ?? data.faturamento_total ?? data.valor_total ?? data.valor;
+  const creditosRaw = data.creditos ?? data.total_creditos ?? data.creditos_inseridos ?? 0;
+  const creditos = Number(creditosRaw) || 0;
+  const transacoesRaw =
+    data.transacoes ?? data.total_transacoes ?? data.count ?? data.quantidade ?? creditos;
+
   return {
-    faturamento: Number(faturamento) || 0,
-    creditos: Number(creditos) || 0,
-    transacoes: Number(transacoes) || 0,
+    faturamento: parseMoney(faturamentoRaw),
+    creditos,
+    transacoes: Number(transacoesRaw) || 0,
+    tocadas: Number(data.tocadas) || 0,
+    nome_jukebox: data.nome_jukebox || null,
   };
 }
 

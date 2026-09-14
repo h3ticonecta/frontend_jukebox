@@ -99,6 +99,7 @@ Funções: `getCreditsBalance()`, `addCredits()`, `deductCredits()` em `src/lib/
 
 - `src/components/jukebox/BillingModal.jsx`
 - `src/components/jukebox/PeriodCalendar.jsx`
+- `src/api/maquinas.js` → `fetchLeitura()`
 - Botão **Leitura** no `JukeboxHeader`
 
 ### `GET /api/v1/maquinas/leitura/?data_inicio=YYYY-MM-DD&data_fim=YYYY-MM-DD`
@@ -107,11 +108,47 @@ Funções: `getCreditsBalance()`, `addCredits()`, `deductCredits()` em `src/lib/
 Authorization: Maquina <token>
 ```
 
-Campos aceitos: `faturamento` / `total_faturamento`, `creditos` / `total_creditos`, `transacoes` / `count`.
+Não enviar `maquina_id` — o backend filtra pela máquina do token.
 
-Se a API não responder, o modal soma o histórico local `jukebox_billing_events` (cada inserção de crédito).
+| Query | Uso |
+|-------|-----|
+| `data_inicio` + `data_fim` | Presets e período personalizado (datas **inclusive**) |
+| Omitir as duas | **Todo período** |
 
-Presets: Hoje, Esta semana, Este mês, Este ano, Todo período. Período personalizado abre calendário de **dois meses** (intervalo: 1º toque = início, 2º = fim).
+Aliases aceitos pelo backend: `inicio` / `fim` — o front envia **`data_inicio` / `data_fim`**.
+
+#### Response `200`
+
+```json
+{
+  "maquina_id": 1,
+  "nome_jukebox": "Bar Central",
+  "data_inicio": "2026-09-10",
+  "data_fim": "2026-09-14",
+  "faturamento": "45.00",
+  "faturamento_total": "45.00",
+  "valor": "45.00",
+  "creditos": 9,
+  "total_creditos": 9,
+  "transacoes": 9,
+  "count": 9,
+  "tocadas": 32
+}
+```
+
+| UI | Campo |
+|----|--------|
+| Faturamento (R$) | `faturamento` / `faturamento_total` / `valor_total` / `valor` (`parseFloat`) |
+| Créditos | `creditos` / `total_creditos` / `creditos_inseridos` |
+| Transações | `transacoes` / `total_transacoes` / `count` / `quantidade` (fallback: `creditos`) |
+| Nome da máquina | `nome_jukebox` |
+| Músicas tocadas (informativo) | `tocadas` — **não** entra no faturamento |
+
+Faturamento = soma em reais dos `POST /creditos/` no período. Créditos/transações = quantidade de inserções (1 POST = 1).
+
+`401` `{ "error": { "code": "UNAUTHORIZED", "message": "..." } }` — modal exibe a mensagem.
+
+Se a rede falhar (exceto 401), fallback local `jukebox_billing_events`.
 
 ---
 
@@ -119,4 +156,4 @@ Presets: Hoje, Esta semana, Este mês, Este ano, Todo período. Período persona
 
 - [ ] Endpoint `GET` de saldo sincronizado com backend
 - [ ] Valores de crédito configuráveis por máquina
-- [x] Fluxo LEITURA / faturamento (UI; API `GET /leitura/` se o backend responder)
+- [x] Fluxo LEITURA / faturamento (`GET /api/v1/maquinas/leitura/`)

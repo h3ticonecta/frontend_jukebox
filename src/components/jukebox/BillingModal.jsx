@@ -13,7 +13,7 @@ import {
 import { cn } from '../../lib/utils';
 import PeriodCalendar from './PeriodCalendar';
 
-const EMPTY_SUMMARY = { faturamento: 0, creditos: 0, transacoes: 0 };
+const EMPTY_SUMMARY = { faturamento: 0, creditos: 0, transacoes: 0, tocadas: 0 };
 
 export default function BillingModal({ token, machineName, onClose }) {
   const now = new Date();
@@ -24,14 +24,13 @@ export default function BillingModal({ token, machineName, onClose }) {
   const [pickingEnd, setPickingEnd] = useState(false);
   const [leftMonth, setLeftMonth] = useState({ year: now.getFullYear(), month: now.getMonth() });
   const [summary, setSummary] = useState(EMPTY_SUMMARY);
+  const [displayName, setDisplayName] = useState(machineName);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const loadSummary = useCallback(
     async (nextPeriodId, startDate, endDate) => {
       const bounds = getPeriodBounds(nextPeriodId, startDate, endDate);
-      const local = summarizeBillingEvents(bounds);
-      setSummary(local);
       setLoading(true);
       setError(null);
 
@@ -41,9 +40,15 @@ export default function BillingModal({ token, machineName, onClose }) {
           dataFim: bounds.end ? toIsoDate(bounds.end) : undefined,
         });
         const remote = normalizeLeituraResponse(data);
-        if (remote) setSummary(remote);
-      } catch {
-        setError(null);
+        if (remote) {
+          setSummary(remote);
+          if (remote.nome_jukebox) setDisplayName(remote.nome_jukebox);
+        }
+      } catch (err) {
+        setSummary(summarizeBillingEvents(bounds));
+        if (err?.status === 401) {
+          setError(err.message || 'Token inválido ou ausente');
+        }
       } finally {
         setLoading(false);
       }
@@ -103,7 +108,7 @@ export default function BillingModal({ token, machineName, onClose }) {
             <h2 id="billing-title" className="text-2xl font-display text-primary neon-glow-amber">
               Leitura de Faturamento
             </h2>
-            {machineName && <p className="text-sm text-muted-foreground mt-1">{machineName}</p>}
+            {displayName && <p className="text-sm text-muted-foreground mt-1">{displayName}</p>}
           </div>
           <button
             type="button"
@@ -185,6 +190,7 @@ export default function BillingModal({ token, machineName, onClose }) {
 
         <p className="text-center text-xs text-muted-foreground mt-4">
           {summary.transacoes} transação(ões) no período
+          {summary.tocadas > 0 ? ` · ${summary.tocadas} música(s) tocada(s)` : ''}
         </p>
         {error && <p className="text-center text-xs text-destructive mt-2">{error}</p>}
       </div>
