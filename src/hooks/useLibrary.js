@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MUSIC_ROOT_PREFIX } from '../api/config';
 import { fetchMusicas, getFoldersFromResponse, getTracksFromResponse } from '../api/musicas';
-import { formatFolderCountLabel, mapFolderFromApi, mapTrackFromApi } from '../lib/library';
+import { buildAlbumsStateFromApi, mapFolderFromApi, mapTrackFromApi } from '../lib/library';
+import { createLibraryCache } from '../lib/libraryCache';
 
 const GRADIENTS = [
   'from-amber-500 to-orange-700',
@@ -28,6 +29,20 @@ function isAbortError(error) {
   return error?.name === 'AbortError';
 }
 
+function parseAlbumsPayload(data, genre) {
+  const folders = getFoldersFromResponse(data);
+  const folderTracks = getTracksFromResponse(data);
+
+  return buildAlbumsStateFromApi(
+    { ...data, folders, musicas: folderTracks },
+    genre,
+    {
+      mapFolder: (folder, index) => mapFolder(folder, index),
+      mapTrack: (track, index) => mapTrack(track, index),
+    }
+  );
+}
+
 export function useLibrary(token) {
   const [genres, setGenres] = useState([]);
   const [albums, setAlbums] = useState([]);
@@ -39,6 +54,8 @@ export function useLibrary(token) {
   const [needsSync, setNeedsSync] = useState(false);
   const [loading, setLoading] = useState(EMPTY_LOADING);
   const [error, setError] = useState(null);
+
+  const cacheRef = useRef(createLibraryCache());
 
   const abortControllersRef = useRef({
     genres: null,
@@ -58,8 +75,15 @@ export function useLibrary(token) {
     [loading]
   );
 
+  const applyAlbumsState = useCallback((state) => {
+    setAlbums(state.albums);
+    setTracks(state.tracks);
+    setSelectedAlbum(state.selectedAlbum);
+    selectedAlbumPathRef.current = state.selectedAlbum?.path ?? null;
+  }, []);
+
   const loadPrefix = useCallback(
-    async (prefix, scope) => {
+    async (prefix, scope, { silent = false } = {}) => {
       if (!token) return null;
 
       abortControllersRef.current[scope]?.abort();
@@ -67,7 +91,9 @@ export function useLibrary(token) {
       abortControllersRef.current[scope] = controller;
       const seq = ++loadSeqRef.current[scope];
 
-      setLoading((current) => ({ ...current, [scope]: true }));
+      if (!silent) {
+        setLoading((current) => ({ ...current, [scope]: true }));
+      }
       setError(null);
 
       try {
@@ -77,10 +103,12 @@ export function useLibrary(token) {
         return { data, seq };
       } catch (err) {
         if (isAbortError(err) || seq !== loadSeqRef.current[scope]) return null;
-        setError(err.message || 'Erro ao carregar biblioteca');
+        if (!silent) {
+          setError(err.message || 'Erro ao carregar biblioteca');
+        }
         return null;
       } finally {
-        if (!controller.signal.aborted && seq === loadSeqRef.current[scope]) {
+        if (!silent && !controller.signal.aborted && seq === loadSeqRef.current[scope]) {
           setLoading((current) => ({ ...current, [scope]: false }));
         }
       }
@@ -116,41 +144,21 @@ export function useLibrary(token) {
         return;
       }
 
-      const result = await loadPrefix(genrePath, 'albums');
+      const cached = cacheRef.current.getAlbums(genrePath);
+      const silent = Boolean(cached);
+
+      if (cached) {
+        applyAlbumsState(cached);
+      }
+
+      const result = await loadPrefix(genrePath, 'albums', { silent });
       if (!result || selectedGenrePathRef.current !== genrePath) return;
 
-      const { data } = result;
-      const folders = getFoldersFromResponse(data);
-      const folderTracks = getTracksFromResponse(data);
-
-      if (folders.length > 0) {
-        setAlbums(folders.map(mapFolder));
-        setTracks([]);
-        setSelectedAlbum(null);
-      } else if (folderTracks.length > 0) {
-        const filesCount = data.files_count ?? folderTracks.length;
-        const albumEntry = {
-          id: genre.path,
-          path: genre.path,
-          name: genre.name,
-          cover: data.cover_url || genre.cover,
-          coverColor: genre.coverColor,
-          subfoldersCount: 0,
-          filesCount,
-          countLabel: formatFolderCountLabel({ subfoldersCount: 0, filesCount }),
-        };
-        setAlbums([albumEntry]);
-        setSelectedAlbum(albumEntry);
-        selectedAlbumPathRef.current = albumEntry.path;
-        setTracks(folderTracks.map(mapTrack));
-      } else {
-        setAlbums([]);
-        setTracks([]);
-        setSelectedAlbum(null);
-        selectedAlbumPathRef.current = null;
-      }
+      const state = parseAlbumsPayload(result.data, genre);
+      cacheRef.current.setAlbums(genrePath, state);
+      applyAlbumsState(state);
     },
-    [loadPrefix]
+    [loadPrefix, applyAlbumsState]
   );
 
   const loadAlbumTracks = useCallback(
@@ -161,17 +169,27 @@ export function useLibrary(token) {
         return;
       }
 
-      const result = await loadPrefix(albumPath, 'tracks');
+      const cachedTracks = cacheRef.current.getTracks(albumPath);
+      const silent = Boolean(cachedTracks);
+
+      if (cachedTracks) {
+        setTracks(cachedTracks);
+        setSelectedAlbum(album);
+      }
+
+      const result = await loadPrefix(albumPath, 'tracks', { silent });
       if (!result || selectedAlbumPathRef.current !== albumPath) return;
 
-      const folderTracks = getTracksFromResponse(result.data);
-      setTracks(folderTracks.map(mapTrack));
+      const folderTracks = getTracksFromResponse(result.data).map(mapTrack);
+      cacheRef.current.setTracks(albumPath, folderTracks);
+      setTracks(folderTracks);
       setSelectedAlbum(album);
     },
     [loadPrefix]
   );
 
   const refreshLibrary = useCallback(async () => {
+    cacheRef.current.clear();
     await loadGenres();
     if (selectedGenre) {
       await loadAlbums(selectedGenre);
@@ -180,6 +198,10 @@ export function useLibrary(token) {
       }
     }
   }, [loadGenres, loadAlbums, loadAlbumTracks, selectedGenre, selectedAlbum]);
+
+  useEffect(() => {
+    cacheRef.current.clear();
+  }, [token]);
 
   useEffect(() => {
     if (token) {
@@ -197,18 +219,28 @@ export function useLibrary(token) {
     }
   }, [token, selectedGenre?.path, genreSelectionKey, loadAlbums]);
 
-  const selectGenre = useCallback((genre) => {
-    if (!genre?.path) return;
+  const selectGenre = useCallback(
+    (genre) => {
+      if (!genre?.path) return;
 
-    selectedGenrePathRef.current = genre.path;
-    selectedAlbumPathRef.current = null;
-    setSelectedGenre(genre);
-    setSelectedAlbum(null);
-    setSelectedTrack(null);
-    setTracks([]);
-    setAlbums([]);
-    setGenreSelectionKey((key) => key + 1);
-  }, []);
+      selectedGenrePathRef.current = genre.path;
+      selectedAlbumPathRef.current = null;
+      setSelectedGenre(genre);
+      setSelectedTrack(null);
+
+      const cached = cacheRef.current.getAlbums(genre.path);
+      if (cached) {
+        applyAlbumsState(cached);
+      } else {
+        setSelectedAlbum(null);
+        setTracks([]);
+        setAlbums([]);
+      }
+
+      setGenreSelectionKey((key) => key + 1);
+    },
+    [applyAlbumsState]
+  );
 
   const selectAlbum = useCallback(
     (album) => {
@@ -217,7 +249,14 @@ export function useLibrary(token) {
       selectedAlbumPathRef.current = album.path;
       setSelectedAlbum(album);
       setSelectedTrack(null);
-      setTracks([]);
+
+      const cachedTracks = cacheRef.current.getTracks(album.path);
+      if (cachedTracks) {
+        setTracks(cachedTracks);
+      } else {
+        setTracks([]);
+      }
+
       loadAlbumTracks(album);
     },
     [loadAlbumTracks]

@@ -20,10 +20,18 @@ Grid fixo de **3 colunas** com cards quadrados de **artistas/bandas** dentro da 
 | Seleção carrega faixas | ✅ |
 | Skeleton ao carregar (`AlbumGridSkeleton`) | ✅ |
 | Cancelamento de requisição ao trocar categoria | ✅ |
+| Cache em memória por SUCESSO (sem áudio) | ✅ |
 
 ### Troca rápida de SUCESSOS
 
 `useLibrary` cancela (`AbortController`) a requisição anterior de `albums` ao selecionar outro gênero. Respostas obsoletas são ignoradas (sequência + abort + `selectedGenrePathRef`), evitando flicker entre listas e liberando banda só para o último clique. `selectGenre` sempre dispara nova carga (`genreSelectionKey`), inclusive ao re-clicar o mesmo SUCESSO.
+
+### Cache de listas (`libraryCache.js`)
+
+- **Por gênero** (`genre.path`): artistas/bandas, faixas “flat” (quando o SUCESSO não tem subpastas) e álbum virtual selecionado.
+- **Por álbum** (`album.path`): lista de faixas (somente metadados da API — `title`, `key`, `duration_seconds`, `cover_url`; **não** baixa `media_url`).
+- Ao voltar a um SUCESSO já visitado, a grade aparece **na hora** a partir do cache; a API é consultada em **segundo plano** (`silent`) para atualizar se necessário.
+- Cache é limpo ao trocar token ou ao sincronizar biblioteca (`refreshLibrary`).
 
 ---
 
