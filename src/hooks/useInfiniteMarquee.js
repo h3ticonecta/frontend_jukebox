@@ -25,8 +25,19 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
   const wrapScroll = useCallback((el) => {
     const half = el.scrollWidth / 2;
     if (half <= 0) return;
-    if (el.scrollLeft >= half) el.scrollLeft -= half;
-    if (el.scrollLeft < 0) el.scrollLeft += half;
+
+    let jumped = 0;
+    if (el.scrollLeft >= half) {
+      el.scrollLeft -= half;
+      jumped = -half;
+    } else if (el.scrollLeft <= 0) {
+      el.scrollLeft += half;
+      jumped = half;
+    }
+
+    if (jumped !== 0 && dragRef.current.active) {
+      dragRef.current.startScroll += jumped;
+    }
   }, []);
 
   const pauseAuto = useCallback(() => {
@@ -67,6 +78,11 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
 
     rafRef.current = requestAnimationFrame(tick);
 
+    const initialHalf = el.scrollWidth / 2;
+    if (initialHalf > 0 && el.scrollLeft < 1) {
+      el.scrollLeft = 1;
+    }
+
     const onPointerDown = (event) => {
       if (event.pointerType === 'mouse' && event.button !== 0) return;
       if (isFormControl(event.target)) return;
@@ -95,7 +111,19 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
         }
       }
 
-      el.scrollLeft = dragRef.current.startScroll - delta;
+      const half = el.scrollWidth / 2;
+      let next = dragRef.current.startScroll - delta;
+      if (half > 0) {
+        while (next >= half) {
+          next -= half;
+          dragRef.current.startScroll -= half;
+        }
+        while (next < 0) {
+          next += half;
+          dragRef.current.startScroll += half;
+        }
+      }
+      el.scrollLeft = next;
       wrapScroll(el);
     };
 
