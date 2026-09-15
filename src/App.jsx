@@ -12,7 +12,9 @@ import {
   addCredits,
   deductCredits,
   getCreditsBalance,
+  getSessionCurrentSong,
   getSessionQueue,
+  setSessionCurrentSong,
   setSessionQueue,
 } from './lib/storage';
 import { syncQueueMediaCache } from './lib/queueMediaCache';
@@ -46,6 +48,7 @@ function JukeboxApp() {
   const tracksRef = useRef(library.tracks);
   const creditToastTimerRef = useRef(null);
   const audioRefHolder = useRef(null);
+  const resumeStartedRef = useRef(false);
   queueRef.current = queue;
   tracksRef.current = library.tracks;
 
@@ -137,6 +140,51 @@ function JukeboxApp() {
       queue,
     });
   }, [queue, audio.currentSong]);
+
+  useEffect(() => {
+    setSessionCurrentSong(audio.currentSong);
+  }, [audio.currentSong]);
+
+  useEffect(() => {
+    if (!token || resumeStartedRef.current) return undefined;
+
+    const savedCurrent = getSessionCurrentSong();
+    const pendingQueue = getSessionQueue();
+    if (!savedCurrent?.media_url && pendingQueue.length === 0) return undefined;
+
+    let attempts = 0;
+    let cancelled = false;
+
+    const tryResume = () => {
+      if (cancelled) return;
+
+      const player = audioRefHolder.current;
+      if (!player?.play) {
+        if (attempts < 60) {
+          attempts += 1;
+          window.requestAnimationFrame(tryResume);
+        }
+        return;
+      }
+
+      resumeStartedRef.current = true;
+
+      if (savedCurrent?.media_url) {
+        playFromPlaylist(savedCurrent);
+        return;
+      }
+
+      const [nextTrack, ...rest] = pendingQueue;
+      setQueue(rest);
+      playTrack(nextTrack, { fromQueue: true });
+    };
+
+    tryResume();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, playFromPlaylist, playTrack]);
 
   const handleSkip = useCallback(() => {
     handlePlayNext();

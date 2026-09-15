@@ -4,7 +4,8 @@
 
 - `src/components/jukebox/WaitQueuePanel.jsx`
 - `src/components/jukebox/PlayerBar.jsx` — contador "em espera"
-- `src/App.jsx` — `queue` (estado React + `sessionStorage`)
+- `src/App.jsx` — `queue` (estado React + `localStorage`)
+- `src/lib/storage.js` — `getSessionQueue()`, `setSessionCurrentSong()`
 - `src/lib/queueMediaCache.js` — pré-cache das próximas 5 faixas
 - `public/sw.js` — Cache Storage (áudios da fila + capas R2)
 
@@ -21,11 +22,12 @@ Exibe músicas aguardando reprodução e a faixa **tocando agora** com equalizad
 | Destaque ao pressionar tecla "fila" | ✅ |
 | Pular faixa (tecla + player) | ✅ |
 | Persistência / API backend | ❌ |
-| Fila na sessão (`sessionStorage`) | ✅ |
+| Fila persistida (`localStorage`, sobrevive reboot) | ✅ |
+| Retomada automática após religar a máquina | ✅ |
 | Pré-cache das próximas 5 faixas (Cache Storage) | ✅ |
 | Sincronização entre terminais | ❌ |
 
-> A fila **não** está no backend. Metadados da fila ficam em `sessionStorage` (`jukebox_session_queue`) e sobrevivem a F5 na mesma aba. O áudio das próximas **5** faixas (+ a que está tocando) é pré-baixado no Cache Storage via Service Worker — **não** a biblioteca inteira.
+> A fila **não** está no backend. Metadados da fila ficam em `localStorage` (`jukebox_session_queue`) e sobrevivem a reboot da máquina. A faixa em reprodução é salva em `jukebox_session_current_song`. Ao reiniciar, o app retoma a música atual ou inicia a fila automaticamente. O áudio das próximas **5** faixas (+ a que está tocando) é pré-baixado no Cache Storage via Service Worker — **não** a biblioteca inteira.
 
 ---
 
@@ -71,6 +73,10 @@ handleAddToQueue(track)  // tecla "fila" / botão na lista
 handlePlayNext()  // fim da faixa, botão próximo ou tecla "pular"
   → se fila.length > 0: toca fila[0] (POST tocadas, sem novo débito) e remove da fila
   → senão: para o player (não avança no álbum — jukebox pago)
+
+// Ao religar a máquina (boot do app com token válido)
+  → se havia faixa tocando: retoma áudio (sem novo débito nem POST)
+  → senão, se fila.length > 0: toca fila[0] automaticamente (POST tocadas, sem débito)
 ```
 
 ---

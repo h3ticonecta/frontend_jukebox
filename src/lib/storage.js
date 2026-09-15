@@ -9,7 +9,12 @@ const KEYS = {
   LIBRARY_FETCHED_AT: 'jukebox_library_fetched_at',
 };
 
-const SESSION_KEYS = {
+const PERSISTENT_KEYS = {
+  QUEUE: 'jukebox_session_queue',
+  CURRENT_SONG: 'jukebox_session_current_song',
+};
+
+const LEGACY_SESSION_KEYS = {
   QUEUE: 'jukebox_session_queue',
   CURRENT_SONG: 'jukebox_session_current_song',
 };
@@ -47,8 +52,10 @@ export function clearMaquinaSession() {
   localStorage.removeItem(KEYS.LAST_ALBUM);
   localStorage.removeItem(KEYS.NEEDS_SYNC);
   localStorage.removeItem(KEYS.LIBRARY_FETCHED_AT);
-  sessionStorage.removeItem(SESSION_KEYS.QUEUE);
-  sessionStorage.removeItem(SESSION_KEYS.CURRENT_SONG);
+  localStorage.removeItem(PERSISTENT_KEYS.QUEUE);
+  localStorage.removeItem(PERSISTENT_KEYS.CURRENT_SONG);
+  sessionStorage.removeItem(LEGACY_SESSION_KEYS.QUEUE);
+  sessionStorage.removeItem(LEGACY_SESSION_KEYS.CURRENT_SONG);
 }
 
 export function getMaquinaTeclas() {
@@ -133,8 +140,8 @@ export function getLibraryFetchedAt() {
   return Number.isFinite(value) ? value : null;
 }
 
-function readSessionJson(key) {
-  const raw = sessionStorage.getItem(key);
+function readJson(storage, key) {
+  const raw = storage.getItem(key);
   if (!raw) return null;
   try {
     return JSON.parse(raw);
@@ -143,23 +150,35 @@ function readSessionJson(key) {
   }
 }
 
+function migrateSessionKeyToLocal(key) {
+  const legacy = readJson(sessionStorage, key);
+  if (legacy == null) return;
+  if (!localStorage.getItem(key)) {
+    localStorage.setItem(key, JSON.stringify(legacy));
+  }
+  sessionStorage.removeItem(key);
+}
+
 export function getSessionQueue() {
-  const data = readSessionJson(SESSION_KEYS.QUEUE);
+  migrateSessionKeyToLocal(PERSISTENT_KEYS.QUEUE);
+  const data = readJson(localStorage, PERSISTENT_KEYS.QUEUE);
   return Array.isArray(data) ? data : [];
 }
 
 export function setSessionQueue(queue) {
-  sessionStorage.setItem(SESSION_KEYS.QUEUE, JSON.stringify(queue || []));
+  localStorage.setItem(PERSISTENT_KEYS.QUEUE, JSON.stringify(queue || []));
 }
 
 export function getSessionCurrentSong() {
-  return readSessionJson(SESSION_KEYS.CURRENT_SONG);
+  migrateSessionKeyToLocal(PERSISTENT_KEYS.CURRENT_SONG);
+  const data = readJson(localStorage, PERSISTENT_KEYS.CURRENT_SONG);
+  return data && typeof data === 'object' ? data : null;
 }
 
 export function setSessionCurrentSong(song) {
   if (!song) {
-    sessionStorage.removeItem(SESSION_KEYS.CURRENT_SONG);
+    localStorage.removeItem(PERSISTENT_KEYS.CURRENT_SONG);
     return;
   }
-  sessionStorage.setItem(SESSION_KEYS.CURRENT_SONG, JSON.stringify(song));
+  localStorage.setItem(PERSISTENT_KEYS.CURRENT_SONG, JSON.stringify(song));
 }
