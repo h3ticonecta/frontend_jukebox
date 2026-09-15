@@ -76,7 +76,6 @@ export default function GenreCarousel({
 
   useLayoutEffect(() => {
     if (!selectedGenre?.id || genres.length === 0) {
-      pendingScrollIndexRef.current = null;
       return;
     }
 
