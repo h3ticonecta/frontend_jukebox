@@ -21,6 +21,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
   const rafRef = useRef(null);
   const dragRef = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
   const suppressClickUntilRef = useRef(0);
+  const isAutoScrollingRef = useRef(false);
 
   const wrapScroll = useCallback((el) => {
     const half = el.scrollWidth / 2;
@@ -28,10 +29,10 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
 
     let jumped = 0;
     if (el.scrollLeft >= half) {
-      el.scrollLeft -= half;
+      el.scrollLeft = Math.round(el.scrollLeft - half);
       jumped = -half;
     } else if (el.scrollLeft <= 0) {
-      el.scrollLeft += half;
+      el.scrollLeft = Math.round(el.scrollLeft + half);
       jumped = half;
     }
 
@@ -70,8 +71,10 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
 
     const tick = () => {
       if (!pausedRef.current) {
-        el.scrollLeft += SCROLL_SPEED;
+        isAutoScrollingRef.current = true;
+        el.scrollLeft = Math.round(el.scrollLeft + SCROLL_SPEED);
         wrapScroll(el);
+        isAutoScrollingRef.current = false;
       }
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -123,7 +126,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
           dragRef.current.startScroll += half;
         }
       }
-      el.scrollLeft = next;
+      el.scrollLeft = Math.round(next);
       wrapScroll(el);
     };
 
@@ -151,6 +154,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     };
 
     const onScroll = () => {
+      if (isAutoScrollingRef.current) return;
       wrapScroll(el);
     };
 

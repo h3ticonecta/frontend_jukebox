@@ -121,8 +121,15 @@
   }
 
   .genre-marquee-mask {
-    mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+    transform: translateZ(0);
+  }
+
+  .vinyl-label-spin {
+    transform-origin: center center;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
 
   .player-volume-slider::-webkit-slider-thumb {

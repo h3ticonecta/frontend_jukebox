@@ -32,16 +32,20 @@ function VinylCard({ gradientClass, albumName, coverImage, isSelected, isFocused
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-full relative transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 group touch-manipulation cursor-grab active:cursor-grabbing',
+        'rounded-full relative transition-transform duration-300 hover:scale-105 active:scale-95 shrink-0 group touch-manipulation cursor-grab active:cursor-grabbing',
         SIZES[vinylSize] || SIZES.lg,
         isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_18px_hsl(var(--primary)/0.5)]',
         isFocused && !isSelected && 'ring-2 ring-secondary ring-offset-2 ring-offset-background shadow-[0_0_14px_hsl(var(--secondary)/0.45)]'
       )}
-      style={{
-        boxShadow: isFocused && !isSelected
-          ? '0 0 15px rgba(56,189,248,0.35), inset 0 0 30px rgba(0,0,0,0.4)'
-          : '0 0 15px rgba(251,236,63,0.3), inset 0 0 30px rgba(0,0,0,0.4)',
-      }}
+      style={
+        isSelected
+          ? undefined
+          : {
+              boxShadow: isFocused
+                ? '0 0 15px rgba(56,189,248,0.35), inset 0 0 30px rgba(0,0,0,0.4)'
+                : '0 0 15px rgba(251,236,63,0.3), inset 0 0 30px rgba(0,0,0,0.4)',
+            }
+      }
     >
       <div className="absolute inset-0 rounded-full bg-zinc-900 border-2 border-zinc-700 overflow-hidden">
         <div className="absolute inset-0 rounded-full pointer-events-none bg-[repeating-radial-gradient(circle_at_center,transparent_0,transparent_1px,rgba(255,255,255,0.04)_1px,rgba(255,255,255,0.04)_2px)] opacity-70" />
@@ -56,17 +60,21 @@ function VinylCard({ gradientClass, albumName, coverImage, isSelected, isFocused
         ))}
         <div className="absolute inset-[22%] rounded-full overflow-hidden border-2 border-zinc-800 z-[1]">
           {hasImage ? (
-            <img
-              src={coverImage}
-              alt={albumName}
-              draggable={false}
+            <div
               className={cn(
-                'w-full h-full object-cover img-no-drag pointer-events-none select-none',
+                'vinyl-label-spin w-full h-full',
                 isSelected ? 'animate-spin-vinyl' : 'group-hover:animate-spin-vinyl-slow'
               )}
-              onDragStart={(event) => event.preventDefault()}
-              onError={() => setImgOk(false)}
-            />
+            >
+              <img
+                src={coverImage}
+                alt={albumName}
+                draggable={false}
+                className="w-full h-full object-cover img-no-drag pointer-events-none select-none"
+                onDragStart={(event) => event.preventDefault()}
+                onError={() => setImgOk(false)}
+              />
+            </div>
           ) : (
             <div className={cn('w-full h-full bg-gradient-to-br flex items-center justify-center', gradientClass)}>
               <Disc className="text-foreground/80" size={isLarge ? 36 : 22} />
