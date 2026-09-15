@@ -191,16 +191,28 @@ function JukeboxApp() {
     }
   }, [token, showCreditToast]);
 
-  const handleAddToQueue = useCallback((track) => {
-    const album = library.selectedAlbum || library.selectedGenre;
-    setQueue((prev) => [
-      ...prev,
-      {
-        ...track,
-        cover: track.cover_url || album?.cover || null,
-      },
-    ]);
-  }, [library.selectedAlbum, library.selectedGenre]);
+  const handleAddToQueue = useCallback(
+    (track) => {
+      if (!token || !track?.media_url) return;
+
+      const requiredCredits = (queue.length + 1) * CREDITS_PER_SONG;
+      if (getCreditsBalance() < requiredCredits) {
+        setActionError('Créditos insuficientes. Insira créditos para adicionar músicas à fila.');
+        return;
+      }
+
+      setActionError(null);
+      const album = library.selectedAlbum || library.selectedGenre;
+      setQueue((prev) => [
+        ...prev,
+        {
+          ...track,
+          cover: track.cover_url || album?.cover || null,
+        },
+      ]);
+    },
+    [token, queue.length, library.selectedAlbum, library.selectedGenre]
+  );
 
   const handlePlay = useCallback(
     async (track) => {
@@ -347,6 +359,7 @@ function JukeboxApp() {
               handlePlay(track);
             }}
             onAddToQueue={handleAddToQueue}
+            canAddToQueue={credits >= (queue.length + 1) * CREDITS_PER_SONG}
             isLoading={library.loading.tracks}
           />
         </div>

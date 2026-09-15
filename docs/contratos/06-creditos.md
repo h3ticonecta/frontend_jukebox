@@ -20,6 +20,7 @@ Créditos são a moeda para tocar músicas. O backend **registra inserções**; 
 | Inserir via tecla configurada | ✅ |
 | Toast de confirmação | ✅ |
 | Débito ao tocar (1 crédito) | ✅ |
+| Bloqueio de fila sem crédito (1 crédito por item na fila + novo) | ✅ |
 | `GET` saldo no backend | ❌ Não existe |
 
 ---
@@ -72,6 +73,9 @@ handlePlay(track)
   → if (credits < 1) erro
   → POST /maquinas/tocadas/
   → deductCredits(1)
+
+handleAddToQueue(track)
+  → if (credits < fila.length + 1) erro (sem débito imediato)
 ```
 
 ---
