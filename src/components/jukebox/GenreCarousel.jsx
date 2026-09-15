@@ -54,6 +54,7 @@ export default function GenreCarousel({
 
   const { scrollerRef, trackRef, wasDragged, pauseForInteraction, scrollToItemIndex } = useInfiniteMarquee({
     enabled: genres.length > 0,
+    itemCount: genres.length,
   });
   const pendingScrollIndexRef = useRef(null);
 
@@ -118,7 +119,7 @@ export default function GenreCarousel({
         <div ref={trackRef} className="genre-marquee-track flex w-max gap-8 pr-8 pt-8 pb-3">
           {loopGenres.map((genre, index) => {
             const isClone = index >= genres.length;
-            const isSelected = selectedGenre?.id === genre.id && !isClone;
+            const isSelected = selectedGenre?.id === genre.id;
             return (
               <GenreSlide
                 key={`${genre.id}-${index}`}

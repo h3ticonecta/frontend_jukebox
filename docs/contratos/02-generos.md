@@ -87,7 +87,7 @@ Implementado em `GenreCarousel.jsx`:
 | Tamanho do disco | `AlbumCard` com `size="xl"` → **180×180px** |
 | Espaço do brilho | `pt-8` na faixa do carrossel — o `overflow-y-hidden` não corta o glow/`box-shadow` acima dos vinis |
 | Largura do item | 200px (disco + labels) |
-| Loop | Lista duplicada (`[...genres, ...genres]`); infinito nos **dois** sentidos (arraste esquerda e direita) |
+| Loop | Lista duplicada (`[...genres, ...genres]`); junção medida em `children[itemCount].offsetLeft` (não `scrollWidth/2`, evita salto por `pr-8`); `ResizeObserver` recalibra ao carregar capas |
 | Animação | `useInfiniteMarquee` — modo **auto**: `translate3d` contínuo; modo **manual** (arraste/touch/wheel): `scrollLeft` nativo com `touch-pan-x`; troca transparente entre modos após 5s |
 | Direção | Direita → esquerda |
 | Arrastar | Mouse e touch; inicia também sobre o disco. Só vira arraste após **>8px**; `setPointerCapture` só nesse momento, para o clique do vinil não ser engolido |
@@ -111,7 +111,7 @@ Implementado em `GenreCarousel.jsx`:
 
 | Estado | Animação |
 |--------|----------|
-| Selecionado | Anel primário; giro da capa só na **primeira** cópia do loop (`spinWhenSelected`, clone sem animação — evita duplo giro/tremor) |
+| Selecionado | Anel primário em **ambas** as cópias; giro da capa só na primeira (`spinWhenSelected` no clone desligado — evita duplo giro/tremor) |
 | Hover (não selecionado) | `animate-spin-vinyl-slow` |
 | Sem `cover_url` | Gradiente colorido + ícone `Disc` |
 | Sulcos do vinil | Anéis concêntricos + textura radial em `AlbumCard` (`VinylCard`) |

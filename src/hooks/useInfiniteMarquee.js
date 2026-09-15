@@ -14,8 +14,14 @@ function preventNativeDrag(event) {
   event.preventDefault();
 }
 
-function getHalfWidth(track) {
-  if (!track) return 0;
+function getLoopWidth(track, itemCount) {
+  if (!track || itemCount <= 0) return 0;
+
+  const cloneStart = track.children[itemCount];
+  if (cloneStart instanceof HTMLElement) {
+    return cloneStart.offsetLeft;
+  }
+
   return track.scrollWidth / 2;
 }
 
@@ -31,9 +37,14 @@ function applyTransform(track, offset) {
   track.style.transform = `translate3d(-${offset}px, 0, 0)`;
 }
 
-export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RESUME_DELAY_MS } = {}) {
+export function useInfiniteMarquee({
+  enabled = true,
+  resumeDelayMs = MARQUEE_RESUME_DELAY_MS,
+  itemCount = 0,
+} = {}) {
   const scrollerRef = useRef(null);
   const trackRef = useRef(null);
+  const itemCountRef = useRef(itemCount);
   const offsetRef = useRef(1);
   const modeRef = useRef('auto');
   const pausedRef = useRef(false);
@@ -43,10 +54,31 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
   const suppressClickUntilRef = useRef(0);
   const isAutoScrollingRef = useRef(false);
 
+  itemCountRef.current = itemCount;
+
+  const getHalf = useCallback((track) => getLoopWidth(track, itemCountRef.current), []);
+
+  const recalibratePosition = useCallback(
+    (scroller, track) => {
+      const half = getHalf(track);
+      if (half <= 0) return;
+
+      if (modeRef.current === 'auto') {
+        offsetRef.current = wrapOffset(offsetRef.current, half);
+        applyTransform(track, offsetRef.current);
+        scroller.scrollLeft = 0;
+      } else {
+        scroller.scrollLeft = wrapOffset(scroller.scrollLeft, half);
+        offsetRef.current = scroller.scrollLeft;
+      }
+    },
+    [getHalf]
+  );
+
   const enterManualMode = useCallback((scroller, track) => {
     if (!scroller || !track) return;
 
-    const half = getHalfWidth(track);
+    const half = getHalf(track);
     const offset =
       modeRef.current === 'auto' ? offsetRef.current : wrapOffset(scroller.scrollLeft, half);
 
@@ -55,12 +87,12 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     scroller.style.overflowX = 'auto';
     scroller.scrollLeft = offsetRef.current;
     modeRef.current = 'manual';
-  }, []);
+  }, [getHalf]);
 
   const enterAutoMode = useCallback((scroller, track) => {
     if (!scroller || !track) return;
 
-    const half = getHalfWidth(track);
+    const half = getHalf(track);
     const offset =
       modeRef.current === 'manual' ? scroller.scrollLeft : offsetRef.current;
 
@@ -69,10 +101,10 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     scroller.scrollLeft = 0;
     scroller.style.overflowX = 'hidden';
     modeRef.current = 'auto';
-  }, []);
+  }, [getHalf]);
 
   const wrapManualScroll = useCallback((scroller, track) => {
-    const half = getHalfWidth(track);
+    const half = getHalf(track);
     if (half <= 0) return;
 
     let jumped = 0;
@@ -91,7 +123,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     }
 
     offsetRef.current = scroller.scrollLeft;
-  }, []);
+  }, [getHalf]);
 
   const pauseAuto = useCallback(() => {
     pausedRef.current = true;
@@ -149,7 +181,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
         }
       }
 
-      const half = getHalfWidth(track);
+      const half = getHalf(track);
       target = wrapOffset(target, half);
       offsetRef.current = target;
 
@@ -165,7 +197,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
         isAutoScrollingRef.current = false;
       });
     },
-    [wrapManualScroll]
+    [getHalf, wrapManualScroll]
   );
 
   useEffect(() => {
@@ -177,10 +209,19 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
 
     enterAutoMode(scroller, track);
 
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(() => {
+            recalibratePosition(scroller, track);
+          })
+        : null;
+
+    resizeObserver?.observe(track);
+
     const tick = () => {
       if (!pausedRef.current && modeRef.current === 'auto') {
         isAutoScrollingRef.current = true;
-        const half = getHalfWidth(track);
+        const half = getHalf(track);
         offsetRef.current = wrapOffset(offsetRef.current + SCROLL_SPEED, half);
         applyTransform(track, offsetRef.current);
         scroller.scrollLeft = 0;
@@ -226,7 +267,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
         }
       }
 
-      const half = getHalfWidth(track);
+      const half = getHalf(track);
       let next = dragRef.current.startScroll - delta;
       if (half > 0) {
         while (next >= half) {
@@ -295,6 +336,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     scroller.addEventListener('touchcancel', onTouchEnd, { passive: true });
 
     return () => {
+      resizeObserver?.disconnect();
       cancelAnimationFrame(rafRef.current);
       clearTimeout(resumeTimerRef.current);
       track.style.transform = '';
@@ -311,7 +353,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
       scroller.removeEventListener('touchend', onTouchEnd);
       scroller.removeEventListener('touchcancel', onTouchEnd);
     };
-  }, [enabled, enterAutoMode, enterManualMode, pauseAuto, scheduleResume, wrapManualScroll]);
+  }, [enabled, enterAutoMode, enterManualMode, getHalf, pauseAuto, recalibratePosition, scheduleResume, wrapManualScroll]);
 
   return { scrollerRef, trackRef, wasDragged, pauseForInteraction, scrollToItemIndex };
 }
