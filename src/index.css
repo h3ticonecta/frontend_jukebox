@@ -123,7 +123,11 @@
   .genre-marquee-mask {
     mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
     -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
-    transform: translateZ(0);
+  }
+
+  .genre-marquee-track {
+    will-change: transform;
+    backface-visibility: hidden;
   }
 
   .vinyl-label-spin {

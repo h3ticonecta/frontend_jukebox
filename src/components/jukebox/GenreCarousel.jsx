@@ -52,7 +52,7 @@ export default function GenreCarousel({
     return [...genres, ...genres];
   }, [genres]);
 
-  const { scrollerRef, wasDragged, pauseForInteraction, scrollToItemIndex } = useInfiniteMarquee({
+  const { scrollerRef, trackRef, wasDragged, pauseForInteraction, scrollToItemIndex } = useInfiniteMarquee({
     enabled: genres.length > 0,
   });
   const pendingScrollIndexRef = useRef(null);
@@ -111,11 +111,10 @@ export default function GenreCarousel({
 
       <div
         ref={scrollerRef}
-        className="genre-marquee-mask overflow-x-auto overflow-y-hidden scrollbar-hide cursor-grab active:cursor-grabbing touch-none select-none"
-        style={{ WebkitOverflowScrolling: 'touch' }}
+        className="genre-marquee-mask overflow-hidden cursor-grab active:cursor-grabbing touch-none select-none"
         onDragStart={(event) => event.preventDefault()}
       >
-        <div className="flex w-max gap-8 pr-8 pt-8 pb-3">
+        <div ref={trackRef} className="genre-marquee-track flex w-max gap-8 pr-8 pt-8 pb-3">
           {loopGenres.map((genre, index) => {
             const isClone = index >= genres.length;
             const isSelected = selectedGenre?.id === genre.id && !isClone;
