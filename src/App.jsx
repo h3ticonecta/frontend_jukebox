@@ -55,14 +55,17 @@ function JukeboxApp() {
     setSessionQueue(queue);
   }, [queue]);
 
-  const playFromPlaylist = useCallback((track) => {
+  const playFromPlaylist = useCallback(async (track) => {
     if (!track) {
       audioRefHolder.current?.clearCurrentSong();
-      return;
+      return false;
     }
 
     const album = library.selectedAlbum || library.selectedGenre;
-    audioRefHolder.current?.play({
+    const player = audioRefHolder.current;
+    if (!player?.play) return false;
+
+    return player.play({
       ...track,
       cover: track.cover || track.cover_url || album?.cover || null,
     });
@@ -93,7 +96,8 @@ function JukeboxApp() {
       };
 
       if (resume) {
-        playFromPlaylist(song);
+        const started = await playFromPlaylist(song);
+        if (!started) return false;
         markPlayingInQueue(song);
         return true;
       }
@@ -115,7 +119,8 @@ function JukeboxApp() {
           setCredits(nextCredits);
         }
 
-        playFromPlaylist(song);
+        const started = await playFromPlaylist(song);
+        if (!started) return false;
         markPlayingInQueue(song);
         return true;
       } catch (err) {
@@ -125,6 +130,18 @@ function JukeboxApp() {
     },
     [token, library.selectedAlbum, library.selectedGenre, playFromPlaylist, markPlayingInQueue]
   );
+
+  const resumeQueuePlayback = useCallback(async () => {
+    const pendingQueue = queueRef.current;
+    if (pendingQueue.length === 0) return false;
+
+    const nextTrack = pendingQueue[0];
+    if (nextTrack.playbackStarted) {
+      return playTrack(nextTrack, { resume: true });
+    }
+
+    return playTrack(nextTrack, { fromQueue: true });
+  }, [playTrack]);
 
   const handlePlayNext = useCallback(async () => {
     const player = audioRefHolder.current;
@@ -167,43 +184,32 @@ function JukeboxApp() {
   }, [audio.currentSong]);
 
   useEffect(() => {
-    if (!token || resumeStartedRef.current) return undefined;
+    if (!token || !audio.isAudioReady || queue.length === 0) return undefined;
 
-    const pendingQueue = queueRef.current;
-    if (pendingQueue.length === 0) return undefined;
-
-    let attempts = 0;
     let cancelled = false;
+    let retryTimer = null;
 
-    const tryResume = () => {
-      if (cancelled) return;
+    const tryResume = async () => {
+      if (cancelled || resumeStartedRef.current) return;
 
-      const player = audioRefHolder.current;
-      if (!player?.play) {
-        if (attempts < 60) {
-          attempts += 1;
-          window.requestAnimationFrame(tryResume);
-        }
+      const started = await resumeQueuePlayback();
+      if (started) {
+        resumeStartedRef.current = true;
         return;
       }
 
-      resumeStartedRef.current = true;
-
-      const nextTrack = pendingQueue[0];
-      if (nextTrack.playbackStarted) {
-        playTrack(nextTrack, { resume: true });
-        return;
-      }
-
-      playTrack(nextTrack, { fromQueue: true });
+      retryTimer = window.setTimeout(tryResume, 2000);
     };
 
     tryResume();
 
     return () => {
       cancelled = true;
+      if (retryTimer) {
+        window.clearTimeout(retryTimer);
+      }
     };
-  }, [token, playTrack]);
+  }, [token, audio.isAudioReady, queue.length, resumeQueuePlayback]);
 
   const handleSkip = useCallback(() => {
     handlePlayNext();

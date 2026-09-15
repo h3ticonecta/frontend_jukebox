@@ -12,6 +12,7 @@ const KEYS = {
 const PERSISTENT_KEYS = {
   QUEUE: 'jukebox_session_queue',
   CURRENT_SONG: 'jukebox_session_current_song',
+  RESUME_PLAYBACK: 'jukebox_should_resume_playback',
 };
 
 const LEGACY_SESSION_KEYS = {
@@ -54,6 +55,7 @@ export function clearMaquinaSession() {
   localStorage.removeItem(KEYS.LIBRARY_FETCHED_AT);
   localStorage.removeItem(PERSISTENT_KEYS.QUEUE);
   localStorage.removeItem(PERSISTENT_KEYS.CURRENT_SONG);
+  localStorage.removeItem(PERSISTENT_KEYS.RESUME_PLAYBACK);
   sessionStorage.removeItem(LEGACY_SESSION_KEYS.QUEUE);
   sessionStorage.removeItem(LEGACY_SESSION_KEYS.CURRENT_SONG);
 }
@@ -194,7 +196,9 @@ export function getPersistedQueue() {
 }
 
 export function setSessionQueue(queue) {
-  localStorage.setItem(PERSISTENT_KEYS.QUEUE, JSON.stringify(queue || []));
+  const items = queue || [];
+  localStorage.setItem(PERSISTENT_KEYS.QUEUE, JSON.stringify(items));
+  setShouldResumePlayback(items.length > 0);
 }
 
 export function getSessionCurrentSong() {
@@ -209,4 +213,16 @@ export function setSessionCurrentSong(song) {
     return;
   }
   localStorage.setItem(PERSISTENT_KEYS.CURRENT_SONG, JSON.stringify(song));
+}
+
+export function shouldResumePlayback() {
+  return localStorage.getItem(PERSISTENT_KEYS.RESUME_PLAYBACK) === 'true';
+}
+
+export function setShouldResumePlayback(value) {
+  if (value) {
+    localStorage.setItem(PERSISTENT_KEYS.RESUME_PLAYBACK, 'true');
+    return;
+  }
+  localStorage.removeItem(PERSISTENT_KEYS.RESUME_PLAYBACK);
 }

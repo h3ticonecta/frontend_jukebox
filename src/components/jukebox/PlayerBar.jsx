@@ -82,7 +82,7 @@ export default function PlayerBar({
 
   return (
     <>
-      <audio ref={audioRef} className="hidden" preload="metadata" />
+      <audio ref={audioRef} className="hidden" preload="auto" autoPlay playsInline />
 
       {!currentSong ? (
         <div className="fixed bottom-0 left-0 right-0 h-20 glass-surface border-t border-border flex items-center justify-between z-40 px-4 shrink-0">

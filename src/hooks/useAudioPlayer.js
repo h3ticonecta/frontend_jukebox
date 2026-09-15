@@ -12,10 +12,20 @@ function resolveMediaUrl(url) {
   }
 }
 
+async function startPlayback(audio) {
+  try {
+    await audio.play();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function useAudioPlayer({ onEnded } = {}) {
   const audioRef = useRef(null);
   const listenersCleanupRef = useRef(null);
   const onEndedRef = useRef(onEnded);
+  const [isAudioReady, setIsAudioReady] = useState(false);
   const [currentSong, setCurrentSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -28,7 +38,10 @@ export function useAudioPlayer({ onEnded } = {}) {
     listenersCleanupRef.current?.();
     listenersCleanupRef.current = null;
     audioRef.current = node;
-    if (!node) return;
+    setIsAudioReady(Boolean(node));
+    if (!node) {
+      return;
+    }
 
     node.volume = getVolumePercent() / 100;
 
@@ -69,9 +82,9 @@ export function useAudioPlayer({ onEnded } = {}) {
 
   useEffect(() => () => listenersCleanupRef.current?.(), []);
 
-  const play = useCallback((song) => {
+  const play = useCallback(async (song) => {
     const audio = audioRef.current;
-    if (!audio || !song?.media_url) return;
+    if (!audio || !song?.media_url) return false;
 
     const nextSrc = resolveMediaUrl(song.media_url);
     const nextDuration = parseDurationSeconds(song.duration_seconds);
@@ -85,7 +98,34 @@ export function useAudioPlayer({ onEnded } = {}) {
       audio.load();
     }
 
-    audio.play().catch(() => setIsPlaying(false));
+    let started = await startPlayback(audio);
+    if (!started) {
+      started = await new Promise((resolve) => {
+        let settled = false;
+        const finish = (value) => {
+          if (settled) return;
+          settled = true;
+          audio.removeEventListener('canplay', onCanPlay);
+          audio.removeEventListener('loadeddata', onCanPlay);
+          resolve(value);
+        };
+
+        const onCanPlay = async () => {
+          finish(await startPlayback(audio));
+        };
+
+        audio.addEventListener('canplay', onCanPlay);
+        audio.addEventListener('loadeddata', onCanPlay);
+
+        window.setTimeout(() => finish(false), 8000);
+      });
+    }
+
+    if (!started) {
+      setIsPlaying(false);
+    }
+
+    return started;
   }, []);
 
   const togglePlay = useCallback(() => {
@@ -144,6 +184,7 @@ export function useAudioPlayer({ onEnded } = {}) {
 
   return {
     audioRef: bindAudioRef,
+    isAudioReady,
     currentSong,
     isPlaying,
     currentTime,

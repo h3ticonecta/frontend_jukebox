@@ -23,7 +23,7 @@ Exibe músicas aguardando reprodução e a faixa **tocando agora** com equalizad
 | Pular faixa (tecla + player) | ✅ |
 | Persistência / API backend | ❌ |
 | Fila persistida (`localStorage`, sobrevive reboot) | ✅ |
-| Retomada automática após religar a máquina | ✅ |
+| Autoplay ao religar a máquina (retry até iniciar) | ✅ |
 | Pré-cache das próximas 5 faixas (Cache Storage) | ✅ |
 | Sincronização entre terminais | ❌ |
 
@@ -77,7 +77,9 @@ handlePlayNext()  // fim da faixa, botão próximo ou tecla "pular"
 
 // Ao religar a máquina (boot do app com token válido)
   → restaura fila completa do localStorage (faixa tocando permanece em fila[0])
-  → retoma fila[0]: se `playbackStarted`, só áudio; senão POST tocadas (sem débito)
+  → flag `jukebox_should_resume_playback` indica autoplay pendente
+  → aguarda `<audio>` pronto e tenta tocar fila[0] (retry a cada 2s se bloqueado)
+  → se `playbackStarted`, só áudio; senão POST tocadas (sem débito)
   → não remove itens da fila no boot
 ```
 
