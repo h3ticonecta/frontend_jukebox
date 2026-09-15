@@ -78,7 +78,7 @@ Sem token, sem proxy. O Service Worker (`public/sw.js`) intercepta GET de áudio
 Ícone `Download` no `JukeboxHeader`, ao lado do refresh. Dispara `runCatalogPrefetch` (`src/lib/catalogPrefetch.js`):
 
 1. Percorre `Musicas/` → cada SUCESSO → cada artista/banda → lista de faixas (metadados JSON no IndexedDB).
-2. Baixa todas as `cover_url` em lotes (Service Worker grava em `jukebox-covers-v1` no primeiro fetch).
+2. Baixa só **imagens** de capa de SUCESSOS e artistas (`jpg/png/webp…`); ignora `media_url` e extensões de áudio/vídeo.
 3. **Não** baixa `media_url` em lote — áudio continua limitado à fila.
 
 Progresso em `PrefetchBanner` (fases: SUCESSOS → artistas → músicas → capas). Enquanto roda, download e refresh ficam desabilitados.

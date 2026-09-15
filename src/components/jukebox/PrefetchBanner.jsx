@@ -2,7 +2,7 @@ const PHASE_LABELS = {
   genres: 'SUCESSOS',
   albums: 'Artistas e bandas',
   tracks: 'Músicas',
-  covers: 'Capas',
+  covers: 'Capas (imagens)',
 };
 
 export default function PrefetchBanner({ progress }) {

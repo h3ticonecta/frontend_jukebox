@@ -5,6 +5,15 @@ export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
+const IMAGE_URL_PATTERN = /\.(jpg|jpeg|png|webp|gif|avif)(\?|$)/i;
+const MEDIA_URL_PATTERN = /\.(mp3|wav|ogg|m4a|flac|mp4|webm|mov)(\?|$)/i;
+
+export function isPrefetchableCoverUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  if (MEDIA_URL_PATTERN.test(url)) return false;
+  return IMAGE_URL_PATTERN.test(url);
+}
+
 export function parseDurationSeconds(value) {
   if (value == null || value === '') return null;
   const seconds = Number(value);

@@ -1,5 +1,6 @@
 import { MUSIC_ROOT_PREFIX } from '../api/config';
 import { fetchMusicas, getTracksFromResponse } from '../api/musicas';
+import { isPrefetchableCoverUrl } from './utils';
 
 const COVER_BATCH_SIZE = 8;
 
@@ -8,7 +9,7 @@ function isAbortError(error) {
 }
 
 function collectCoverUrls(target, url) {
-  if (url) target.add(url);
+  if (isPrefetchableCoverUrl(url)) target.add(url);
 }
 
 async function prefetchCoverBatch(urls, { signal, onItemDone }) {
@@ -70,7 +71,6 @@ export async function runCatalogPrefetch({
 
     if (state.tracks.length > 0 && state.selectedAlbum?.path) {
       cache.setTracks(state.selectedAlbum.path, state.tracks);
-      state.tracks.forEach((track) => collectCoverUrls(coverUrls, track.cover_url));
     } else {
       state.albums.forEach((album) => {
         if (album.path) albumPaths.push(album);
@@ -89,7 +89,6 @@ export async function runCatalogPrefetch({
     const data = await fetchMusicas(token, { prefix: album.path, signal });
     const tracks = getTracksFromResponse(data).map(mapTrack);
     cache.setTracks(album.path, tracks);
-    tracks.forEach((track) => collectCoverUrls(coverUrls, track.cover_url));
   }
 
   if (albumPaths.length > 0) {
