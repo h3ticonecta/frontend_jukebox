@@ -95,7 +95,7 @@ Implementado em `GenreCarousel.jsx`:
 | Pausa | Durante arraste, toque, rolagem manual ou wheel |
 | Retomada | **5s** após soltar (`pointerup`) ou clique em gênero (`MARQUEE_RESUME_DELAY_MS`) |
 | Clique | Disco, nome e contagem selecionam gênero e carregam artistas/bandas; pausam o carrossel por 5s. Após um arraste, o clique fantasma é ignorado (~400ms) |
-| Centralizar seleção | Ao mudar `selectedGenre` (clique ou tecla), `scrollToItemIndex` centraliza o disco na faixa visível |
+| Centralizar seleção | Ao mudar `selectedGenre` (clique ou tecla E/R), `pauseForInteraction` + `scrollToItemIndex` no mesmo `useLayoutEffect` (cópia do meio); sem `scrollIntoView` duplicado no teclado |
 | Bordas | Fade lateral via `.genre-marquee-mask` (`index.css`) |
 
 ### Componentes envolvidos

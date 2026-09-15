@@ -206,36 +206,22 @@ export function useInfiniteMarquee({
       const centerOffsetFor = (slide) =>
         slide.offsetLeft + slide.offsetWidth / 2 - scroller.clientWidth / 2;
 
-      const loopWidth = getLoopWidthCached(track);
-      const current = modeRef.current === 'auto' ? offsetRef.current : scroller.scrollLeft;
-      let target = centerOffsetFor(primarySlide);
-
-      const alternateSlide = track.querySelector(
-        `[data-loop-copy="0"][data-copy-index="${index}"]`
-      );
-      if (alternateSlide instanceof HTMLElement) {
-        const alternate = centerOffsetFor(alternateSlide);
-        if (Math.abs(alternate - current) < Math.abs(target - current)) {
-          target = alternate;
-        }
+      if (modeRef.current === 'auto') {
+        enterManualMode(scroller, track);
       }
 
-      target = wrapOffset(target, loopWidth);
+      const loopWidth = getLoopWidthCached(track);
+      const target = wrapOffset(centerOffsetFor(primarySlide), loopWidth);
       offsetRef.current = target;
 
       isAutoScrollingRef.current = true;
-      if (modeRef.current === 'auto') {
-        applyTransform(track, target);
-        scroller.scrollLeft = 0;
-      } else {
-        scroller.scrollLeft = target;
-        wrapManualScroll(scroller, track);
-      }
+      scroller.scrollLeft = target;
+      wrapManualScroll(scroller, track);
       requestAnimationFrame(() => {
         isAutoScrollingRef.current = false;
       });
     },
-    [getLoopWidthCached, wrapManualScroll]
+    [enterManualMode, getLoopWidthCached, wrapManualScroll]
   );
 
   useEffect(() => {

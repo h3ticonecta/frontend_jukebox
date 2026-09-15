@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useLayoutEffect, useMemo } from 'react';
 import { Star } from 'lucide-react';
 import { useInfiniteMarquee } from '../../hooks/useInfiniteMarquee';
 import { GenreCarouselSkeleton } from '../shared/Skeleton';
@@ -65,8 +65,6 @@ export default function GenreCarousel({
     enabled: genres.length > 0,
     itemCount: genres.length,
   });
-  const pendingScrollIndexRef = useRef(null);
-
   const handleActivate = useCallback(
     (genre) => {
       if (wasDragged()) return;
@@ -76,7 +74,7 @@ export default function GenreCarousel({
     [onSelectGenre, pauseForInteraction, wasDragged]
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!selectedGenre?.id || genres.length === 0) {
       pendingScrollIndexRef.current = null;
       return;
@@ -85,17 +83,9 @@ export default function GenreCarousel({
     const index = genres.findIndex((genre) => genre.id === selectedGenre.id);
     if (index < 0) return;
 
-    pendingScrollIndexRef.current = index;
     pauseForInteraction();
-  }, [selectedGenre?.id, genres, pauseForInteraction]);
-
-  useLayoutEffect(() => {
-    const index = pendingScrollIndexRef.current;
-    if (index == null || genres.length === 0) return;
-
     scrollToItemIndex(index);
-    pendingScrollIndexRef.current = null;
-  }, [selectedGenre?.id, genres.length, loopGenres.length, scrollToItemIndex]);
+  }, [selectedGenre?.id, genres, loopGenres.length, pauseForInteraction, scrollToItemIndex]);
 
   if (isLoading && genres.length === 0) {
     return <GenreCarouselSkeleton />;

@@ -282,17 +282,6 @@ export function useJukeboxKeyboard({
   );
 
   useEffect(() => {
-    if (!library.selectedGenre?.id) return;
-    const genreElement =
-      document.querySelector(
-        `[data-genre-id="${library.selectedGenre.id}"][data-loop-copy="1"]`
-      ) || document.querySelector(`[data-genre-id="${library.selectedGenre.id}"]`);
-    if (genreElement && focusZone === 'genres') {
-      genreElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }
-  }, [library.selectedGenre?.id, focusZone]);
-
-  useEffect(() => {
     if (!library.selectedAlbum?.id) return;
     const albumElement = document.querySelector(`[data-album-id="${library.selectedAlbum.id}"]`);
     if (albumElement && focusZone === 'albums') {
