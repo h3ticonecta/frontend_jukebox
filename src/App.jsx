@@ -12,8 +12,7 @@ import {
   addCredits,
   deductCredits,
   getCreditsBalance,
-  getSessionCurrentSong,
-  getSessionQueue,
+  getPersistedQueue,
   setSessionCurrentSong,
   setSessionQueue,
 } from './lib/storage';
@@ -35,7 +34,7 @@ function JukeboxApp() {
   const { token, machine, teclas, refreshConfig } = useAuth();
   const library = useLibrary(token);
 
-  const [queue, setQueue] = useState(() => getSessionQueue());
+  const [queue, setQueue] = useState(() => getPersistedQueue());
   const [credits, setCredits] = useState(() => getCreditsBalance());
   const [actionError, setActionError] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -69,17 +68,35 @@ function JukeboxApp() {
     });
   }, [library.selectedAlbum, library.selectedGenre]);
 
+  const markPlayingInQueue = useCallback((track) => {
+    setQueue((prev) => {
+      const playing = { ...track, playbackStarted: true };
+      const rest = prev.filter((item) => item.id !== track.id);
+      return [playing, ...rest];
+    });
+  }, []);
+
   const playTrack = useCallback(
-    async (track, { fromQueue = false } = {}) => {
+    async (track, { fromQueue = false, resume = false } = {}) => {
       if (!token || !track?.media_url) return false;
 
-      if (!fromQueue && getCreditsBalance() < CREDITS_PER_SONG) {
+      if (!fromQueue && !resume && getCreditsBalance() < CREDITS_PER_SONG) {
         setActionError('Créditos insuficientes');
         return false;
       }
 
       setActionError(null);
       const album = library.selectedAlbum || library.selectedGenre;
+      const song = {
+        ...track,
+        cover: track.cover || track.cover_url || album?.cover || null,
+      };
+
+      if (resume) {
+        playFromPlaylist(song);
+        markPlayingInQueue(song);
+        return true;
+      }
 
       try {
         await registrarMusicaTocada(token, {
@@ -98,17 +115,15 @@ function JukeboxApp() {
           setCredits(nextCredits);
         }
 
-        playFromPlaylist({
-          ...track,
-          cover: track.cover || track.cover_url || album?.cover || null,
-        });
+        playFromPlaylist(song);
+        markPlayingInQueue(song);
         return true;
       } catch (err) {
         setActionError(err.message || 'Erro ao registrar música tocada');
         return false;
       }
     },
-    [token, library.selectedAlbum, library.selectedGenre, playFromPlaylist]
+    [token, library.selectedAlbum, library.selectedGenre, playFromPlaylist, markPlayingInQueue]
   );
 
   const handlePlayNext = useCallback(async () => {
@@ -117,27 +132,33 @@ function JukeboxApp() {
     if (!current) return;
 
     const waiting = queueRef.current;
-    if (waiting.length > 0) {
-      const [nextTrack, ...rest] = waiting;
-      setQueue(rest);
-      const played = await playTrack(nextTrack, { fromQueue: true });
-      if (!played) {
-        setQueue((prev) => [nextTrack, ...prev]);
-        player.clearCurrentSong();
-      }
+    const currentId = current.id;
+    const rest =
+      waiting.length > 0 && waiting[0].id === currentId
+        ? waiting.slice(1)
+        : waiting.filter((item) => item.id !== currentId);
+
+    setQueue(rest);
+
+    if (rest.length === 0) {
+      player.clearCurrentSong();
       return;
     }
 
-    player.clearCurrentSong();
+    const played = await playTrack(rest[0], { fromQueue: true });
+    if (!played) {
+      player.clearCurrentSong();
+    }
   }, [playTrack]);
 
   const audio = useAudioPlayer({ onEnded: handlePlayNext });
   audioRefHolder.current = audio;
 
   useEffect(() => {
+    const upcoming = audio.currentSong ? queue.slice(1) : queue;
     syncQueueMediaCache({
       currentSong: audio.currentSong,
-      queue,
+      queue: upcoming,
     });
   }, [queue, audio.currentSong]);
 
@@ -148,9 +169,8 @@ function JukeboxApp() {
   useEffect(() => {
     if (!token || resumeStartedRef.current) return undefined;
 
-    const savedCurrent = getSessionCurrentSong();
-    const pendingQueue = getSessionQueue();
-    if (!savedCurrent?.media_url && pendingQueue.length === 0) return undefined;
+    const pendingQueue = queueRef.current;
+    if (pendingQueue.length === 0) return undefined;
 
     let attempts = 0;
     let cancelled = false;
@@ -169,13 +189,12 @@ function JukeboxApp() {
 
       resumeStartedRef.current = true;
 
-      if (savedCurrent?.media_url) {
-        playFromPlaylist(savedCurrent);
+      const nextTrack = pendingQueue[0];
+      if (nextTrack.playbackStarted) {
+        playTrack(nextTrack, { resume: true });
         return;
       }
 
-      const [nextTrack, ...rest] = pendingQueue;
-      setQueue(rest);
       playTrack(nextTrack, { fromQueue: true });
     };
 
@@ -184,7 +203,7 @@ function JukeboxApp() {
     return () => {
       cancelled = true;
     };
-  }, [token, playFromPlaylist, playTrack]);
+  }, [token, playTrack]);
 
   const handleSkip = useCallback(() => {
     handlePlayNext();
@@ -323,6 +342,7 @@ function JukeboxApp() {
   }, [library]);
 
   const headerError = actionError || library.error;
+  const waitingQueue = audio.currentSong ? queue.slice(1) : queue;
 
   return (
     <>
@@ -363,7 +383,7 @@ function JukeboxApp() {
           <WaitQueuePanel
             currentSong={audio.currentSong}
             isPlaying={audio.isPlaying}
-            queue={queue}
+            queue={waitingQueue}
             highlighted={highlightQueue}
           />
         }
@@ -380,7 +400,7 @@ function JukeboxApp() {
             duration={audio.duration}
             volume={audio.volume}
             credits={credits}
-            queueCount={queue.length}
+            queueCount={waitingQueue.length}
             onTogglePlay={audio.togglePlay}
             onPrevious={handlePlayPrevious}
             onNext={handlePlayNext}

@@ -159,10 +159,38 @@ function migrateSessionKeyToLocal(key) {
   sessionStorage.removeItem(key);
 }
 
+function trackIdentity(track) {
+  return track?.id || track?.key || null;
+}
+
 export function getSessionQueue() {
   migrateSessionKeyToLocal(PERSISTENT_KEYS.QUEUE);
   const data = readJson(localStorage, PERSISTENT_KEYS.QUEUE);
   return Array.isArray(data) ? data : [];
+}
+
+/** Fila persistida com a faixa em reprodução sempre na posição 0 (se existir). */
+export function getPersistedQueue() {
+  let queue = getSessionQueue();
+  const savedCurrent = getSessionCurrentSong();
+  if (!savedCurrent?.media_url) {
+    return queue;
+  }
+
+  const currentId = trackIdentity(savedCurrent);
+  const existingIndex = queue.findIndex((item) => trackIdentity(item) === currentId);
+
+  if (existingIndex === -1) {
+    queue = [{ ...savedCurrent, playbackStarted: true }, ...queue];
+  } else if (existingIndex > 0) {
+    const [current] = queue.splice(existingIndex, 1);
+    queue = [{ ...current, playbackStarted: true }, ...queue];
+  } else {
+    queue = [{ ...queue[0], ...savedCurrent, playbackStarted: true }, ...queue.slice(1)];
+  }
+
+  setSessionQueue(queue);
+  return queue;
 }
 
 export function setSessionQueue(queue) {

@@ -27,7 +27,7 @@ Exibe músicas aguardando reprodução e a faixa **tocando agora** com equalizad
 | Pré-cache das próximas 5 faixas (Cache Storage) | ✅ |
 | Sincronização entre terminais | ❌ |
 
-> A fila **não** está no backend. Metadados da fila ficam em `localStorage` (`jukebox_session_queue`) e sobrevivem a reboot da máquina. A faixa em reprodução é salva em `jukebox_session_current_song`. Ao reiniciar, o app retoma a música atual ou inicia a fila automaticamente. O áudio das próximas **5** faixas (+ a que está tocando) é pré-baixado no Cache Storage via Service Worker — **não** a biblioteca inteira.
+> A fila **não** está no backend. Metadados ficam em `localStorage` (`jukebox_session_queue`). A faixa **em reprodução** permanece na posição 0 da fila (`playbackStarted: true`), para não perder a música se a máquina desligar no meio. `jukebox_session_current_song` é espelho auxiliar para reboot. Ao reiniciar, a fila inteira é restaurada e o app retoma `fila[0]` sem remover itens. O áudio das próximas **5** faixas (+ a que está tocando) é pré-baixado no Cache Storage via Service Worker — **não** a biblioteca inteira.
 
 ---
 
@@ -52,8 +52,9 @@ Exibe músicas aguardando reprodução e a faixa **tocando agora** com equalizad
 |-------|----------|
 | `title` | Título na fila |
 | `artist` | Subtítulo (se ≠ título) |
-| `queue.length` | Badge no header + rodapé |
-| Faixa atual | Bloco "Tocando agora" com `EqualizerBars` |
+| `queue.length - 1` (com faixa tocando) | Badge "em espera" no rodapé |
+| `queue[0]` | Faixa em reprodução — bloco "Tocando agora" |
+| `queue.slice(1)` | Lista numerada de espera na UI |
 
 ---
 
@@ -61,22 +62,23 @@ Exibe músicas aguardando reprodução e a faixa **tocando agora** com equalizad
 
 ```javascript
 handlePlay(track)
-  → POST /maquinas/tocadas/
-  → audio.play(song)
-  // não adiciona à fila — "Tocando agora" é separado da fila de espera
+  → POST /maquinas/tocadas/ + debita 1 crédito
+  → coloca a faixa em fila[0] (`playbackStarted: true`) e reproduz
 
 handleAddToQueue(track)  // tecla "fila" / botão na lista
   → botão sempre clicável; exige saldo ≥ 1 × CREDITS_PER_SONG
   → se insuficiente: mensagem "Créditos insuficientes" no header (sem adicionar)
-  → debita 1 crédito localmente e adiciona à fila (sem tocar)
+  → debita 1 crédito e acrescenta ao final da fila (sem tocar)
 
 handlePlayNext()  // fim da faixa, botão próximo ou tecla "pular"
-  → se fila.length > 0: toca fila[0] (POST tocadas, sem novo débito) e remove da fila
-  → senão: para o player (não avança no álbum — jukebox pago)
+  → remove fila[0] (faixa que acabou)
+  → se ainda houver itens: toca novo fila[0] (POST tocadas, sem novo débito)
+  → senão: para o player
 
 // Ao religar a máquina (boot do app com token válido)
-  → se havia faixa tocando: retoma áudio (sem novo débito nem POST)
-  → senão, se fila.length > 0: toca fila[0] automaticamente (POST tocadas, sem débito)
+  → restaura fila completa do localStorage (faixa tocando permanece em fila[0])
+  → retoma fila[0]: se `playbackStarted`, só áudio; senão POST tocadas (sem débito)
+  → não remove itens da fila no boot
 ```
 
 ---
