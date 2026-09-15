@@ -88,7 +88,7 @@ Implementado em `GenreCarousel.jsx`:
 | Espaço do brilho | `pt-8` na faixa do carrossel — o `overflow-y-hidden` não corta o glow/`box-shadow` acima dos vinis |
 | Largura do item | 200px (disco + labels) |
 | Loop | Lista duplicada (`[...genres, ...genres]`); infinito nos **dois** sentidos (arraste esquerda e direita) |
-| Animação | `useInfiniteMarquee` — deslocamento via `translate3d` + `requestAnimationFrame` (loop sem salto de `scrollLeft`) |
+| Animação | `useInfiniteMarquee` — `scrollLeft` + `requestAnimationFrame`; loop contínuo com wrap modular na metade da faixa duplicada |
 | Direção | Direita → esquerda |
 | Arrastar | Mouse e touch; inicia também sobre o disco. Só vira arraste após **>8px**; `setPointerCapture` só nesse momento, para o clique do vinil não ser engolido |
 | Imagens | `draggable={false}` + `img-no-drag` — evita arrastar fantasma da capa |

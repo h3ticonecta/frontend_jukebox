@@ -14,32 +14,36 @@ function preventNativeDrag(event) {
   event.preventDefault();
 }
 
-function getHalfWidth(track) {
-  if (!track) return 0;
-  return track.scrollWidth / 2;
+function getHalfWidth(el) {
+  if (!el) return 0;
+  return el.scrollWidth / 2;
 }
 
-function wrapOffset(offset, half) {
-  if (half <= 0) return 0;
-  let next = offset;
+function wrapScrollLeft(left, half) {
+  if (half <= 0) return left;
+  let next = left;
   while (next >= half) next -= half;
   while (next < 0) next += half;
   return next;
 }
 
-function applyOffset(track, offset) {
-  track.style.transform = `translate3d(-${Math.round(offset)}px, 0, 0)`;
-}
-
 export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RESUME_DELAY_MS } = {}) {
   const scrollerRef = useRef(null);
-  const trackRef = useRef(null);
-  const offsetRef = useRef(0);
   const pausedRef = useRef(false);
   const resumeTimerRef = useRef(null);
   const rafRef = useRef(null);
-  const dragRef = useRef({ active: false, startX: 0, startOffset: 0, moved: false });
+  const dragRef = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
   const suppressClickUntilRef = useRef(0);
+  const isAutoScrollingRef = useRef(false);
+
+  const syncScroll = useCallback((el, left) => {
+    const half = getHalfWidth(el);
+    const next = wrapScrollLeft(left, half);
+    if (next !== el.scrollLeft) {
+      el.scrollLeft = next;
+    }
+    return next;
+  }, []);
 
   const pauseAuto = useCallback(() => {
     pausedRef.current = true;
@@ -63,52 +67,63 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     scheduleResume();
   }, [pauseAuto, scheduleResume]);
 
-  const scrollToItemIndex = useCallback((index, itemCount) => {
-    const scroller = scrollerRef.current;
-    const track = trackRef.current;
-    if (!scroller || !track || itemCount <= 0 || index < 0 || index >= itemCount) return;
+  const scrollToItemIndex = useCallback(
+    (index, itemCount) => {
+      const el = scrollerRef.current;
+      if (!el || itemCount <= 0 || index < 0 || index >= itemCount) return;
 
-    const slides = track.querySelectorAll('[data-marquee-index]');
-    const firstCopy = slides[index];
-    const secondCopy = slides[index + itemCount];
-    if (!firstCopy) return;
+      const slides = el.querySelectorAll('[data-marquee-index]');
+      const firstCopy = slides[index];
+      const secondCopy = slides[index + itemCount];
+      if (!firstCopy) return;
 
-    const half = getHalfWidth(track);
-    const centerOffsetFor = (slide) => slide.offsetLeft + slide.offsetWidth / 2 - scroller.clientWidth / 2;
+      const centerScrollFor = (slide) => slide.offsetLeft + slide.offsetWidth / 2 - el.clientWidth / 2;
 
-    const current = offsetRef.current;
-    let target = centerOffsetFor(firstCopy);
-    if (secondCopy) {
-      const alternate = centerOffsetFor(secondCopy);
-      if (Math.abs(alternate - current) < Math.abs(target - current)) {
-        target = alternate;
+      const current = el.scrollLeft;
+      let target = centerScrollFor(firstCopy);
+      if (secondCopy) {
+        const alternate = centerScrollFor(secondCopy);
+        if (Math.abs(alternate - current) < Math.abs(target - current)) {
+          target = alternate;
+        }
       }
-    }
 
-    offsetRef.current = wrapOffset(target, half);
-    applyOffset(track, offsetRef.current);
-  }, []);
+      isAutoScrollingRef.current = true;
+      syncScroll(el, target);
+      requestAnimationFrame(() => {
+        isAutoScrollingRef.current = false;
+      });
+    },
+    [syncScroll]
+  );
 
   useEffect(() => {
     if (!enabled) return undefined;
 
-    const scroller = scrollerRef.current;
-    const track = trackRef.current;
-    if (!scroller || !track) return undefined;
+    const el = scrollerRef.current;
+    if (!el) return undefined;
 
-    offsetRef.current = wrapOffset(offsetRef.current, getHalfWidth(track));
-    applyOffset(track, offsetRef.current);
+    const endAutoScrollFrame = () => {
+      requestAnimationFrame(() => {
+        isAutoScrollingRef.current = false;
+      });
+    };
 
     const tick = () => {
       if (!pausedRef.current) {
-        const half = getHalfWidth(track);
-        offsetRef.current = wrapOffset(offsetRef.current + SCROLL_SPEED, half);
-        applyOffset(track, offsetRef.current);
+        isAutoScrollingRef.current = true;
+        syncScroll(el, el.scrollLeft + SCROLL_SPEED);
+        endAutoScrollFrame();
       }
       rafRef.current = requestAnimationFrame(tick);
     };
 
     rafRef.current = requestAnimationFrame(tick);
+
+    const initialHalf = getHalfWidth(el);
+    if (initialHalf > 0 && el.scrollLeft < 1) {
+      el.scrollLeft = 1;
+    }
 
     const onPointerDown = (event) => {
       if (event.pointerType === 'mouse' && event.button !== 0) return;
@@ -117,7 +132,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
       dragRef.current = {
         active: true,
         startX: event.clientX,
-        startOffset: offsetRef.current,
+        startScroll: el.scrollLeft,
         moved: false,
       };
     };
@@ -129,19 +144,28 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
       if (!dragRef.current.moved) {
         if (Math.abs(delta) <= DRAG_THRESHOLD) return;
         dragRef.current.moved = true;
-        if (typeof scroller.setPointerCapture === 'function') {
+        if (typeof el.setPointerCapture === 'function') {
           try {
-            scroller.setPointerCapture(event.pointerId);
+            el.setPointerCapture(event.pointerId);
           } catch {
             // Capture is optional; drag still works while the pointer stays over the scroller.
           }
         }
       }
 
-      const half = getHalfWidth(track);
-      const next = wrapOffset(dragRef.current.startOffset - delta, half);
-      offsetRef.current = next;
-      applyOffset(track, next);
+      const half = getHalfWidth(el);
+      let next = dragRef.current.startScroll - delta;
+      if (half > 0) {
+        while (next >= half) {
+          next -= half;
+          dragRef.current.startScroll -= half;
+        }
+        while (next < 0) {
+          next += half;
+          dragRef.current.startScroll += half;
+        }
+      }
+      el.scrollLeft = next;
     };
 
     const onPointerUp = (event) => {
@@ -149,8 +173,8 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
       const hadDrag = dragRef.current.moved;
       dragRef.current.active = false;
       dragRef.current.moved = false;
-      if (scroller.hasPointerCapture?.(event.pointerId)) {
-        scroller.releasePointerCapture(event.pointerId);
+      if (el.hasPointerCapture?.(event.pointerId)) {
+        el.releasePointerCapture(event.pointerId);
       }
       scheduleResume();
       if (hadDrag) {
@@ -165,37 +189,38 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
       }
     };
 
-    const onWheel = (event) => {
-      if (!event.deltaX && !event.deltaY) return;
+    const onScroll = () => {
+      if (isAutoScrollingRef.current) return;
+      syncScroll(el, el.scrollLeft);
+    };
+
+    const onWheel = () => {
       pauseAuto();
-      const half = getHalfWidth(track);
-      const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-      offsetRef.current = wrapOffset(offsetRef.current + delta, half);
-      applyOffset(track, offsetRef.current);
       scheduleResume();
     };
 
-    scroller.addEventListener('dragstart', preventNativeDrag);
-    scroller.addEventListener('pointerdown', onPointerDown);
-    scroller.addEventListener('pointermove', onPointerMove);
+    el.addEventListener('dragstart', preventNativeDrag);
+    el.addEventListener('pointerdown', onPointerDown);
+    el.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('pointercancel', onPointerUp);
-    scroller.addEventListener('click', onClickCapture, true);
-    scroller.addEventListener('wheel', onWheel, { passive: true });
+    el.addEventListener('click', onClickCapture, true);
+    el.addEventListener('scroll', onScroll, { passive: true });
+    el.addEventListener('wheel', onWheel, { passive: true });
 
     return () => {
       cancelAnimationFrame(rafRef.current);
       clearTimeout(resumeTimerRef.current);
-      scroller.removeEventListener('dragstart', preventNativeDrag);
-      scroller.removeEventListener('pointerdown', onPointerDown);
-      scroller.removeEventListener('pointermove', onPointerMove);
+      el.removeEventListener('dragstart', preventNativeDrag);
+      el.removeEventListener('pointerdown', onPointerDown);
+      el.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
       window.removeEventListener('pointercancel', onPointerUp);
-      scroller.removeEventListener('click', onClickCapture, true);
-      scroller.removeEventListener('wheel', onWheel);
-      track.style.transform = '';
+      el.removeEventListener('click', onClickCapture, true);
+      el.removeEventListener('scroll', onScroll);
+      el.removeEventListener('wheel', onWheel);
     };
-  }, [enabled, pauseAuto, scheduleResume]);
+  }, [enabled, pauseAuto, scheduleResume, syncScroll]);
 
-  return { scrollerRef, trackRef, wasDragged, pauseForInteraction, scrollToItemIndex };
+  return { scrollerRef, wasDragged, pauseForInteraction, scrollToItemIndex };
 }

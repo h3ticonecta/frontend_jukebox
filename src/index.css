@@ -125,11 +125,6 @@
     -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
   }
 
-  .genre-marquee-track {
-    will-change: transform;
-    backface-visibility: hidden;
-  }
-
   .vinyl-label-spin {
     transform-origin: center center;
     backface-visibility: hidden;
