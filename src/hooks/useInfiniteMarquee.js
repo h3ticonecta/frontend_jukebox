@@ -31,7 +31,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     if (el.scrollLeft >= half) {
       el.scrollLeft = Math.round(el.scrollLeft - half);
       jumped = -half;
-    } else if (el.scrollLeft <= 0) {
+    } else if (el.scrollLeft <= 0 && dragRef.current.active) {
       el.scrollLeft = Math.round(el.scrollLeft + half);
       jumped = half;
     }
@@ -69,12 +69,18 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     const el = scrollerRef.current;
     if (!el) return undefined;
 
+    const endAutoScrollFrame = () => {
+      requestAnimationFrame(() => {
+        isAutoScrollingRef.current = false;
+      });
+    };
+
     const tick = () => {
       if (!pausedRef.current) {
         isAutoScrollingRef.current = true;
         el.scrollLeft = Math.round(el.scrollLeft + SCROLL_SPEED);
         wrapScroll(el);
-        isAutoScrollingRef.current = false;
+        endAutoScrollFrame();
       }
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -132,17 +138,15 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
 
     const onPointerUp = (event) => {
       if (!dragRef.current.active) return;
+      const hadDrag = dragRef.current.moved;
       dragRef.current.active = false;
+      dragRef.current.moved = false;
       if (el.hasPointerCapture?.(event.pointerId)) {
         el.releasePointerCapture(event.pointerId);
       }
-      const hadDrag = dragRef.current.moved;
       scheduleResume();
       if (hadDrag) {
         suppressClickUntilRef.current = Date.now() + CLICK_SUPPRESS_MS;
-        window.setTimeout(() => {
-          dragRef.current.moved = false;
-        }, CLICK_SUPPRESS_MS);
       }
     };
 
@@ -163,33 +167,14 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
       scheduleResume();
     };
 
-    const onTouchStart = (event) => {
-      if (isFormControl(event.target)) return;
-      pauseAuto();
-    };
-
-    const onTouchEnd = () => {
-      scheduleResume();
-    };
-
-    const onScrollEnd = () => {
-      if (!dragRef.current.active) {
-        scheduleResume();
-      }
-    };
-
     el.addEventListener('dragstart', preventNativeDrag);
     el.addEventListener('pointerdown', onPointerDown);
     el.addEventListener('pointermove', onPointerMove);
-    el.addEventListener('pointerup', onPointerUp);
-    el.addEventListener('pointercancel', onPointerUp);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
     el.addEventListener('click', onClickCapture, true);
     el.addEventListener('scroll', onScroll, { passive: true });
     el.addEventListener('wheel', onWheel, { passive: true });
-    el.addEventListener('touchstart', onTouchStart, { passive: true });
-    el.addEventListener('touchend', onTouchEnd, { passive: true });
-    el.addEventListener('touchcancel', onTouchEnd, { passive: true });
-    el.addEventListener('scrollend', onScrollEnd);
 
     return () => {
       cancelAnimationFrame(rafRef.current);
@@ -197,15 +182,11 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
       el.removeEventListener('dragstart', preventNativeDrag);
       el.removeEventListener('pointerdown', onPointerDown);
       el.removeEventListener('pointermove', onPointerMove);
-      el.removeEventListener('pointerup', onPointerUp);
-      el.removeEventListener('pointercancel', onPointerUp);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
       el.removeEventListener('click', onClickCapture, true);
       el.removeEventListener('scroll', onScroll);
       el.removeEventListener('wheel', onWheel);
-      el.removeEventListener('touchstart', onTouchStart);
-      el.removeEventListener('touchend', onTouchEnd);
-      el.removeEventListener('touchcancel', onTouchEnd);
-      el.removeEventListener('scrollend', onScrollEnd);
     };
   }, [enabled, pauseAuto, scheduleResume, wrapScroll]);
 

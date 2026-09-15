@@ -18,7 +18,16 @@ const VINYL_GROOVE_RINGS = [
   'inset-[19%]',
 ];
 
-function VinylCard({ gradientClass, albumName, coverImage, isSelected, isFocused = false, onClick, vinylSize = 'lg' }) {
+function VinylCard({
+  gradientClass,
+  albumName,
+  coverImage,
+  isSelected,
+  isFocused = false,
+  spinWhenSelected = true,
+  onClick,
+  vinylSize = 'lg',
+}) {
   const [imgOk, setImgOk] = useState(true);
   const hasImage = !!coverImage && imgOk;
   const isLarge = vinylSize === 'xl';
@@ -63,7 +72,8 @@ function VinylCard({ gradientClass, albumName, coverImage, isSelected, isFocused
             <div
               className={cn(
                 'vinyl-label-spin w-full h-full',
-                isSelected ? 'animate-spin-vinyl' : 'group-hover:animate-spin-vinyl-slow'
+                isSelected && spinWhenSelected && 'animate-spin-vinyl',
+                !isSelected && 'group-hover:animate-spin-vinyl-slow'
               )}
             >
               <img
@@ -100,6 +110,7 @@ export default function AlbumCard({
   size = 'md',
   isSelected = false,
   isFocused = false,
+  spinWhenSelected = true,
   onClick,
 }) {
   const [imgOk, setImgOk] = useState(true);
@@ -113,6 +124,7 @@ export default function AlbumCard({
         coverImage={coverImage}
         isSelected={isSelected}
         isFocused={isFocused}
+        spinWhenSelected={spinWhenSelected}
         onClick={onClick}
         vinylSize={size}
       />

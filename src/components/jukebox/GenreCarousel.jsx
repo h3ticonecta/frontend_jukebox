@@ -4,7 +4,7 @@ import { useInfiniteMarquee } from '../../hooks/useInfiniteMarquee';
 import { GenreCarouselSkeleton } from '../shared/Skeleton';
 import AlbumCard from './AlbumCard';
 
-function GenreSlide({ genre, isSelected, isFocused, onActivate }) {
+function GenreSlide({ genre, isSelected, isFocused, isClone, onActivate }) {
   return (
     <div className="flex flex-col items-center gap-2.5 shrink-0 w-[200px]" data-genre-id={genre.id}>
       <AlbumCard
@@ -15,6 +15,7 @@ function GenreSlide({ genre, isSelected, isFocused, onActivate }) {
         artistName=""
         isSelected={isSelected}
         isFocused={isFocused}
+        spinWhenSelected={!isClone}
         onClick={() => onActivate(genre)}
       />
       <button
@@ -89,15 +90,20 @@ export default function GenreCarousel({
         onDragStart={(event) => event.preventDefault()}
       >
         <div className="flex w-max gap-8 pr-8 pt-8 pb-3">
-          {loopGenres.map((genre, index) => (
-            <GenreSlide
-              key={`${genre.id}-${index}`}
-              genre={genre}
-              isSelected={selectedGenre?.id === genre.id}
-              isFocused={focusedGenreId === genre.id}
-              onActivate={handleActivate}
-            />
-          ))}
+          {loopGenres.map((genre, index) => {
+            const isClone = index >= genres.length;
+            const isSelected = selectedGenre?.id === genre.id && !isClone;
+            return (
+              <GenreSlide
+                key={`${genre.id}-${index}`}
+                genre={genre}
+                isSelected={isSelected}
+                isFocused={focusedGenreId === genre.id && !isClone}
+                isClone={isClone}
+                onActivate={handleActivate}
+              />
+            );
+          })}
         </div>
       </div>
     </section>
