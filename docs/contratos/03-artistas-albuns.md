@@ -18,6 +18,7 @@ Grid fixo de **3 colunas** com cards quadrados de **artistas/bandas** dentro da 
 | Capa no card | ✅ |
 | Contagem "N músicas" | ✅ |
 | Seleção carrega faixas | ✅ |
+| Marcação amarela no artista selecionado (anel `ring-primary`, igual SUCESSOS) | ✅ |
 | Skeleton ao carregar (`AlbumGridSkeleton`) | ✅ |
 | Cancelamento de requisição ao trocar categoria | ✅ |
 | Cache em memória por SUCESSO (sem áudio) | ✅ |
@@ -88,6 +89,10 @@ Se `folders[]` estiver vazio mas houver faixas em `musicas` / `musicas_list`:
 - Carrega as faixas diretamente (sem grid de artistas)
 
 ---
+
+## Seleção visual
+
+O card selecionado (`selectedAlbum`) usa o mesmo padrão do vinil SUCESSOS: `ring-2 ring-primary`, `ring-offset-2` e brilho âmbar. O anel fica no botão externo (sem `overflow-hidden`) para não ser cortado. Foco por teclado sem seleção ativa usa anel ciano (`ring-secondary`).
 
 ## Ao selecionar artista
 

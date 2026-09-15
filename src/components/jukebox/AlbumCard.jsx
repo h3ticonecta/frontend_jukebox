@@ -137,30 +137,35 @@ export default function AlbumCard({
       onClick={onClick}
       className={cn(
         SIZES[size],
-        'rounded-lg flex flex-col items-center justify-center gap-1',
-        'transition-all duration-300 hover:scale-105 active:scale-95',
-        'neon-border-amber cursor-pointer shrink-0 overflow-hidden relative group touch-manipulation',
-        isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_18px_hsl(var(--primary)/0.5)]',
-        isFocused && !isSelected && 'ring-2 ring-secondary ring-offset-2 ring-offset-background shadow-[0_0_14px_hsl(var(--secondary)/0.45)]'
+        'rounded-lg relative transition-transform duration-300 hover:scale-105 active:scale-95',
+        'cursor-pointer shrink-0 group touch-manipulation',
+        isSelected &&
+          'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_18px_hsl(var(--primary)/0.5)]',
+        isFocused &&
+          !isSelected &&
+          'ring-2 ring-secondary ring-offset-2 ring-offset-background shadow-[0_0_14px_hsl(var(--secondary)/0.45)]',
+        !isSelected && !isFocused && 'neon-border-amber'
       )}
     >
-      {hasImage ? (
-        <img
-          src={coverImage}
-          alt={albumName}
-          draggable={false}
-          className="absolute inset-0 w-full h-full object-cover img-no-drag pointer-events-none select-none"
-          onDragStart={(event) => event.preventDefault()}
-          onError={() => setImgOk(false)}
-        />
-      ) : (
-        <div className={cn('absolute inset-0 bg-gradient-to-br flex items-center justify-center', gradientClass)}>
-          <Disc className="text-foreground/80" size={22} />
+      <div className="absolute inset-0 rounded-[inherit] overflow-hidden">
+        {hasImage ? (
+          <img
+            src={coverImage}
+            alt={albumName}
+            draggable={false}
+            className="absolute inset-0 w-full h-full object-cover img-no-drag pointer-events-none select-none"
+            onDragStart={(event) => event.preventDefault()}
+            onError={() => setImgOk(false)}
+          />
+        ) : (
+          <div className={cn('absolute inset-0 bg-gradient-to-br flex items-center justify-center', gradientClass)}>
+            <Disc className="text-foreground/80" size={22} />
+          </div>
+        )}
+        <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/70 to-transparent z-10">
+          <p className="text-foreground text-xs font-display truncate">{albumName}</p>
+          <p className="text-foreground/70 text-[10px] truncate">{artistName}</p>
         </div>
-      )}
-      <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/70 to-transparent z-10">
-        <p className="text-foreground text-xs font-display truncate">{albumName}</p>
-        <p className="text-foreground/70 text-[10px] truncate">{artistName}</p>
       </div>
     </button>
   );
