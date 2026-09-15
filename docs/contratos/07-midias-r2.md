@@ -83,6 +83,8 @@ Sem token, sem proxy. O Service Worker (`public/sw.js`) intercepta GET de áudio
 
 Progresso em `PrefetchBanner` (fases: SUCESSOS → artistas → músicas → capas). Enquanto roda, download e refresh ficam desabilitados.
 
+**Resiliência:** cada `fetchMusicas` na fase de músicas usa até **3 tentativas** com backoff; falha em um artista/álbum **não** interrompe o restante. Intervalo de **50ms** entre pastas de músicas. Se houver falhas parciais, o header exibe aviso (`Cache offline parcial: …`) e o que foi baixado permanece no IndexedDB.
+
 ---
 
 ## Fallback no frontend

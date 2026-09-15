@@ -265,7 +265,7 @@ export function useLibrary(token) {
     setError(null);
 
     try {
-      await runCatalogPrefetch({
+      const result = await runCatalogPrefetch({
         token,
         cache: cacheRef.current,
         signal: controller.signal,
@@ -274,6 +274,23 @@ export function useLibrary(token) {
         mapTrack,
         parseAlbumsPayload,
       });
+
+      if (result.partial) {
+        const parts = [];
+        if (result.failures.genres > 0) {
+          parts.push(`${result.failures.genres} SUCESSO(s) sem artistas`);
+        }
+        if (result.tracksTotal > 0 && result.failures.tracks > 0) {
+          parts.push(
+            `${result.tracksLoaded}/${result.tracksTotal} pastas de músicas (${result.failures.tracks} falhas)`
+          );
+        }
+        setError(
+          parts.length > 0
+            ? `Cache offline parcial: ${parts.join('; ')}.`
+            : 'Cache offline parcial — alguns itens não foram baixados.'
+        );
+      }
 
       const cachedGenres = cacheRef.current.getGenres();
       if (cachedGenres?.length) {
