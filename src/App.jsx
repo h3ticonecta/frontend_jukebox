@@ -71,7 +71,7 @@ function JukeboxApp() {
       if (!token || !track?.media_url) return false;
 
       if (getCreditsBalance() < CREDITS_PER_SONG) {
-        setActionError('Créditos insuficientes. Insira créditos para tocar músicas.');
+        setActionError('Créditos insuficientes');
         return false;
       }
 
@@ -197,7 +197,7 @@ function JukeboxApp() {
 
       const requiredCredits = (queue.length + 1) * CREDITS_PER_SONG;
       if (getCreditsBalance() < requiredCredits) {
-        setActionError('Créditos insuficientes. Insira créditos para adicionar músicas à fila.');
+        setActionError('Créditos insuficientes');
         return;
       }
 
@@ -359,7 +359,6 @@ function JukeboxApp() {
               handlePlay(track);
             }}
             onAddToQueue={handleAddToQueue}
-            canAddToQueue={credits >= (queue.length + 1) * CREDITS_PER_SONG}
             isLoading={library.loading.tracks}
           />
         </div>

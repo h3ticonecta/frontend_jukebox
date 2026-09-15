@@ -10,7 +10,6 @@ export default function SongSidePanel({
   focusedTrackId,
   onPlay,
   onAddToQueue,
-  canAddToQueue = true,
   isLoading = false,
 }) {
   if (!album) {
@@ -84,17 +83,10 @@ export default function SongSidePanel({
               )}
               <button
                 type="button"
-                title={canAddToQueue ? 'Adicionar à fila' : 'Créditos insuficientes'}
-                disabled={!canAddToQueue}
-                className={cn(
-                  'p-2 min-w-[40px] min-h-[40px] flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 active:scale-95 transition-all touch-manipulation',
-                  canAddToQueue
-                    ? 'text-muted-foreground hover:text-secondary'
-                    : 'text-muted-foreground/40 cursor-not-allowed'
-                )}
+                title="Adicionar à fila"
+                className="p-2 min-w-[40px] min-h-[40px] flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 active:scale-95 transition-all touch-manipulation text-muted-foreground hover:text-secondary"
                 onClick={(event) => {
                   event.stopPropagation();
-                  if (!canAddToQueue) return;
                   onAddToQueue(track);
                 }}
               >
