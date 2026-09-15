@@ -64,12 +64,12 @@ handlePlay(track)
   // não adiciona à fila — "Tocando agora" é separado da fila de espera
 
 handleAddToQueue(track)  // tecla "fila" / botão na lista
-  → botão sempre clicável; exige saldo ≥ (fila.length + 1) × CREDITS_PER_SONG
+  → botão sempre clicável; exige saldo ≥ 1 × CREDITS_PER_SONG
   → se insuficiente: mensagem "Créditos insuficientes" no header (sem adicionar)
-  → adiciona à fila local (sem tocar nem debitar — débito ao tocar)
+  → debita 1 crédito localmente e adiciona à fila (sem tocar)
 
 handlePlayNext()  // fim da faixa, botão próximo ou tecla "pular"
-  → se fila.length > 0: toca fila[0] (POST tocadas + débito) e remove da fila
+  → se fila.length > 0: toca fila[0] (POST tocadas, sem novo débito) e remove da fila
   → senão: para o player (não avança no álbum — jukebox pago)
 ```
 

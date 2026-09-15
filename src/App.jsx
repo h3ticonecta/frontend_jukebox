@@ -67,10 +67,10 @@ function JukeboxApp() {
   }, [library.selectedAlbum, library.selectedGenre]);
 
   const playTrack = useCallback(
-    async (track) => {
+    async (track, { fromQueue = false } = {}) => {
       if (!token || !track?.media_url) return false;
 
-      if (getCreditsBalance() < CREDITS_PER_SONG) {
+      if (!fromQueue && getCreditsBalance() < CREDITS_PER_SONG) {
         setActionError('Créditos insuficientes');
         return false;
       }
@@ -90,8 +90,10 @@ function JukeboxApp() {
           valor: DEFAULT_SONG_PRICE,
         });
 
-        const nextCredits = deductCredits(CREDITS_PER_SONG);
-        setCredits(nextCredits);
+        if (!fromQueue) {
+          const nextCredits = deductCredits(CREDITS_PER_SONG);
+          setCredits(nextCredits);
+        }
 
         playFromPlaylist({
           ...track,
@@ -115,7 +117,7 @@ function JukeboxApp() {
     if (waiting.length > 0) {
       const [nextTrack, ...rest] = waiting;
       setQueue(rest);
-      const played = await playTrack(nextTrack);
+      const played = await playTrack(nextTrack, { fromQueue: true });
       if (!played) {
         setQueue((prev) => [nextTrack, ...prev]);
         player.clearCurrentSong();
@@ -195,13 +197,15 @@ function JukeboxApp() {
     (track) => {
       if (!token || !track?.media_url) return;
 
-      const requiredCredits = (queue.length + 1) * CREDITS_PER_SONG;
-      if (getCreditsBalance() < requiredCredits) {
+      if (getCreditsBalance() < CREDITS_PER_SONG) {
         setActionError('Créditos insuficientes');
         return;
       }
 
       setActionError(null);
+      const nextCredits = deductCredits(CREDITS_PER_SONG);
+      setCredits(nextCredits);
+
       const album = library.selectedAlbum || library.selectedGenre;
       setQueue((prev) => [
         ...prev,
@@ -211,7 +215,7 @@ function JukeboxApp() {
         },
       ]);
     },
-    [token, queue.length, library.selectedAlbum, library.selectedGenre]
+    [token, library.selectedAlbum, library.selectedGenre]
   );
 
   const handlePlay = useCallback(
