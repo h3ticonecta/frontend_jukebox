@@ -4,12 +4,21 @@ import { useInfiniteMarquee } from '../../hooks/useInfiniteMarquee';
 import { GenreCarouselSkeleton } from '../shared/Skeleton';
 import AlbumCard from './AlbumCard';
 
-function GenreSlide({ genre, marqueeIndex, isSelected, isFocused, isClone, onActivate }) {
+function GenreSlide({
+  genre,
+  copyIndex,
+  copyItemIndex,
+  isSelected,
+  isFocused,
+  spinWhenSelected,
+  onActivate,
+}) {
   return (
     <div
       className="flex flex-col items-center gap-2.5 shrink-0 w-[200px]"
       data-genre-id={genre.id}
-      data-marquee-index={marqueeIndex}
+      data-copy-index={copyItemIndex}
+      data-loop-copy={copyIndex}
     >
       <AlbumCard
         size="xl"
@@ -19,20 +28,20 @@ function GenreSlide({ genre, marqueeIndex, isSelected, isFocused, isClone, onAct
         artistName=""
         isSelected={isSelected}
         isFocused={isFocused}
-        spinWhenSelected={!isClone}
+        spinWhenSelected={spinWhenSelected}
         onClick={() => onActivate(genre)}
       />
       <button
         type="button"
         onClick={() => onActivate(genre)}
-        className="text-sm font-semibold text-foreground/80 text-center leading-tight max-w-full px-1 touch-manipulation hover:text-foreground active:scale-[0.98] transition-colors"
+        className="text-sm font-semibold text-foreground/80 text-center leading-tight max-w-full px-1 min-h-[2.5rem] line-clamp-2 touch-manipulation hover:text-foreground active:scale-[0.98] transition-colors"
       >
         {genre.name}
       </button>
       <button
         type="button"
         onClick={() => onActivate(genre)}
-        className="text-xs text-muted-foreground touch-manipulation hover:text-foreground/80 active:scale-[0.98] transition-colors"
+        className="text-xs text-muted-foreground min-h-[1rem] touch-manipulation hover:text-foreground/80 active:scale-[0.98] transition-colors"
       >
         {genre.countLabel}
       </button>
@@ -49,7 +58,7 @@ export default function GenreCarousel({
 }) {
   const loopGenres = useMemo(() => {
     if (genres.length === 0) return [];
-    return [...genres, ...genres];
+    return [...genres, ...genres, ...genres];
   }, [genres]);
 
   const { scrollerRef, trackRef, wasDragged, pauseForInteraction, scrollToItemIndex } = useInfiniteMarquee({
@@ -84,7 +93,7 @@ export default function GenreCarousel({
     const index = pendingScrollIndexRef.current;
     if (index == null || genres.length === 0) return;
 
-    scrollToItemIndex(index, genres.length);
+    scrollToItemIndex(index);
     pendingScrollIndexRef.current = null;
   }, [selectedGenre?.id, genres.length, loopGenres.length, scrollToItemIndex]);
 
@@ -112,22 +121,25 @@ export default function GenreCarousel({
 
       <div
         ref={scrollerRef}
-        className="genre-marquee-mask overflow-x-auto overflow-y-hidden scrollbar-hide cursor-grab active:cursor-grabbing touch-pan-x select-none"
+        className="genre-marquee-mask overflow-x-auto overflow-y-hidden scrollbar-hide cursor-grab active:cursor-grabbing touch-pan-x select-none pe-8"
         style={{ WebkitOverflowScrolling: 'touch' }}
         onDragStart={(event) => event.preventDefault()}
       >
-        <div ref={trackRef} className="genre-marquee-track flex w-max gap-8 pr-8 pt-8 pb-3">
+        <div ref={trackRef} className="genre-marquee-track flex w-max gap-8 pt-8 pb-3">
           {loopGenres.map((genre, index) => {
-            const isClone = index >= genres.length;
+            const copyIndex = Math.floor(index / genres.length);
+            const copyItemIndex = index % genres.length;
+            const isMiddleCopy = copyIndex === 1;
             const isSelected = selectedGenre?.id === genre.id;
             return (
               <GenreSlide
-                key={`${genre.id}-${index}`}
+                key={`${genre.id}-${copyIndex}-${copyItemIndex}`}
                 genre={genre}
-                marqueeIndex={index}
+                copyIndex={copyIndex}
+                copyItemIndex={copyItemIndex}
                 isSelected={isSelected}
-                isFocused={focusedGenreId === genre.id && !isClone}
-                isClone={isClone}
+                isFocused={focusedGenreId === genre.id && isMiddleCopy}
+                spinWhenSelected={isSelected && isMiddleCopy}
                 onActivate={handleActivate}
               />
             );

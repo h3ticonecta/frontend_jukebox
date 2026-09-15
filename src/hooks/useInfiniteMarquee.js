@@ -14,22 +14,34 @@ function preventNativeDrag(event) {
   event.preventDefault();
 }
 
-function getLoopWidth(track, itemCount) {
-  if (!track || itemCount <= 0) return 0;
+function getLoopWidth(track) {
+  if (!track) return 0;
 
+  const first = track.querySelector('[data-loop-copy="0"][data-copy-index="0"]');
+  const second = track.querySelector('[data-loop-copy="1"][data-copy-index="0"]');
+  if (first instanceof HTMLElement && second instanceof HTMLElement) {
+    return second.offsetLeft - first.offsetLeft;
+  }
+
+  const itemCount = track.querySelectorAll('[data-loop-copy="0"]').length;
   const cloneStart = track.children[itemCount];
   if (cloneStart instanceof HTMLElement) {
     return cloneStart.offsetLeft;
   }
 
-  return track.scrollWidth / 2;
+  return track.scrollWidth / 3;
 }
 
-function wrapOffset(offset, half) {
-  if (half <= 0) return offset;
+function wrapOffset(offset, loopWidth) {
+  if (loopWidth <= 0) return offset;
+
+  const min = loopWidth;
+  const max = loopWidth * 2;
   let next = offset;
-  while (next >= half) next -= half;
-  while (next < 0) next += half;
+
+  while (next >= max) next -= loopWidth;
+  while (next < min) next += loopWidth;
+
   return next;
 }
 
@@ -45,6 +57,7 @@ export function useInfiniteMarquee({
   const scrollerRef = useRef(null);
   const trackRef = useRef(null);
   const itemCountRef = useRef(itemCount);
+  const loopWidthRef = useRef(0);
   const offsetRef = useRef(1);
   const modeRef = useRef('auto');
   const pausedRef = useRef(false);
@@ -56,74 +69,95 @@ export function useInfiniteMarquee({
 
   itemCountRef.current = itemCount;
 
-  const getHalf = useCallback((track) => getLoopWidth(track, itemCountRef.current), []);
+  const getLoopWidthCached = useCallback((track) => {
+    const measured = getLoopWidth(track);
+    if (measured > 0) {
+      loopWidthRef.current = measured;
+    }
+    return loopWidthRef.current;
+  }, []);
 
-  const recalibratePosition = useCallback(
+  const syncOffsetFromLayout = useCallback(
     (scroller, track) => {
-      const half = getHalf(track);
-      if (half <= 0) return;
+      const loopWidth = getLoopWidthCached(track);
+      if (loopWidth <= 0) return;
 
       if (modeRef.current === 'auto') {
-        offsetRef.current = wrapOffset(offsetRef.current, half);
+        offsetRef.current = wrapOffset(offsetRef.current, loopWidth);
         applyTransform(track, offsetRef.current);
         scroller.scrollLeft = 0;
       } else {
-        scroller.scrollLeft = wrapOffset(scroller.scrollLeft, half);
+        scroller.scrollLeft = wrapOffset(scroller.scrollLeft, loopWidth);
         offsetRef.current = scroller.scrollLeft;
       }
     },
-    [getHalf]
+    [getLoopWidthCached]
   );
 
-  const enterManualMode = useCallback((scroller, track) => {
-    if (!scroller || !track) return;
+  const enterManualMode = useCallback(
+    (scroller, track) => {
+      if (!scroller || !track) return;
 
-    const half = getHalf(track);
-    const offset =
-      modeRef.current === 'auto' ? offsetRef.current : wrapOffset(scroller.scrollLeft, half);
+      const loopWidth = getLoopWidthCached(track);
+      const offset =
+        modeRef.current === 'auto' ? offsetRef.current : wrapOffset(scroller.scrollLeft, loopWidth);
 
-    offsetRef.current = wrapOffset(offset, half);
-    track.style.transform = '';
-    scroller.style.overflowX = 'auto';
-    scroller.scrollLeft = offsetRef.current;
-    modeRef.current = 'manual';
-  }, [getHalf]);
+      offsetRef.current = wrapOffset(offset, loopWidth);
+      track.style.transform = '';
+      scroller.style.overflowX = 'auto';
+      scroller.scrollLeft = offsetRef.current;
+      modeRef.current = 'manual';
+    },
+    [getLoopWidthCached]
+  );
 
-  const enterAutoMode = useCallback((scroller, track) => {
-    if (!scroller || !track) return;
+  const enterAutoMode = useCallback(
+    (scroller, track) => {
+      if (!scroller || !track) return;
 
-    const half = getHalf(track);
-    const offset =
-      modeRef.current === 'manual' ? scroller.scrollLeft : offsetRef.current;
+      const loopWidth = getLoopWidthCached(track);
+      const offset = modeRef.current === 'manual' ? scroller.scrollLeft : offsetRef.current;
 
-    offsetRef.current = wrapOffset(offset, half);
-    applyTransform(track, offsetRef.current);
-    scroller.scrollLeft = 0;
-    scroller.style.overflowX = 'hidden';
-    modeRef.current = 'auto';
-  }, [getHalf]);
+      offsetRef.current = wrapOffset(offset, loopWidth);
+      applyTransform(track, offsetRef.current);
+      scroller.scrollLeft = 0;
+      scroller.style.overflowX = 'hidden';
+      modeRef.current = 'auto';
+    },
+    [getLoopWidthCached]
+  );
 
-  const wrapManualScroll = useCallback((scroller, track) => {
-    const half = getHalf(track);
-    if (half <= 0) return;
+  const wrapManualScroll = useCallback(
+    (scroller, track) => {
+      const loopWidth = getLoopWidthCached(track);
+      if (loopWidth <= 0) return;
 
-    let jumped = 0;
-    while (scroller.scrollLeft >= half) {
-      scroller.scrollLeft -= half;
-      jumped -= half;
-    }
+      const min = loopWidth;
+      const max = loopWidth * 2;
+      let jumped = 0;
 
-    if (scroller.scrollLeft <= 0 && dragRef.current.active) {
-      scroller.scrollLeft += half;
-      jumped += half;
-    }
+      while (scroller.scrollLeft >= max) {
+        scroller.scrollLeft -= loopWidth;
+        jumped -= loopWidth;
+      }
 
-    if (jumped !== 0 && dragRef.current.active) {
-      dragRef.current.startScroll += jumped;
-    }
+      if (scroller.scrollLeft < min) {
+        if (dragRef.current.active || scroller.scrollLeft <= 0) {
+          scroller.scrollLeft += loopWidth;
+          jumped += loopWidth;
+        } else {
+          scroller.scrollLeft = min;
+        }
+      }
 
-    offsetRef.current = scroller.scrollLeft;
-  }, [getHalf]);
+      if (jumped !== 0 && dragRef.current.active) {
+        dragRef.current.startScroll += jumped;
+      }
+
+      offsetRef.current = scroller.scrollLeft;
+    },
+    [getLoopWidthCached]
+  );
 
   const pauseAuto = useCallback(() => {
     pausedRef.current = true;
@@ -158,31 +192,35 @@ export function useInfiniteMarquee({
   }, [enterManualMode, pauseAuto, scheduleResume]);
 
   const scrollToItemIndex = useCallback(
-    (index, itemCount) => {
+    (index) => {
       const scroller = scrollerRef.current;
       const track = trackRef.current;
-      if (!scroller || !track || itemCount <= 0 || index < 0 || index >= itemCount) return;
+      const count = itemCountRef.current;
+      if (!scroller || !track || count <= 0 || index < 0 || index >= count) return;
 
-      const slides = track.querySelectorAll('[data-marquee-index]');
-      const firstCopy = slides[index];
-      const secondCopy = slides[index + itemCount];
-      if (!firstCopy) return;
+      const primarySlide = track.querySelector(
+        `[data-loop-copy="1"][data-copy-index="${index}"]`
+      );
+      if (!(primarySlide instanceof HTMLElement)) return;
 
       const centerOffsetFor = (slide) =>
         slide.offsetLeft + slide.offsetWidth / 2 - scroller.clientWidth / 2;
 
-      const current =
-        modeRef.current === 'auto' ? offsetRef.current : scroller.scrollLeft;
-      let target = centerOffsetFor(firstCopy);
-      if (secondCopy) {
-        const alternate = centerOffsetFor(secondCopy);
+      const loopWidth = getLoopWidthCached(track);
+      const current = modeRef.current === 'auto' ? offsetRef.current : scroller.scrollLeft;
+      let target = centerOffsetFor(primarySlide);
+
+      const alternateSlide = track.querySelector(
+        `[data-loop-copy="0"][data-copy-index="${index}"]`
+      );
+      if (alternateSlide instanceof HTMLElement) {
+        const alternate = centerOffsetFor(alternateSlide);
         if (Math.abs(alternate - current) < Math.abs(target - current)) {
           target = alternate;
         }
       }
 
-      const half = getHalf(track);
-      target = wrapOffset(target, half);
+      target = wrapOffset(target, loopWidth);
       offsetRef.current = target;
 
       isAutoScrollingRef.current = true;
@@ -197,7 +235,7 @@ export function useInfiniteMarquee({
         isAutoScrollingRef.current = false;
       });
     },
-    [getHalf, wrapManualScroll]
+    [getLoopWidthCached, wrapManualScroll]
   );
 
   useEffect(() => {
@@ -207,12 +245,19 @@ export function useInfiniteMarquee({
     const track = trackRef.current;
     if (!scroller || !track) return undefined;
 
+    const loopWidth = getLoopWidthCached(track);
+    offsetRef.current = loopWidth > 0 ? loopWidth + 1 : 1;
     enterAutoMode(scroller, track);
 
     const resizeObserver =
       typeof ResizeObserver !== 'undefined'
         ? new ResizeObserver(() => {
-            recalibratePosition(scroller, track);
+            const nextLoopWidth = getLoopWidth(track);
+            if (nextLoopWidth <= 0 || Math.abs(nextLoopWidth - loopWidthRef.current) < 1) {
+              return;
+            }
+            loopWidthRef.current = nextLoopWidth;
+            syncOffsetFromLayout(scroller, track);
           })
         : null;
 
@@ -221,8 +266,8 @@ export function useInfiniteMarquee({
     const tick = () => {
       if (!pausedRef.current && modeRef.current === 'auto') {
         isAutoScrollingRef.current = true;
-        const half = getHalf(track);
-        offsetRef.current = wrapOffset(offsetRef.current + SCROLL_SPEED, half);
+        const width = getLoopWidthCached(track);
+        offsetRef.current = wrapOffset(offsetRef.current + SCROLL_SPEED, width);
         applyTransform(track, offsetRef.current);
         scroller.scrollLeft = 0;
         isAutoScrollingRef.current = false;
@@ -267,16 +312,18 @@ export function useInfiniteMarquee({
         }
       }
 
-      const half = getHalf(track);
+      const loopWidth = getLoopWidthCached(track);
       let next = dragRef.current.startScroll - delta;
-      if (half > 0) {
-        while (next >= half) {
-          next -= half;
-          dragRef.current.startScroll -= half;
+      if (loopWidth > 0) {
+        const min = loopWidth;
+        const max = loopWidth * 2;
+        while (next >= max) {
+          next -= loopWidth;
+          dragRef.current.startScroll -= loopWidth;
         }
-        while (next < 0) {
-          next += half;
-          dragRef.current.startScroll += half;
+        while (next < min) {
+          next += loopWidth;
+          dragRef.current.startScroll += loopWidth;
         }
       }
       scroller.scrollLeft = next;
@@ -353,7 +400,16 @@ export function useInfiniteMarquee({
       scroller.removeEventListener('touchend', onTouchEnd);
       scroller.removeEventListener('touchcancel', onTouchEnd);
     };
-  }, [enabled, enterAutoMode, enterManualMode, getHalf, pauseAuto, recalibratePosition, scheduleResume, wrapManualScroll]);
+  }, [
+    enabled,
+    enterAutoMode,
+    enterManualMode,
+    getLoopWidthCached,
+    pauseAuto,
+    scheduleResume,
+    syncOffsetFromLayout,
+    wrapManualScroll,
+  ]);
 
   return { scrollerRef, trackRef, wasDragged, pauseForInteraction, scrollToItemIndex };
 }
