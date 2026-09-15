@@ -63,6 +63,38 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     scheduleResume();
   }, [pauseAuto, scheduleResume]);
 
+  const scrollToItemIndex = useCallback(
+    (index, itemCount) => {
+      const el = scrollerRef.current;
+      if (!el || itemCount <= 0 || index < 0 || index >= itemCount) return;
+
+      const slides = el.querySelectorAll('[data-marquee-index]');
+      const firstCopy = slides[index];
+      const secondCopy = slides[index + itemCount];
+      if (!firstCopy) return;
+
+      const centerScrollFor = (slide) => slide.offsetLeft + slide.offsetWidth / 2 - el.clientWidth / 2;
+
+      const current = el.scrollLeft;
+      let target = centerScrollFor(firstCopy);
+      if (secondCopy) {
+        const alternate = centerScrollFor(secondCopy);
+        if (Math.abs(alternate - current) < Math.abs(target - current)) {
+          target = alternate;
+        }
+      }
+
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      isAutoScrollingRef.current = true;
+      el.scrollLeft = Math.round(Math.max(0, Math.min(maxScroll, target)));
+      wrapScroll(el);
+      requestAnimationFrame(() => {
+        isAutoScrollingRef.current = false;
+      });
+    },
+    [wrapScroll]
+  );
+
   useEffect(() => {
     if (!enabled) return undefined;
 
@@ -190,5 +222,5 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     };
   }, [enabled, pauseAuto, scheduleResume, wrapScroll]);
 
-  return { scrollerRef, wasDragged, pauseForInteraction };
+  return { scrollerRef, wasDragged, pauseForInteraction, scrollToItemIndex };
 }

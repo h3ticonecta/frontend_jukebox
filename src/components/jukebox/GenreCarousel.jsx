@@ -1,12 +1,16 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { Star } from 'lucide-react';
 import { useInfiniteMarquee } from '../../hooks/useInfiniteMarquee';
 import { GenreCarouselSkeleton } from '../shared/Skeleton';
 import AlbumCard from './AlbumCard';
 
-function GenreSlide({ genre, isSelected, isFocused, isClone, onActivate }) {
+function GenreSlide({ genre, marqueeIndex, isSelected, isFocused, isClone, onActivate }) {
   return (
-    <div className="flex flex-col items-center gap-2.5 shrink-0 w-[200px]" data-genre-id={genre.id}>
+    <div
+      className="flex flex-col items-center gap-2.5 shrink-0 w-[200px]"
+      data-genre-id={genre.id}
+      data-marquee-index={marqueeIndex}
+    >
       <AlbumCard
         size="xl"
         gradientClass={genre.coverColor}
@@ -48,9 +52,10 @@ export default function GenreCarousel({
     return [...genres, ...genres];
   }, [genres]);
 
-  const { scrollerRef, wasDragged, pauseForInteraction } = useInfiniteMarquee({
+  const { scrollerRef, wasDragged, pauseForInteraction, scrollToItemIndex } = useInfiniteMarquee({
     enabled: genres.length > 0,
   });
+  const pendingScrollIndexRef = useRef(null);
 
   const handleActivate = useCallback(
     (genre) => {
@@ -60,6 +65,27 @@ export default function GenreCarousel({
     },
     [onSelectGenre, pauseForInteraction, wasDragged]
   );
+
+  useEffect(() => {
+    if (!selectedGenre?.id || genres.length === 0) {
+      pendingScrollIndexRef.current = null;
+      return;
+    }
+
+    const index = genres.findIndex((genre) => genre.id === selectedGenre.id);
+    if (index < 0) return;
+
+    pendingScrollIndexRef.current = index;
+    pauseForInteraction();
+  }, [selectedGenre?.id, genres, pauseForInteraction]);
+
+  useLayoutEffect(() => {
+    const index = pendingScrollIndexRef.current;
+    if (index == null || genres.length === 0) return;
+
+    scrollToItemIndex(index, genres.length);
+    pendingScrollIndexRef.current = null;
+  }, [selectedGenre?.id, genres.length, loopGenres.length, scrollToItemIndex]);
 
   if (isLoading && genres.length === 0) {
     return <GenreCarouselSkeleton />;
@@ -97,6 +123,7 @@ export default function GenreCarousel({
               <GenreSlide
                 key={`${genre.id}-${index}`}
                 genre={genre}
+                marqueeIndex={index}
                 isSelected={isSelected}
                 isFocused={focusedGenreId === genre.id && !isClone}
                 isClone={isClone}
