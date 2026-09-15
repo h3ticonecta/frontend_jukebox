@@ -111,7 +111,7 @@ export default function GenreCarousel({
 
       <div
         ref={scrollerRef}
-        className="genre-marquee-mask overflow-x-auto overflow-y-hidden scrollbar-hide cursor-grab active:cursor-grabbing touch-none select-none"
+        className="genre-marquee-mask overflow-x-auto overflow-y-hidden scrollbar-hide cursor-grab active:cursor-grabbing touch-pan-x select-none"
         style={{ WebkitOverflowScrolling: 'touch' }}
         onDragStart={(event) => event.preventDefault()}
       >

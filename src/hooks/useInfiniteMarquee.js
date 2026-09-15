@@ -14,19 +14,6 @@ function preventNativeDrag(event) {
   event.preventDefault();
 }
 
-function getHalfWidth(el) {
-  if (!el) return 0;
-  return el.scrollWidth / 2;
-}
-
-function wrapScrollLeft(left, half) {
-  if (half <= 0) return left;
-  let next = left;
-  while (next >= half) next -= half;
-  while (next < 0) next += half;
-  return next;
-}
-
 export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RESUME_DELAY_MS } = {}) {
   const scrollerRef = useRef(null);
   const pausedRef = useRef(false);
@@ -36,13 +23,22 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
   const suppressClickUntilRef = useRef(0);
   const isAutoScrollingRef = useRef(false);
 
-  const syncScroll = useCallback((el, left) => {
-    const half = getHalfWidth(el);
-    const next = wrapScrollLeft(left, half);
-    if (next !== el.scrollLeft) {
-      el.scrollLeft = next;
+  const wrapScroll = useCallback((el) => {
+    const half = el.scrollWidth / 2;
+    if (half <= 0) return;
+
+    let jumped = 0;
+    if (el.scrollLeft >= half) {
+      el.scrollLeft -= half;
+      jumped = -half;
+    } else if (el.scrollLeft <= 0 && dragRef.current.active) {
+      el.scrollLeft += half;
+      jumped = half;
     }
-    return next;
+
+    if (jumped !== 0 && dragRef.current.active) {
+      dragRef.current.startScroll += jumped;
+    }
   }, []);
 
   const pauseAuto = useCallback(() => {
@@ -89,12 +85,13 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
       }
 
       isAutoScrollingRef.current = true;
-      syncScroll(el, target);
+      el.scrollLeft = target;
+      wrapScroll(el);
       requestAnimationFrame(() => {
         isAutoScrollingRef.current = false;
       });
     },
-    [syncScroll]
+    [wrapScroll]
   );
 
   useEffect(() => {
@@ -103,24 +100,19 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     const el = scrollerRef.current;
     if (!el) return undefined;
 
-    const endAutoScrollFrame = () => {
-      requestAnimationFrame(() => {
-        isAutoScrollingRef.current = false;
-      });
-    };
-
     const tick = () => {
       if (!pausedRef.current) {
         isAutoScrollingRef.current = true;
-        syncScroll(el, el.scrollLeft + SCROLL_SPEED);
-        endAutoScrollFrame();
+        el.scrollLeft += SCROLL_SPEED;
+        wrapScroll(el);
+        isAutoScrollingRef.current = false;
       }
       rafRef.current = requestAnimationFrame(tick);
     };
 
     rafRef.current = requestAnimationFrame(tick);
 
-    const initialHalf = getHalfWidth(el);
+    const initialHalf = el.scrollWidth / 2;
     if (initialHalf > 0 && el.scrollLeft < 1) {
       el.scrollLeft = 1;
     }
@@ -153,7 +145,7 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
         }
       }
 
-      const half = getHalfWidth(el);
+      const half = el.scrollWidth / 2;
       let next = dragRef.current.startScroll - delta;
       if (half > 0) {
         while (next >= half) {
@@ -191,11 +183,20 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
 
     const onScroll = () => {
       if (isAutoScrollingRef.current) return;
-      syncScroll(el, el.scrollLeft);
+      wrapScroll(el);
     };
 
     const onWheel = () => {
       pauseAuto();
+      scheduleResume();
+    };
+
+    const onTouchStart = (event) => {
+      if (isFormControl(event.target)) return;
+      pauseAuto();
+    };
+
+    const onTouchEnd = () => {
       scheduleResume();
     };
 
@@ -207,6 +208,9 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
     el.addEventListener('click', onClickCapture, true);
     el.addEventListener('scroll', onScroll, { passive: true });
     el.addEventListener('wheel', onWheel, { passive: true });
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
+    el.addEventListener('touchcancel', onTouchEnd, { passive: true });
 
     return () => {
       cancelAnimationFrame(rafRef.current);
@@ -219,8 +223,11 @@ export function useInfiniteMarquee({ enabled = true, resumeDelayMs = MARQUEE_RES
       el.removeEventListener('click', onClickCapture, true);
       el.removeEventListener('scroll', onScroll);
       el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchend', onTouchEnd);
+      el.removeEventListener('touchcancel', onTouchEnd);
     };
-  }, [enabled, pauseAuto, scheduleResume, syncScroll]);
+  }, [enabled, pauseAuto, scheduleResume, wrapScroll]);
 
   return { scrollerRef, wasDragged, pauseForInteraction, scrollToItemIndex };
 }
