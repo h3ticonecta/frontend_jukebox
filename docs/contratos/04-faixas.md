@@ -68,13 +68,13 @@ Authorization: Maquina <token>
 | `key` / `path` | `track.key` via `resolveTrackKey()` | ID + `musica_key` em tocadas (`path`, `file_key`, ou `name`+pasta) |
 | `media_url` | `track.media_url` | `<audio src>` |
 | `cover_url` | `track.cover_url` | Capa no player/fila |
-| `duration_seconds` | `track.duration_seconds` | Duração na lista e player (`4:21`); `null` → `--:--` |
+| `duration_seconds` | `track.duration_seconds` | Segunda linha do item em `SongSidePanel` (`4:21`); `null` → `--:--`; player no rodapé |
 
 ### Regras de exibição
 
 1. Título: `title` (ou `name` sem extensão) — **nunca repetir** o nome do álbum no título.
-2. Subtítulo: artista extraído de `folder_path` — só exibe se diferente do título.
-3. **Não** usar nome da pasta selecionada como artista (evita textos incorretos como "(Na Na Na)").
+2. Abaixo do título: **duração original** da faixa (`formatDuration`), não o nome da pasta/álbum.
+3. Subtítulo por artista (`folder_path`) não é exibido na lista lateral (evita repetir “SELEÇÃO …” como segunda linha).
 
 ```javascript
 // src/lib/library.js

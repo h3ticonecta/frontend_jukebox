@@ -72,15 +72,15 @@ export default function SongSidePanel({
               </span>
               <div className="flex-1 min-w-0">
                 <p className={cn('text-sm truncate', isPlaying && 'text-primary font-semibold')}>{track.title}</p>
-                {track.artist && track.artist !== track.title && (
-                  <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
-                )}
+                <p
+                  className={cn(
+                    'text-xs tabular-nums',
+                    isPlaying ? 'text-primary/70' : 'text-muted-foreground'
+                  )}
+                >
+                  {track.duration_seconds != null ? formatDuration(track.duration_seconds) : '--:--'}
+                </p>
               </div>
-              {track.duration_seconds != null && (
-                <span className="text-xs text-muted-foreground tabular-nums shrink-0">
-                  {formatDuration(track.duration_seconds)}
-                </span>
-              )}
               <button
                 type="button"
                 title="Adicionar à fila"
