@@ -125,7 +125,12 @@ function JukeboxApp() {
 
         const started = await playFromPlaylist(song);
         if (!started) return false;
-        markPlayingInQueue(song);
+        if (fromQueue) {
+          markPlayingInQueue(song);
+        } else {
+          // Reprodução direta pela lista: substitui a fila — não tocar as próximas faixas do álbum.
+          setQueue([{ ...song, playbackStarted: true }]);
+        }
         return true;
       } catch (err) {
         setActionError(err.message || 'Erro ao registrar música tocada');
@@ -312,25 +317,12 @@ function JukeboxApp() {
     const tracks = library.tracks;
     if (!tracks.length || !token) return;
 
-    const focusedIndex = library.selectedTrack
-      ? tracks.findIndex((track) => track.id === library.selectedTrack.id)
-      : -1;
-    const startIndex = focusedIndex >= 0 ? focusedIndex : 0;
-    const ordered = [...tracks.slice(startIndex), ...tracks.slice(0, startIndex)];
+    const track = library.selectedTrack || tracks[0];
+    if (!track) return;
 
     setActionError(null);
-
-    const started = await playTrack(ordered[0]);
-    if (!started) return;
-
-    for (let index = 1; index < ordered.length; index += 1) {
-      if (getCreditsBalance() < CREDITS_PER_SONG) {
-        setActionError('Créditos insuficientes para enfileirar o CD completo');
-        break;
-      }
-      handleAddToQueue(ordered[index]);
-    }
-  }, [library.tracks, library.selectedTrack, token, playTrack, handleAddToQueue]);
+    await playTrack(track);
+  }, [library.tracks, library.selectedTrack, token, playTrack]);
 
   const handleCancel = useCallback(() => {
     setKeysPanelOpen(false);

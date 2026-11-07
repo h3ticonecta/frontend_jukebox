@@ -61,9 +61,10 @@ Exibe músicas aguardando reprodução e a faixa **tocando agora** com equalizad
 ## Fluxo atual
 
 ```javascript
-handlePlay(track)
+handlePlay(track)  // clique na lista / tecla Tocar CD na faixa
   → POST /maquinas/tocadas/ + debita 1 crédito
-  → coloca a faixa em fila[0] (`playbackStarted: true`) e reproduz
+  → **substitui** a fila: só esta faixa em fila[0] (`playbackStarted: true`)
+  → não toca automaticamente as demais faixas do álbum
 
 handleAddToQueue(track)  // tecla "fila" / botão na lista
   → botão sempre clicável; exige saldo ≥ 1 × CREDITS_PER_SONG

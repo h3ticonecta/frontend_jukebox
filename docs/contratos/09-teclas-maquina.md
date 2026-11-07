@@ -109,7 +109,7 @@ Valores especiais de exibição:
 | `hits` | Foco na seção SUCESSOS + scroll |
 | `fila` | **Ativa** o item focado: destaca fila (2s) e, se o foco está em uma faixa, adiciona à fila local |
 | `pular` | Pula faixa e toca próxima da fila |
-| `tocar_cd` | **Zona `genres`:** foco no 1º artista. **Zona `albums`:** só desce o foco para a lista de músicas (não toca). **Zona `tracks`:** toca a faixa focada (ou a 1ª) e enfileira o restante do álbum |
+| `tocar_cd` | **Zona `genres`:** foco no 1º artista. **Zona `albums`:** só desce o foco para a lista de músicas (não toca). **Zona `tracks`:** toca **somente** a faixa focada (ou a 1ª) — não enfileira o álbum inteiro; use `fila` para cada música escolhida |
 | `vol_mais` | Volume +10% |
 | `vol_menos` | Volume −10% |
 | `cancelar` | Fecha painéis e limpa erros |
