@@ -1,5 +1,7 @@
 # Contrato 09 — Teclas da Máquina
 
+> **Backend:** ações e teclas padrão definidas no contrato **`09-maquinas`** (`teclas[]` no login e em `GET /config/`). Ver também [01-sessao-dispositivo.md](./01-sessao-dispositivo.md).
+
 ## Componentes frontend
 
 - `src/components/jukebox/KeysPanel.jsx` — painel read-only TECLAS
@@ -23,6 +25,28 @@ Atalhos físicos do jukebox são configurados **somente no admin Django**. O app
 | Listener global | ✅ |
 | Navegação estilo TAB (foco visual) | ✅ |
 | Tecla crédito → inserir 1 crédito | ✅ |
+| Tecla `tocar_cd` (Tocar CD) | ✅ |
+
+---
+
+## Ações padrão (backend)
+
+| `acao` | Label padrão | Tecla padrão |
+|--------|--------------|--------------|
+| `cima` | Cima | `Q` |
+| `baixo` | Baixo | `W` |
+| `esquerda` | Esquerda | `E` |
+| `direita` | Direita | `R` |
+| `credito` | Crédito | `K` |
+| `hits` | HITS | `I` |
+| `fila` | Fila | `F` |
+| `pular` | Pular | `P` |
+| `tocar_cd` | Tocar CD | `C` |
+| `vol_mais` | Vol+ | `PgUp` |
+| `vol_menos` | Vol- | `PgDn` |
+| `cancelar` | Cancelar | `Enter` |
+
+O admin pode remapear só o campo `tecla`; `label` vem do backend para exibição.
 
 ---
 
@@ -42,6 +66,7 @@ Atalhos físicos do jukebox são configurados **somente no admin Django**. O app
   { "acao": "hits", "label": "HITS", "tecla": "I" },
   { "acao": "fila", "label": "Fila", "tecla": "F" },
   { "acao": "pular", "label": "Pular", "tecla": "P" },
+  { "acao": "tocar_cd", "label": "Tocar CD", "tecla": "C" },
   { "acao": "vol_mais", "label": "Vol+", "tecla": "PgUp" },
   { "acao": "vol_menos", "label": "Vol-", "tecla": "PgDn" },
   { "acao": "cancelar", "label": "Cancelar", "tecla": "Enter" }
@@ -84,6 +109,7 @@ Valores especiais de exibição:
 | `hits` | Foco na seção SUCESSOS + scroll |
 | `fila` | **Ativa** o item focado: destaca fila (2s) e, se o foco está em uma faixa, adiciona à fila local |
 | `pular` | Pula faixa e toca próxima da fila |
+| `tocar_cd` | Toca a faixa atual (ou a 1ª) do álbum/pasta aberto e **enfileira** o restante na ordem (1 crédito por item enfileirado; para se faltar crédito) |
 | `vol_mais` | Volume +10% |
 | `vol_menos` | Volume −10% |
 | `cancelar` | Fecha painéis e limpa erros |

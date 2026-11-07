@@ -71,6 +71,15 @@ O client lança `ApiError` com `message`, `status` e `data`.
 | `POST` | `/api/v1/maquinas/creditos/` | 06 | Maquina |
 | `POST` | `/api/v1/maquinas/tocadas/` | 04 | Maquina |
 
+### Máquinas (`/api/v1/maquinas/`) — escopo do app
+
+| Token | Uso |
+|-------|-----|
+| **Maquina** `<token>` | App jukebox: biblioteca, config, créditos, tocadas, leitura |
+| **Token** `<jwt>` admin | CRUD de máquinas no backoffice — **não** usado neste repo |
+
+Eventos de crédito e música tocada: contratos [06](./06-creditos.md) e [04](./04-faixas.md). Cadastro/login/teclas: [01](./01-sessao-dispositivo.md) e [09](./09-teclas-maquina.md).
+
 ### Não utilizados (legado dos contratos antigos)
 
 Estes endpoints **não existem** na integração atual:

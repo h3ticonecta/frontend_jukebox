@@ -7,8 +7,26 @@ import {
   getMaquinaToken,
   getMaquinaTeclas,
   setMaquinaSession,
+  patchMaquinaInfo,
   updateMaquinaTeclas,
 } from '../lib/storage';
+
+function mapLoginErrorMessage(err) {
+  const code = err?.data?.error?.code;
+  if (code === 'INVALID_CREDENTIALS') {
+    return 'Usuário ou senha inválidos.';
+  }
+  if (code === 'MACHINE_INACTIVE') {
+    return 'Máquina inativa. Contate o administrador.';
+  }
+  return (
+    err?.data?.error?.message ||
+    err?.data?.non_field_errors?.[0] ||
+    err?.data?.detail ||
+    err?.message ||
+    'Falha no login da máquina'
+  );
+}
 import { idbClearCatalog } from '../lib/idbCatalog';
 
 const AuthContext = createContext(null);
@@ -46,13 +64,7 @@ export function AuthProvider({ children }) {
       setTeclas(sessionTeclas);
       return data;
     } catch (err) {
-      const message =
-        err?.data?.error?.message ||
-        err?.data?.non_field_errors?.[0] ||
-        err?.data?.detail ||
-        err.message ||
-        'Falha no login da máquina';
-      setError(message);
+      setError(mapLoginErrorMessage(err));
       throw err;
     } finally {
       setIsLoading(false);
@@ -75,6 +87,18 @@ export function AuthProvider({ children }) {
       if (data?.teclas) {
         setTeclas(data.teclas);
         updateMaquinaTeclas(data.teclas);
+      }
+      if (data?.nome_jukebox || data?.usuario || data?.id) {
+        setMachine((current) => ({
+          id: data.id ?? current?.id,
+          nome_jukebox: data.nome_jukebox ?? current?.nome_jukebox,
+          usuario: data.usuario ?? current?.usuario,
+        }));
+        patchMaquinaInfo({
+          id: data.id,
+          nome_jukebox: data.nome_jukebox,
+          usuario: data.usuario,
+        });
       }
       return data;
     } catch {

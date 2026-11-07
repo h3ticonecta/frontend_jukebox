@@ -7,6 +7,7 @@ export const TECLAS_DISPLAY_ORDER = [
   'hits',
   'fila',
   'pular',
+  'tocar_cd',
   'vol_mais',
   'vol_menos',
   'cancelar',

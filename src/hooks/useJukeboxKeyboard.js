@@ -23,6 +23,7 @@ export function useJukeboxKeyboard({
   onSkip,
   onVolume,
   onCancel,
+  onPlayCd,
 }) {
   const [focusZone, setFocusZone] = useState('genres');
 
@@ -249,6 +250,9 @@ export function useJukeboxKeyboard({
         case 'pular':
           onSkip();
           break;
+        case 'tocar_cd':
+          onPlayCd?.();
+          break;
         case 'vol_mais':
           onVolume(0.1);
           break;
@@ -278,6 +282,7 @@ export function useJukeboxKeyboard({
       onSkip,
       onVolume,
       onCancel,
+      onPlayCd,
     ]
   );
 

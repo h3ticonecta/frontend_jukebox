@@ -71,6 +71,13 @@ export function updateMaquinaTeclas(teclas) {
   setMaquinaSession({ token, ...info, teclas });
 }
 
+export function patchMaquinaInfo(patch) {
+  const token = getMaquinaToken();
+  const info = getMaquinaInfo() || {};
+  if (!token || !patch) return;
+  setMaquinaSession({ token, ...info, ...patch });
+}
+
 export function getCreditsBalance() {
   const raw = localStorage.getItem(KEYS.CREDITS);
   const value = Number(raw);

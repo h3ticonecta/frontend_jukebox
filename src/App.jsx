@@ -308,6 +308,30 @@ function JukeboxApp() {
     [token, playTrack]
   );
 
+  const handlePlayCd = useCallback(async () => {
+    const tracks = library.tracks;
+    if (!tracks.length || !token) return;
+
+    const focusedIndex = library.selectedTrack
+      ? tracks.findIndex((track) => track.id === library.selectedTrack.id)
+      : -1;
+    const startIndex = focusedIndex >= 0 ? focusedIndex : 0;
+    const ordered = [...tracks.slice(startIndex), ...tracks.slice(0, startIndex)];
+
+    setActionError(null);
+
+    const started = await playTrack(ordered[0]);
+    if (!started) return;
+
+    for (let index = 1; index < ordered.length; index += 1) {
+      if (getCreditsBalance() < CREDITS_PER_SONG) {
+        setActionError('Créditos insuficientes para enfileirar o CD completo');
+        break;
+      }
+      handleAddToQueue(ordered[index]);
+    }
+  }, [library.tracks, library.selectedTrack, token, playTrack, handleAddToQueue]);
+
   const handleCancel = useCallback(() => {
     setKeysPanelOpen(false);
     setBillingOpen(false);
@@ -323,6 +347,7 @@ function JukeboxApp() {
     onSkip: handleSkip,
     onVolume: (delta) => audio.adjustVolume(delta),
     onCancel: handleCancel,
+    onPlayCd: handlePlayCd,
   });
 
   useKeyboardShortcuts({
