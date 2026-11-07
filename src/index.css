@@ -130,7 +130,7 @@
     backface-visibility: hidden;
   }
 
-  .genre-slide-focus {
+  .genre-carousel-focus {
     border: 2px solid hsl(var(--primary) / 0.9);
     border-radius: 1.25rem;
     box-shadow:

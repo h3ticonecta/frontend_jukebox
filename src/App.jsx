@@ -378,6 +378,7 @@ function JukeboxApp() {
             genres={library.genres}
             selectedGenre={library.selectedGenre}
             focusedGenreId={keyboard.focusedGenreId}
+            genresZoneFocused={keyboard.focusZone === 'genres'}
             onSelectGenre={(genre) => {
               library.selectGenre(genre);
               keyboard.setFocusZone('genres');

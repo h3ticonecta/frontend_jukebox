@@ -16,10 +16,7 @@ function GenreSlide({
 }) {
   return (
     <div
-      className={cn(
-        'flex flex-col items-center gap-2.5 shrink-0 w-[200px] rounded-[1.25rem] px-3 py-3 transition-shadow duration-200',
-        isFocused && 'genre-slide-focus'
-      )}
+      className="flex flex-col items-center gap-2.5 shrink-0 w-[200px]"
       data-genre-id={genre.id}
       data-copy-index={copyItemIndex}
       data-loop-copy={copyIndex}
@@ -31,7 +28,7 @@ function GenreSlide({
         coverImage={genre.cover}
         artistName=""
         isSelected={isSelected}
-        isFocused={false}
+        isFocused={isFocused}
         spinWhenSelected={spinWhenSelected}
         onClick={() => onActivate(genre)}
       />
@@ -57,6 +54,7 @@ export default function GenreCarousel({
   genres,
   selectedGenre,
   focusedGenreId,
+  genresZoneFocused = false,
   onSelectGenre,
   isLoading = false,
 }) {
@@ -113,30 +111,37 @@ export default function GenreCarousel({
       </div>
 
       <div
-        ref={scrollerRef}
-        className="genre-marquee-mask overflow-x-auto overflow-y-hidden scrollbar-hide cursor-grab active:cursor-grabbing touch-pan-x select-none pe-8"
-        style={{ WebkitOverflowScrolling: 'touch' }}
-        onDragStart={(event) => event.preventDefault()}
+        className={cn(
+          'rounded-[1.25rem] px-3 py-3 transition-shadow duration-200',
+          genresZoneFocused && 'genre-carousel-focus'
+        )}
       >
-        <div ref={trackRef} className="genre-marquee-track flex w-max gap-8 pt-6 pb-5">
-          {loopGenres.map((genre, index) => {
-            const copyIndex = Math.floor(index / genres.length);
-            const copyItemIndex = index % genres.length;
-            const isMiddleCopy = copyIndex === 1;
-            const isSelected = selectedGenre?.id === genre.id;
-            return (
-              <GenreSlide
-                key={`${genre.id}-${copyIndex}-${copyItemIndex}`}
-                genre={genre}
-                copyIndex={copyIndex}
-                copyItemIndex={copyItemIndex}
-                isSelected={isSelected}
-                isFocused={focusedGenreId === genre.id && isMiddleCopy}
-                spinWhenSelected={isSelected && isMiddleCopy}
-                onActivate={handleActivate}
-              />
-            );
-          })}
+        <div
+          ref={scrollerRef}
+          className="genre-marquee-mask overflow-x-auto overflow-y-hidden scrollbar-hide cursor-grab active:cursor-grabbing touch-pan-x select-none pe-4"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+          onDragStart={(event) => event.preventDefault()}
+        >
+          <div ref={trackRef} className="genre-marquee-track flex w-max gap-8 pt-8 pb-3">
+            {loopGenres.map((genre, index) => {
+              const copyIndex = Math.floor(index / genres.length);
+              const copyItemIndex = index % genres.length;
+              const isMiddleCopy = copyIndex === 1;
+              const isSelected = selectedGenre?.id === genre.id;
+              return (
+                <GenreSlide
+                  key={`${genre.id}-${copyIndex}-${copyItemIndex}`}
+                  genre={genre}
+                  copyIndex={copyIndex}
+                  copyItemIndex={copyItemIndex}
+                  isSelected={isSelected}
+                  isFocused={focusedGenreId === genre.id && isMiddleCopy}
+                  spinWhenSelected={isSelected && isMiddleCopy}
+                  onActivate={handleActivate}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
