@@ -124,8 +124,10 @@ audio.play({ ...track, media_url })
 ### Vídeo (MP4) — `VideoStage`
 
 - Detecção: `isVideoTrack()` em `src/lib/library.js` — `media_type: "video"` da API (backend já envia) ou fallback por extensão (`.mp4`, `.m4v`, `.webm`, `.mkv`, `.mov`, `.avi`)
-- Faixa de vídeo tocando → overlay full screen (z-30, sob o `PlayerBar`/popups) com o vídeo em `object-contain`; faixa de áudio → palco invisível
-- Botão **X** fecha a visualização (a reprodução continua — dá para navegar e montar a fila); botão flutuante **"Ver vídeo"** reabre. A cada nova faixa de vídeo o palco reabre automaticamente
+- Faixa de vídeo tocando → **tela cheia** (z-30, sob o `PlayerBar`/popups) com o vídeo em `object-contain`; faixa de áudio → palco invisível
+- **Qualquer tecla** (ou botão minimizar) → **mini player** ~380px no canto inferior direito, acima do `PlayerBar`: a tecla mantém sua ação normal (navegar, `fila`, crédito…), então dá para escolher mais faixas e montar a fila durante o clipe
+- Clique no mini player ou botão maximizar → volta à tela cheia; botão **X** (tela cheia ou mini) fecha de vez — só o áudio continua e o botão flutuante **"Ver vídeo"** reabre
+- A cada nova faixa de vídeo o palco volta à tela cheia automaticamente; o elemento `<video>` nunca é desmontado nas transições (reprodução não para)
 - Faixas de vídeo mostram selo "vídeo" (`Clapperboard`) na lista lateral
 - Vídeos **não** entram no pré-cache do Service Worker (arquivos grandes) — streaming direto do `media_url`
 
