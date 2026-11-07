@@ -74,7 +74,7 @@ O front usa a **tecla** de `vol` (ou legado); o JSON só documenta o comportamen
 
 ### Vídeo em tela cheia
 
-Com uma faixa de vídeo (MP4) tocando em tela cheia (`VideoStage`), **qualquer tecla** minimiza o vídeo para o mini player (~380 px, canto inferior direito) — a tecla também executa sua ação normal (navegar, `fila`, crédito…), permitindo montar a fila de espera durante o clipe. O mini player **volta sozinho à tela cheia após 5 minutos**; toque nele (ou no botão maximizar) expande antes disso.
+Com uma faixa de vídeo (MP4) tocando em tela cheia (`VideoStage`), **qualquer tecla** minimiza o vídeo para o mini player (~380 px, canto inferior direito) — a tecla também executa sua ação normal (navegar, `fila`, crédito…), permitindo montar a fila de espera durante o clipe. O mini player **volta sozinho à tela cheia após 3 minutos**; toque nele (ou no botão maximizar) expande antes disso.
 
 ---
 
