@@ -1,6 +1,7 @@
 import { useCallback, useLayoutEffect, useMemo } from 'react';
 import { Star } from 'lucide-react';
 import { useInfiniteMarquee } from '../../hooks/useInfiniteMarquee';
+import { cn } from '../../lib/utils';
 import { GenreCarouselSkeleton } from '../shared/Skeleton';
 import AlbumCard from './AlbumCard';
 
@@ -15,7 +16,10 @@ function GenreSlide({
 }) {
   return (
     <div
-      className="flex flex-col items-center gap-2.5 shrink-0 w-[200px]"
+      className={cn(
+        'flex flex-col items-center gap-2.5 shrink-0 w-[200px] rounded-[1.25rem] px-3 py-3 transition-shadow duration-200',
+        isFocused && 'genre-slide-focus'
+      )}
       data-genre-id={genre.id}
       data-copy-index={copyItemIndex}
       data-loop-copy={copyIndex}
@@ -27,7 +31,7 @@ function GenreSlide({
         coverImage={genre.cover}
         artistName=""
         isSelected={isSelected}
-        isFocused={isFocused}
+        isFocused={false}
         spinWhenSelected={spinWhenSelected}
         onClick={() => onActivate(genre)}
       />
@@ -114,7 +118,7 @@ export default function GenreCarousel({
         style={{ WebkitOverflowScrolling: 'touch' }}
         onDragStart={(event) => event.preventDefault()}
       >
-        <div ref={trackRef} className="genre-marquee-track flex w-max gap-8 pt-8 pb-3">
+        <div ref={trackRef} className="genre-marquee-track flex w-max gap-8 pt-6 pb-5">
           {loopGenres.map((genre, index) => {
             const copyIndex = Math.floor(index / genres.length);
             const copyItemIndex = index % genres.length;
