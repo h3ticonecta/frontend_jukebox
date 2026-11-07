@@ -103,7 +103,10 @@ function JukeboxApp() {
       }
 
       try {
-        const tocadaPayload = buildMusicaTocadaPayload(song, album);
+        const tocadaPayload = buildMusicaTocadaPayload(song, {
+          album: library.selectedAlbum,
+          genre: library.selectedGenre,
+        });
         if (!tocadaPayload.musica_key) {
           setActionError('Faixa sem chave no catálogo — não foi possível registrar a tocada.');
           return false;

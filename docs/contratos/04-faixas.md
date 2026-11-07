@@ -104,7 +104,7 @@ Authorization: Maquina <token>
 }
 ```
 
-Montado com `buildMusicaTocadaPayload()` (`src/lib/library.js`) em `playTrack()` antes do áudio. `pasta` com barra final; erros `400` exibem campos da API (`formatApiErrorMessage` em `client.js`).
+Montado com `buildMusicaTocadaPayload()` (`src/lib/library.js`) em `playTrack()` antes do áudio. `pasta` com barra final; `cover_url` nunca `null` (cascade faixa → álbum → SUCESSO, senão `""`). Erros `400` exibem campos da API (`formatApiErrorMessage` em `client.js`).
 
 ---
 

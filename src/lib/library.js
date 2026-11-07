@@ -42,11 +42,27 @@ export function normalizeMusicFolderPath(path) {
   return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
 }
 
-export function buildMusicaTocadaPayload(track, album, valor = DEFAULT_SONG_PRICE) {
-  const musicaKey = resolveTrackKey(track);
-  const pasta = normalizeMusicFolderPath(
-    resolveTrackFolderPath(track, album?.path || '')
+export function resolveCoverUrlForTocada(track, { album = null, genre = null } = {}) {
+  return (
+    track?.cover_url ||
+    track?.cover ||
+    album?.cover ||
+    genre?.cover ||
+    ''
   );
+}
+
+export function buildMusicaTocadaPayload(
+  track,
+  { album = null, genre = null } = {},
+  valor = DEFAULT_SONG_PRICE
+) {
+  const musicaKey = resolveTrackKey(track);
+  const folderSource = album || genre;
+  const pasta = normalizeMusicFolderPath(
+    resolveTrackFolderPath(track, folderSource?.path || '')
+  );
+  const coverUrl = resolveCoverUrlForTocada(track, { album, genre });
 
   return {
     musica_key: musicaKey,
@@ -55,7 +71,7 @@ export function buildMusicaTocadaPayload(track, album, valor = DEFAULT_SONG_PRIC
     pasta,
     media_type: track.media_type || 'audio',
     media_url: track.media_url || track.audio_url || null,
-    cover_url: track.cover_url || track.cover || album?.cover || null,
+    cover_url: coverUrl,
     valor,
   };
 }
