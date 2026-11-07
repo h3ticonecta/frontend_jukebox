@@ -71,7 +71,8 @@ Authorization: Maquina <token>
 | `name` | Título do overlay no card |
 | `cover_url` | Imagem de fundo do card |
 | `countLabel` | Subtítulo: `"64 músicas"` (quando `subfolders_count === 0`) |
-| `meta.total` equivalente | `({albums.length})` no header da seção |
+| `totals.current_folders` | Contagem no header `ARTISTAS / BANDAS (N)` (`albumsFolderTotal`); fallback `folders.length` |
+| Lista na troca de SUCESSO | `folders[]` — **não** usar `files_list` (vem vazio fora da busca) |
 
 ### Header da seção
 
@@ -81,9 +82,17 @@ ARTISTAS / BANDAS (N)
 
 ---
 
+## Parsing (`buildAlbumsStateFromApi` / `parseAlbumsPayload`)
+
+1. Se `folders[]` tiver itens → grade de artistas.
+2. Se `folders[]` vazio mas `totals.current_folders > 0` → grade vazia temporária (não cair no modo “flat” por `files_list` vazio).
+3. Modo flat (faixas direto na categoria) só quando `current_folders === 0` e há faixas em `musicas` / `musicas_list` / `files`.
+
+Helpers em `src/api/musicas.js`: `getFoldersFromResponse`, `getFolderTotalFromResponse`, `getNavigationTracksFromResponse`.
+
 ## Caso especial: faixas direto na categoria
 
-Se `folders[]` estiver vazio mas houver faixas em `musicas` / `musicas_list`:
+Se `folders[]` estiver vazio, `totals.current_folders === 0`, mas houver faixas em `musicas` / `musicas_list` / `files`:
 
 - O front cria um álbum sintético com o nome da categoria
 - Carrega as faixas diretamente (sem grid de artistas)

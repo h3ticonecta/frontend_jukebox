@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MUSIC_ROOT_PREFIX } from '../api/config';
-import { fetchMusicas, getFoldersFromResponse, getTracksFromResponse } from '../api/musicas';
+import {
+  fetchMusicas,
+  getFoldersFromResponse,
+  getNavigationTracksFromResponse,
+} from '../api/musicas';
 import { buildAlbumsStateFromApi, mapFolderFromApi, mapTrackFromApi } from '../lib/library';
 import { runCatalogPrefetch } from '../lib/catalogPrefetch';
 import { createLibraryCache } from '../lib/libraryCache';
@@ -40,10 +44,9 @@ function isAbortError(error) {
 
 function parseAlbumsPayload(data, genre) {
   const folders = getFoldersFromResponse(data);
-  const folderTracks = getTracksFromResponse(data);
 
   return buildAlbumsStateFromApi(
-    { ...data, folders, musicas: folderTracks },
+    { ...data, folders },
     genre,
     {
       mapFolder: (folder, index) => mapFolder(folder, index),
@@ -80,6 +83,7 @@ function pickInitialGenre(mapped, current) {
 export function useLibrary(token) {
   const [genres, setGenres] = useState([]);
   const [albums, setAlbums] = useState([]);
+  const [albumsFolderTotal, setAlbumsFolderTotal] = useState(0);
   const [tracks, setTracks] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState(null);
   const [genreSelectionKey, setGenreSelectionKey] = useState(0);
@@ -114,6 +118,7 @@ export function useLibrary(token) {
 
   const applyAlbumsState = useCallback((state) => {
     setAlbums(state.albums);
+    setAlbumsFolderTotal(state.folderTotal ?? state.albums?.length ?? 0);
     setTracks(state.tracks);
     setSelectedAlbum(state.selectedAlbum);
     selectedAlbumPathRef.current = state.selectedAlbum?.path ?? null;
@@ -235,7 +240,7 @@ export function useLibrary(token) {
       const result = await loadPrefix(albumPath, 'tracks', { silent });
       if (!result || selectedAlbumPathRef.current !== albumPath) return;
 
-      const folderTracks = getTracksFromResponse(result.data).map(mapTrack);
+      const folderTracks = getNavigationTracksFromResponse(result.data).map(mapTrack);
       cacheRef.current.setTracks(albumPath, folderTracks);
       setTracks(folderTracks);
       setSelectedAlbum(album);
@@ -392,6 +397,7 @@ export function useLibrary(token) {
         setSelectedAlbum(null);
         setTracks([]);
         setAlbums([]);
+        setAlbumsFolderTotal(0);
       }
 
       setGenreSelectionKey((key) => key + 1);
@@ -468,6 +474,7 @@ export function useLibrary(token) {
   return {
     genres,
     albums,
+    albumsFolderTotal,
     tracks,
     selectedGenre,
     selectedAlbum,

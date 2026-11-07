@@ -5,11 +5,13 @@ import { AlbumGridSkeleton } from '../shared/Skeleton';
 
 export default function AlbumBrowser({
   albums,
+  albumsTotal,
   selectedAlbumId,
   focusedAlbumId,
   onSelectAlbum,
   isLoading = false,
 }) {
+  const headerTotal = albumsTotal ?? albums.length;
   return (
     <div
       className="flex-1 flex min-h-0"
@@ -32,7 +34,7 @@ export default function AlbumBrowser({
           <h2 className="text-sm font-display text-secondary neon-glow-cyan whitespace-nowrap">
             ARTISTAS / BANDAS
           </h2>
-          <span className="text-xs text-muted-foreground ml-1">({albums.length})</span>
+          <span className="text-xs text-muted-foreground ml-1">({headerTotal})</span>
         </div>
 
         <div

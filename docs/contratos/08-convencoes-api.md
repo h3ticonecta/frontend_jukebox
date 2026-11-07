@@ -83,6 +83,15 @@ Estes endpoints **não existem** na integração atual:
 
 A biblioteca é navegada exclusivamente via `GET /musicas/?prefix=...`.
 
+### Corpo de `GET /musicas/` (navegação)
+
+| Campo | Uso no front |
+|-------|----------------|
+| `folders[]` | SUCESSOS (raiz) e **ARTISTAS / BANDAS** ao trocar categoria |
+| `totals.current_folders` | Contagem `(N)` no header de artistas (`albumsFolderTotal`) |
+| `musicas` / `files` | Faixas no prefixo do artista ou categoria “flat” |
+| `files_list` | **Somente busca** (`?q=`); vazio de propósito na navegação normal |
+
 ---
 
 ## CORS

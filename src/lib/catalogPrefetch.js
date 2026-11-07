@@ -1,5 +1,5 @@
 import { MUSIC_ROOT_PREFIX } from '../api/config';
-import { fetchMusicas, getTracksFromResponse } from '../api/musicas';
+import { fetchMusicas, getNavigationTracksFromResponse } from '../api/musicas';
 import { isPrefetchableCoverUrl } from './utils';
 
 const COVER_BATCH_SIZE = 8;
@@ -130,7 +130,7 @@ export async function runCatalogPrefetch({
 
     try {
       const data = await fetchMusicasWithRetry(token, { prefix: album.path, signal });
-      const tracks = getTracksFromResponse(data).map(mapTrack);
+      const tracks = getNavigationTracksFromResponse(data).map(mapTrack);
       cache.setTracks(album.path, tracks);
       tracksLoaded += 1;
     } catch (error) {

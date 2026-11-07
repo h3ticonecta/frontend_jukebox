@@ -149,7 +149,9 @@ Visual original do jukebox (`glass-surface`, vinil girando, barra de progresso n
 - Presente apenas em `media_type: "audio"` ou `"video"`
 - `timeupdate` no `<audio>` atualiza o tempo corrente no player
 
-Listas de faixas: `musicas`, `musicas_list`, `files` ou `files_list` (`getTracksFromResponse`).
+Navegação por `prefix` (artista/categoria): `getNavigationTracksFromResponse` — `musicas`, `musicas_list` ou `files` (`files_list` vazio fora da busca).
+
+Busca (`?q=`): `getTracksFromResponse` também considera `files_list`.
 
 ## Pendências
 

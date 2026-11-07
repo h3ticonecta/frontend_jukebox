@@ -26,14 +26,27 @@ export function formatFolderCountLabel({ subfoldersCount = 0, filesCount = 0 } =
 
 export function buildAlbumsStateFromApi(data, genre, { mapFolder, mapTrack }) {
   const folders = data?.folders || [];
-  const folderTracks =
-    data?.musicas || data?.musicas_list || data?.files || data?.files_list || [];
+  const folderTotal =
+    typeof data?.totals?.current_folders === 'number'
+      ? data.totals.current_folders
+      : folders.length;
+  const folderTracks = data?.musicas || data?.musicas_list || data?.files || [];
 
   if (folders.length > 0) {
     return {
       albums: folders.map((folder, index) => mapFolder(folder, index)),
       tracks: [],
       selectedAlbum: null,
+      folderTotal,
+    };
+  }
+
+  if (folderTotal > 0) {
+    return {
+      albums: [],
+      tracks: [],
+      selectedAlbum: null,
+      folderTotal,
     };
   }
 
@@ -54,6 +67,7 @@ export function buildAlbumsStateFromApi(data, genre, { mapFolder, mapTrack }) {
       albums: [albumEntry],
       tracks: folderTracks.map((track, index) => mapTrack(track, index)),
       selectedAlbum: albumEntry,
+      folderTotal: 0,
     };
   }
 
@@ -61,6 +75,7 @@ export function buildAlbumsStateFromApi(data, genre, { mapFolder, mapTrack }) {
     albums: [],
     tracks: [],
     selectedAlbum: null,
+    folderTotal: 0,
   };
 }
 
