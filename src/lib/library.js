@@ -1,4 +1,5 @@
 import { DEFAULT_SONG_PRICE } from '../api/config';
+import { resolveDurationSecondsFromTrack } from './trackDuration';
 import { parseDurationSeconds } from './utils';
 
 function stripExtension(filename) {
@@ -179,7 +180,7 @@ export function mapTrackFromApi(track, index, albumPath = '') {
     key,
     number: String(index + 1).padStart(2, '0'),
     title,
-    duration_seconds: isMedia ? parseDurationSeconds(track.duration_seconds) : null,
+    duration_seconds: isMedia ? resolveDurationSecondsFromTrack(track) : null,
     media_url: track.media_url || track.audio_url || track.media?.media_url || null,
     cover_url: track.cover_url || track.cover?.media_url || null,
     pasta: folderPath,

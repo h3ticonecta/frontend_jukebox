@@ -6,6 +6,7 @@ import {
   getNavigationTracksFromResponse,
 } from '../api/musicas';
 import { buildAlbumsStateFromApi, mapFolderFromApi, mapTrackFromApi } from '../lib/library';
+import { enrichTracksWithDurations, trackNeedsDurationProbe } from '../lib/trackDuration';
 import { runCatalogPrefetch } from '../lib/catalogPrefetch';
 import { createLibraryCache } from '../lib/libraryCache';
 import {
@@ -110,6 +111,7 @@ export function useLibrary(token) {
   });
   const selectedGenrePathRef = useRef(null);
   const selectedAlbumPathRef = useRef(null);
+  const trackDurationAbortRef = useRef(null);
 
   const isLoading = useMemo(
     () => loading.genres || loading.albums || loading.tracks,
@@ -221,6 +223,32 @@ export function useLibrary(token) {
     [loadPrefix, applyAlbumsState]
   );
 
+  const enrichAlbumTrackDurations = useCallback((albumPath, tracks) => {
+    if (!albumPath || !tracks?.some(trackNeedsDurationProbe)) return;
+
+    trackDurationAbortRef.current?.abort();
+    const controller = new AbortController();
+    trackDurationAbortRef.current = controller;
+
+    enrichTracksWithDurations(tracks, {
+      signal: controller.signal,
+      onTrackDuration: (index, duration_seconds) => {
+        if (selectedAlbumPathRef.current !== albumPath) return;
+        setTracks((prev) => {
+          const next = [...prev];
+          const item = next[index];
+          if (!item || item.duration_seconds != null) return prev;
+          next[index] = { ...item, duration_seconds };
+          return next;
+        });
+      },
+    }).then((enriched) => {
+      if (controller.signal.aborted || selectedAlbumPathRef.current !== albumPath) return;
+      cacheRef.current.setTracks(albumPath, enriched);
+      setTracks(enriched);
+    });
+  }, []);
+
   const loadAlbumTracks = useCallback(
     async (album) => {
       const albumPath = album?.path;
@@ -235,6 +263,7 @@ export function useLibrary(token) {
       if (cachedTracks) {
         setTracks(cachedTracks);
         setSelectedAlbum(album);
+        enrichAlbumTrackDurations(albumPath, cachedTracks);
       }
 
       const result = await loadPrefix(albumPath, 'tracks', { silent });
@@ -246,8 +275,9 @@ export function useLibrary(token) {
       cacheRef.current.setTracks(albumPath, folderTracks);
       setTracks(folderTracks);
       setSelectedAlbum(album);
+      enrichAlbumTrackDurations(albumPath, folderTracks);
     },
-    [loadPrefix]
+    [loadPrefix, enrichAlbumTrackDurations]
   );
 
   const refreshLibrary = useCallback(async () => {

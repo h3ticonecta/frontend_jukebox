@@ -142,12 +142,12 @@ Visual original do jukebox (`glass-surface`, vinil girando, barra de progresso n
 
 ### `duration_seconds`
 
-- Inteiro em segundos (`261` → `4:21` via `formatDuration()` em `src/lib/utils.js`)
-- Valor da API é normalizado com `parseDurationSeconds()` (aceita string numérica)
-- Pode ser `null` se a duração não foi extraída — UI exibe `--:--` no total do player
-- Fallback: `loadedmetadata` / `durationchange` do `<audio>` preenchem o total quando a API não envia duração
+- Inteiro em segundos (`261` → `2:44` via `formatDuration()` em `src/lib/utils.js`)
+- API: `resolveDurationSecondsFromTrack()` tenta `duration_seconds`, `duration`, `length`, `duracao`, ms, etc.
+- Lista lateral: se a API não enviar duração, `enrichTracksWithDurations()` lê `loadedmetadata` do `media_url` (até 3 faixas em paralelo) e atualiza cache/IndexedDB
+- Player: `loadedmetadata` / `timeupdate` no `<audio>` principal
+- Ausente em todos os fallbacks → `--:--` na lista e no total do player
 - Presente apenas em `media_type: "audio"` ou `"video"`
-- `timeupdate` no `<audio>` atualiza o tempo corrente no player
 
 Navegação por `prefix` (artista/categoria): `getNavigationTracksFromResponse` — `musicas`, `musicas_list` ou `files` (`files_list` vazio fora da busca).
 

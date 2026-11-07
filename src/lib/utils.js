@@ -14,8 +14,31 @@ export function isPrefetchableCoverUrl(url) {
   return IMAGE_URL_PATTERN.test(url);
 }
 
+export function parseTimecodeToSeconds(value) {
+  if (value == null || value === '') return null;
+  if (typeof value === 'number') return parseDurationSeconds(value);
+  if (typeof value !== 'string') return null;
+
+  const trimmed = value.trim();
+  if (!trimmed.includes(':')) return null;
+
+  const parts = trimmed.split(':').map((part) => Number(part.trim()));
+  if (parts.some((part) => !Number.isFinite(part) || part < 0)) return null;
+
+  if (parts.length === 2) {
+    return parts[0] * 60 + parts[1];
+  }
+  if (parts.length === 3) {
+    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  }
+  return null;
+}
+
 export function parseDurationSeconds(value) {
   if (value == null || value === '') return null;
+  if (typeof value === 'string' && value.includes(':')) {
+    return parseTimecodeToSeconds(value);
+  }
   const seconds = Number(value);
   return Number.isFinite(seconds) && seconds >= 0 ? seconds : null;
 }
