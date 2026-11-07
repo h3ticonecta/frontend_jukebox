@@ -1,4 +1,5 @@
-import { Disc, ListPlus, Play } from 'lucide-react';
+import { Clapperboard, Disc, ListPlus, Play } from 'lucide-react';
+import { isVideoTrack } from '../../lib/library';
 import { cn, formatDuration } from '../../lib/utils';
 import EmptyState from '../shared/EmptyState';
 import { TrackListSkeleton } from '../shared/Skeleton';
@@ -74,11 +75,17 @@ export default function SongSidePanel({
                 <p className={cn('text-sm truncate', isPlaying && 'text-primary font-semibold')}>{track.title}</p>
                 <p
                   className={cn(
-                    'text-xs tabular-nums',
+                    'text-xs tabular-nums flex items-center gap-1.5',
                     isPlaying ? 'text-primary/70' : 'text-muted-foreground'
                   )}
                 >
                   {track.duration_seconds != null ? formatDuration(track.duration_seconds) : '--:--'}
+                  {isVideoTrack(track) && (
+                    <span className="inline-flex items-center gap-1 text-secondary" title="Vídeo">
+                      <Clapperboard size={12} />
+                      <span className="text-[10px] uppercase tracking-wide">vídeo</span>
+                    </span>
+                  )}
                 </p>
               </div>
               <button

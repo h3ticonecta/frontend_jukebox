@@ -43,6 +43,21 @@ export function normalizeMusicFolderPath(path) {
   return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
 }
 
+const VIDEO_EXTENSIONS = ['.mp4', '.m4v', '.webm', '.mkv', '.mov', '.avi'];
+
+/**
+ * Detecta faixa de vídeo: `media_type: "video"` da API ou, como fallback,
+ * extensão de vídeo no media_url/key (URLs podem ter query string).
+ */
+export function isVideoTrack(track) {
+  if (!track) return false;
+  if (track.media_type === 'video') return true;
+  if (track.media_type === 'audio') return false;
+
+  const source = String(track.media_url || track.key || '').toLowerCase().split('?')[0];
+  return VIDEO_EXTENSIONS.some((ext) => source.endsWith(ext));
+}
+
 export function resolveCoverUrlForTocada(track, { album = null, genre = null } = {}) {
   return (
     track?.cover_url ||

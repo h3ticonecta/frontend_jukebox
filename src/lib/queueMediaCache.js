@@ -1,3 +1,5 @@
+import { isVideoTrack } from './library';
+
 export const QUEUE_PRECACHE_COUNT = 5;
 
 function uniqueUrls(urls) {
@@ -15,7 +17,11 @@ export function syncQueueMediaCache({ currentSong, queue = [] } = {}) {
   const upcoming = queue.slice(0, QUEUE_PRECACHE_COUNT);
   const tracks = currentSong ? [currentSong, ...upcoming] : upcoming;
 
-  const audioUrls = uniqueUrls(tracks.map((track) => track.media_url || track.audio_url));
+  // Vídeos (MP4) ficam fora do pré-cache: arquivos grandes demais para
+  // baixar em lote — o player faz streaming direto do media_url.
+  const audioUrls = uniqueUrls(
+    tracks.filter((track) => !isVideoTrack(track)).map((track) => track.media_url || track.audio_url)
+  );
   const coverUrls = uniqueUrls(tracks.map((track) => track.cover || track.cover_url));
 
   return postToServiceWorker({

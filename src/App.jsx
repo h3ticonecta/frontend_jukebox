@@ -28,6 +28,7 @@ import PlayerBar from './components/jukebox/PlayerBar';
 import SongSidePanel from './components/jukebox/SongSidePanel';
 import PrefetchBanner from './components/jukebox/PrefetchBanner';
 import SyncBanner from './components/jukebox/SyncBanner';
+import VideoStage from './components/jukebox/VideoStage';
 import VolumePopup from './components/jukebox/VolumePopup';
 import WaitQueuePanel from './components/jukebox/WaitQueuePanel';
 import CreditToast from './components/shared/CreditToast';
@@ -466,7 +467,6 @@ function JukeboxApp() {
         }
         playerBar={
           <PlayerBar
-            audioRef={audio.audioRef}
             currentSong={audio.currentSong}
             subtitle={buildPlayerSubtitle(
               audio.currentSong,
@@ -516,6 +516,7 @@ function JukeboxApp() {
       </JukeboxShell>
 
       <CreditToast visible={creditToastVisible} />
+      <VideoStage mediaRef={audio.audioRef} currentSong={audio.currentSong} />
       <VolumePopup volume={audio.volume} visible={volumePopupVisible} />
       {billingOpen && (
         <BillingModal

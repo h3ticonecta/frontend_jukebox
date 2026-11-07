@@ -4,6 +4,7 @@
 
 - `src/components/jukebox/SongSidePanel.jsx`
 - `src/components/jukebox/PlayerBar.jsx` — barra fixa inferior
+- `src/components/jukebox/VideoStage.jsx` — elemento `<video>` único do player + palco full screen para MP4
 - `src/components/jukebox/VolumePopup.jsx` — popup central ao mudar o volume
 - `src/hooks/useAudioPlayer.js` — reprodução
 - `src/hooks/useLibrary.js` → `loadAlbumTracks()`
@@ -28,6 +29,7 @@ Lista numerada de faixas do artista/álbum selecionado. Ao tocar, registra event
 | Anterior / Próximo (fila ou `tracks`) | ✅ |
 | Teclas `pular` e `vol` (botão único; legado vol_mais/menos migra) | ✅ |
 | Player com `media_url` direto | ✅ |
+| Reprodução de vídeo (MP4) em tela cheia (`VideoStage`) | ✅ |
 | Duração na lista lateral (`duration_seconds`) | ✅ |
 | Linha inteira clicável (touch/mouse) | ✅ |
 | Botões da fila visíveis em touch | ✅ |
@@ -112,12 +114,20 @@ Montado com `buildMusicaTocadaPayload()` (`src/lib/library.js`) em `playTrack()`
 
 ## Reprodução
 
-Elemento `<audio>` oculto em `PlayerBar.jsx`; controles na barra customizada.
+Elemento de mídia único: **`<video>`** montado em `VideoStage.jsx` (toca MP3 e MP4 — mesma API de mídia usada pelo `useAudioPlayer`); controles na barra customizada.
 
 ```javascript
 audio.play({ ...track, media_url })
 // Player usa media_url direto — sem proxy backend
 ```
+
+### Vídeo (MP4) — `VideoStage`
+
+- Detecção: `isVideoTrack()` em `src/lib/library.js` — `media_type: "video"` da API (backend já envia) ou fallback por extensão (`.mp4`, `.m4v`, `.webm`, `.mkv`, `.mov`, `.avi`)
+- Faixa de vídeo tocando → overlay full screen (z-30, sob o `PlayerBar`/popups) com o vídeo em `object-contain`; faixa de áudio → palco invisível
+- Botão **X** fecha a visualização (a reprodução continua — dá para navegar e montar a fila); botão flutuante **"Ver vídeo"** reabre. A cada nova faixa de vídeo o palco reabre automaticamente
+- Faixas de vídeo mostram selo "vídeo" (`Clapperboard`) na lista lateral
+- Vídeos **não** entram no pré-cache do Service Worker (arquivos grandes) — streaming direto do `media_url`
 
 ### Barra fixa (`PlayerBar`)
 
@@ -148,7 +158,7 @@ Visual original do jukebox (`glass-surface`, vinil girando, barra de progresso n
 - API: `resolveDurationSecondsFromTrack()` tenta `duration_seconds`, `duration`, `length`, `duracao`, ms, etc.
 - Lista lateral: `resolveMediaUrlFromTrack()` (vários campos de URL); `enrichTracksWithDurations()` lê metadados do áudio (com/sem `crossOrigin`); ao tocar, `onDurationKnown` grava a duração do player na lista (`patchTrackDuration`)
 - Cache de faixas sem `media_url` força novo `GET` do álbum (não usa `silent`)
-- Player: `loadedmetadata` / `timeupdate` no `<audio>` principal
+- Player: `loadedmetadata` / `timeupdate` no elemento de mídia principal (`<video>` em `VideoStage`)
 - Ausente em todos os fallbacks → `--:--` na lista e no total do player
 - Presente apenas em `media_type: "audio"` ou `"video"`
 
@@ -158,4 +168,4 @@ Busca (`?q=`): `getTracksFromResponse` também considera `files_list`.
 
 ## Pendências
 
-- [ ] Suporte a vídeo (`.mp4`) no player
+- [ ] Legendas/faixas alternativas de áudio em vídeos, se o catálogo exigir

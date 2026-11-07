@@ -28,7 +28,7 @@ Exibe músicas aguardando reprodução e a faixa **tocando agora** com equalizad
 | Pré-cache das próximas 5 faixas (Cache Storage) | ✅ |
 | Sincronização entre terminais | ❌ |
 
-> A fila **não** está no backend. Metadados ficam em `localStorage` (`jukebox_session_queue`). A faixa **em reprodução** permanece na posição 0 da fila (`playbackStarted: true`), para não perder a música se a máquina desligar no meio. `jukebox_session_current_song` é espelho auxiliar para reboot. Ao reiniciar, a fila inteira é restaurada e o app retoma `fila[0]` sem remover itens. O áudio das próximas **5** faixas (+ a que está tocando) é pré-baixado no Cache Storage via Service Worker — **não** a biblioteca inteira.
+> A fila **não** está no backend. Metadados ficam em `localStorage` (`jukebox_session_queue`). A faixa **em reprodução** permanece na posição 0 da fila (`playbackStarted: true`), para não perder a música se a máquina desligar no meio. `jukebox_session_current_song` é espelho auxiliar para reboot. Ao reiniciar, a fila inteira é restaurada e o app retoma `fila[0]` sem remover itens. O áudio das próximas **5** faixas (+ a que está tocando) é pré-baixado no Cache Storage via Service Worker — **não** a biblioteca inteira. Vídeos (MP4) **não** entram no pré-cache (arquivos grandes demais para baixar em lote): o player faz streaming direto do `media_url`.
 
 ---
 
