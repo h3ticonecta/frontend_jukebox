@@ -21,10 +21,12 @@ async function startPlayback(audio) {
   }
 }
 
-export function useAudioPlayer({ onEnded } = {}) {
+export function useAudioPlayer({ onEnded, onDurationKnown } = {}) {
   const audioRef = useRef(null);
   const listenersCleanupRef = useRef(null);
   const onEndedRef = useRef(onEnded);
+  const onDurationKnownRef = useRef(onDurationKnown);
+  const currentSongRef = useRef(null);
   const [isAudioReady, setIsAudioReady] = useState(false);
   const [currentSong, setCurrentSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -33,6 +35,15 @@ export function useAudioPlayer({ onEnded } = {}) {
   const [volume, setVolumeState] = useState(() => getVolumePercent());
 
   onEndedRef.current = onEnded;
+  onDurationKnownRef.current = onDurationKnown;
+  currentSongRef.current = currentSong;
+
+  const publishDuration = useCallback((seconds) => {
+    if (!(seconds > 0)) return;
+    const song = currentSongRef.current;
+    if (!song) return;
+    onDurationKnownRef.current?.(song, seconds);
+  }, []);
 
   const bindAudioRef = useCallback((node) => {
     listenersCleanupRef.current?.();
@@ -45,21 +56,19 @@ export function useAudioPlayer({ onEnded } = {}) {
 
     node.volume = getVolumePercent() / 100;
 
-    const onTimeUpdate = () => {
-      setCurrentTime(node.currentTime || 0);
+    const syncDurationFromAudio = () => {
       if (Number.isFinite(node.duration) && node.duration > 0) {
-        setDuration((current) =>
-          current != null && current > 0 ? current : node.duration
-        );
+        setDuration((current) => {
+          const next = current != null && current > 0 ? current : node.duration;
+          publishDuration(next);
+          return next;
+        });
       }
     };
 
-    const syncDurationFromAudio = () => {
-      if (Number.isFinite(node.duration) && node.duration > 0) {
-        setDuration((current) =>
-          current != null && current > 0 ? current : node.duration
-        );
-      }
+    const onTimeUpdate = () => {
+      setCurrentTime(node.currentTime || 0);
+      syncDurationFromAudio();
     };
 
     const handleEnded = () => {
@@ -85,7 +94,7 @@ export function useAudioPlayer({ onEnded } = {}) {
       node.removeEventListener('play', onPlay);
       node.removeEventListener('pause', onPause);
     };
-  }, []);
+  }, [publishDuration]);
 
   useEffect(() => () => listenersCleanupRef.current?.(), []);
 

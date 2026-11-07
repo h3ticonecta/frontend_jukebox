@@ -172,7 +172,12 @@ function JukeboxApp() {
     }
   }, [playTrack]);
 
-  const audio = useAudioPlayer({ onEnded: handlePlayNext });
+  const audio = useAudioPlayer({
+    onEnded: handlePlayNext,
+    onDurationKnown: (song, duration_seconds) => {
+      library.patchTrackDuration(song.id, Math.floor(duration_seconds));
+    },
+  });
   audioRefHolder.current = audio;
 
   useEffect(() => {

@@ -6,7 +6,11 @@ import {
   getNavigationTracksFromResponse,
 } from '../api/musicas';
 import { buildAlbumsStateFromApi, mapFolderFromApi, mapTrackFromApi } from '../lib/library';
-import { enrichTracksWithDurations, trackNeedsDurationProbe } from '../lib/trackDuration';
+import {
+  enrichTracksWithDurations,
+  resolveMediaUrlFromTrack,
+  trackNeedsDurationProbe,
+} from '../lib/trackDuration';
 import { runCatalogPrefetch } from '../lib/catalogPrefetch';
 import { createLibraryCache } from '../lib/libraryCache';
 import {
@@ -258,7 +262,10 @@ export function useLibrary(token) {
       }
 
       const cachedTracks = cacheRef.current.getTracks(albumPath);
-      const silent = Boolean(cachedTracks);
+      const cacheComplete =
+        cachedTracks?.length > 0 &&
+        cachedTracks.every((track) => resolveMediaUrlFromTrack(track));
+      const silent = cacheComplete;
 
       if (cachedTracks) {
         setTracks(cachedTracks);
@@ -503,6 +510,25 @@ export function useLibrary(token) {
     setSelectedTrack(track);
   }, []);
 
+  const patchTrackDuration = useCallback((trackId, duration_seconds) => {
+    if (!trackId || !(duration_seconds > 0)) return;
+
+    const albumPath = selectedAlbumPathRef.current;
+    setTracks((prev) => {
+      const index = prev.findIndex((track) => track.id === trackId);
+      if (index < 0) return prev;
+      const item = prev[index];
+      if (item.duration_seconds != null && item.duration_seconds > 0) return prev;
+
+      const next = [...prev];
+      next[index] = { ...item, duration_seconds };
+      if (albumPath) {
+        cacheRef.current.setTracks(albumPath, next);
+      }
+      return next;
+    });
+  }, []);
+
   return {
     genres,
     albums,
@@ -518,6 +544,7 @@ export function useLibrary(token) {
     selectGenre,
     selectAlbum,
     selectTrack,
+    patchTrackDuration,
     navigateGenre,
     navigateAlbum,
     navigateTrack,

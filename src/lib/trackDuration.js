@@ -20,8 +20,17 @@ export function resolveDurationSecondsFromTrack(track) {
     track.length,
     track.duracao,
     track.duracao_segundos,
+    track.duracao_formatada,
+    track.tempo,
+    track.tempo_segundos,
+    track.time,
     track.media?.duration_seconds,
+    track.media?.duration,
     track.metadata?.duration_seconds,
+    track.metadata?.duration,
+    track.file?.duration_seconds,
+    track.file?.duration,
+    track.audio?.duration_seconds,
   ];
 
   for (const value of candidates) {
@@ -38,48 +47,87 @@ export function resolveDurationSecondsFromTrack(track) {
   return null;
 }
 
-export function trackNeedsDurationProbe(track) {
-  return (
-    (track?.duration_seconds == null || track.duration_seconds <= 0) && Boolean(track?.media_url)
-  );
+export function resolveMediaUrlFromTrack(track) {
+  if (!track) return null;
+
+  const direct =
+    track.media_url ||
+    track.audio_url ||
+    track.stream_url ||
+    track.public_url ||
+    track.url ||
+    track.media?.media_url ||
+    track.media?.url ||
+    track.file?.media_url ||
+    track.audio?.url;
+
+  const value = direct ? String(direct).trim() : '';
+  return value || null;
 }
 
-export function probeTrackDuration(mediaUrl, signal) {
-  return new Promise((resolve) => {
-    if (!mediaUrl) {
-      resolve(null);
-      return;
-    }
+export function trackNeedsDurationProbe(track) {
+  const needsDuration = track?.duration_seconds == null || track.duration_seconds <= 0;
+  return needsDuration && Boolean(resolveMediaUrlFromTrack(track));
+}
 
+function readDurationSeconds(audio) {
+  const seconds = audio?.duration;
+  return Number.isFinite(seconds) && seconds > 0 && seconds !== Infinity
+    ? Math.floor(seconds)
+    : null;
+}
+
+function probeWithCrossOrigin(mediaUrl, crossOrigin, signal, timeoutMs) {
+  return new Promise((resolve) => {
     const audio = new Audio();
     let settled = false;
 
     const finish = (value) => {
       if (settled) return;
       settled = true;
+      signal?.removeEventListener('abort', onAbort);
       audio.removeAttribute('src');
       audio.load();
       resolve(value);
     };
 
+    const tryResolve = () => {
+      const seconds = readDurationSeconds(audio);
+      if (seconds != null) finish(seconds);
+    };
+
     const onAbort = () => finish(null);
-    signal?.addEventListener('abort', onAbort, { once: true });
+    signal?.addEventListener('abort', onAbort);
+
+    if (crossOrigin) {
+      audio.crossOrigin = crossOrigin;
+    }
 
     audio.preload = 'metadata';
+    audio.addEventListener('loadedmetadata', tryResolve);
+    audio.addEventListener('durationchange', tryResolve);
     audio.addEventListener(
-      'loadedmetadata',
+      'canplay',
       () => {
-        const seconds = audio.duration;
-        finish(Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : null);
+        tryResolve();
       },
       { once: true }
     );
     audio.addEventListener('error', () => finish(null), { once: true });
-    window.setTimeout(() => finish(null), 12_000);
+    window.setTimeout(() => finish(readDurationSeconds(audio)), timeoutMs);
 
     audio.src = resolveMediaUrl(mediaUrl);
     audio.load();
   });
+}
+
+export async function probeTrackDuration(mediaUrl, signal) {
+  if (!mediaUrl) return null;
+
+  const withCors = await probeWithCrossOrigin(mediaUrl, 'anonymous', signal, 14_000);
+  if (withCors != null) return withCors;
+
+  return probeWithCrossOrigin(mediaUrl, null, signal, 14_000);
 }
 
 const PROBE_CONCURRENCY = 3;
@@ -101,7 +149,8 @@ export async function enrichTracksWithDurations(tracks, { signal, onTrackDuratio
       if (signal?.aborted) return;
       const slot = cursor++;
       const { track, index } = pending[slot];
-      const seconds = await probeTrackDuration(track.media_url, signal);
+      const mediaUrl = resolveMediaUrlFromTrack(track);
+      const seconds = await probeTrackDuration(mediaUrl, signal);
       if (seconds == null || signal?.aborted) continue;
 
       result[index] = { ...result[index], duration_seconds: seconds };
