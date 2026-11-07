@@ -132,7 +132,7 @@ Valores especiais de exibição:
 | `hits` | Foco na seção SUCESSOS + scroll |
 | `fila` | **Ativa** o item focado: destaca fila (2s) e, se o foco está em uma faixa, adiciona à fila local |
 | `pular` | Pula faixa e toca próxima da fila |
-| `tocar_cd` | **Zona `genres`:** foco no 1º artista. **Zona `albums`:** só desce o foco para a lista de músicas (não toca). **Zona `tracks`:** toca **somente** a faixa focada (ou a 1ª) — não enfileira o álbum inteiro; use `fila` para cada música escolhida |
+| `tocar_cd` | **Zona `genres`:** foco no 1º artista. **Zona `albums`:** só desce o foco para a lista de músicas (não toca). **Zona `tracks`:** seleciona a faixa focada (ou a 1ª) — com o player livre, toca na hora; com música em reprodução, entra no **final da fila** (não substitui a atual). Não enfileira o álbum inteiro |
 | `vol` | Um clique +10%; cliques em sequência / segurar −10% contínuo (ver `useVolumeShortcuts`). Cada mudança abre o `VolumePopup` central com o percentual e a barra segmentada — permanece visível enquanto a tecla é segurada e some ~1,6 s após a última alteração |
 | `cancelar` | Fecha painéis e limpa erros |
 
@@ -144,7 +144,7 @@ Valores especiais de exibição:
 | `albums` | Anel ciano no card do artista | `esquerda` / `direita` (grid 3 col., quebra de linha); `cima` / `baixo` (mesma coluna) |
 | `tracks` | Linha ciano na lista de músicas | `cima` / `baixo`; `cima` no topo volta aos artistas |
 
-As setas **não disparam clique** (não tocam música). Toque/mouse continuam com o comportamento anterior. Somente `fila` confirma a faixa focada (adiciona à fila).
+As setas **não disparam clique** (não tocam música). Toque/mouse continuam com o comportamento anterior. A faixa focada é confirmada por `tocar_cd` (toca se o player estiver livre; senão entra na fila) ou por `fila` (sempre adiciona à fila).
 
 ---
 

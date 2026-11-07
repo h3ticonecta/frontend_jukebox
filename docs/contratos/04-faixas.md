@@ -140,7 +140,7 @@ Visual original do jukebox (`glass-surface`, vinil girando, barra de progresso n
 
 1. Tocar consome `CREITS_PER_SONG` (1) crédito local.
 2. Se saldo insuficiente, exibe erro no header.
-3. Fila de espera é independente do play imediato (contrato 05).
+3. Seleção de faixa (toque na lista ou tecla `tocar_cd`) com o **player livre** toca na hora; com **música em reprodução** (ou itens aguardando), a faixa entra no final da fila de espera — nunca substitui a faixa atual (contrato 05).
 
 ### `duration_seconds`
 

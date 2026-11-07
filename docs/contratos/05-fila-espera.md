@@ -19,6 +19,7 @@ Exibe músicas aguardando reprodução e a faixa **tocando agora** com equalizad
 |----------------|--------|
 | UI da fila | ✅ |
 | Adicionar via tecla/botão "fila" | ✅ |
+| Seleção de faixa com player ocupado entra na fila (não substitui a atual) | ✅ |
 | Destaque ao pressionar tecla "fila" | ✅ |
 | Pular faixa (tecla + player) | ✅ |
 | Persistência / API backend | ❌ |
@@ -62,14 +63,18 @@ Exibe músicas aguardando reprodução e a faixa **tocando agora** com equalizad
 
 ```javascript
 handlePlay(track)  // clique na lista / tecla Tocar CD na faixa
-  → POST /maquinas/tocadas/ + debita 1 crédito
-  → **substitui** a fila: só esta faixa em fila[0] (`playbackStarted: true`)
-  → não toca automaticamente as demais faixas do álbum
+  → player livre (nada tocando e fila vazia):
+      POST /maquinas/tocadas/ + debita 1 crédito e toca na hora
+      (fila[0] com `playbackStarted: true`)
+  → player ocupado (ou fila com itens aguardando):
+      delega para handleAddToQueue — a faixa entra no FINAL da fila
+      de espera; nunca substitui a faixa em reprodução
 
-handleAddToQueue(track)  // tecla "fila" / botão na lista
+handleAddToQueue(track)  // tecla "fila" / botão na lista / seleção com player ocupado
   → botão sempre clicável; exige saldo ≥ 1 × CREDITS_PER_SONG
   → se insuficiente: mensagem "Créditos insuficientes" no header (sem adicionar)
-  → debita 1 crédito e acrescenta ao final da fila (sem tocar)
+  → debita 1 crédito e acrescenta ao final da fila; destaca o painel da fila (2 s)
+  → player livre: a faixa entra como atual na hora (POST tocadas, sem novo débito)
 
 handlePlayNext()  // fim da faixa, botão próximo ou tecla "pular"
   → remove fila[0] (faixa que acabou)

@@ -320,23 +320,36 @@ function JukeboxApp() {
       setCredits(nextCredits);
 
       const album = library.selectedAlbum || library.selectedGenre;
-      setQueue((prev) => [
-        ...prev,
-        {
-          ...track,
-          cover: track.cover_url || album?.cover || null,
-        },
-      ]);
+      const queuedTrack = {
+        ...track,
+        cover: track.cover_url || album?.cover || null,
+      };
+      setQueue((prev) => [...prev, queuedTrack]);
+      setHighlightQueue(true);
+
+      // Player livre (nada tocando): a faixa entra como atual na hora,
+      // em vez de ficar parada na fila.
+      if (!audioRefHolder.current?.currentSong) {
+        playTrack(queuedTrack, { fromQueue: true });
+      }
     },
-    [token, library.selectedAlbum, library.selectedGenre]
+    [token, library.selectedAlbum, library.selectedGenre, playTrack]
   );
 
   const handlePlay = useCallback(
     async (track) => {
-      if (!token) return;
+      if (!token || !track) return;
+
+      // Jukebox clássico: com música tocando (ou itens pagos aguardando),
+      // nova seleção entra na fila de espera — nunca substitui a faixa atual.
+      if (audioRefHolder.current?.currentSong || queueRef.current.length > 0) {
+        handleAddToQueue(track);
+        return;
+      }
+
       await playTrack(track);
     },
-    [token, playTrack]
+    [token, playTrack, handleAddToQueue]
   );
 
   const handlePlayCd = useCallback(async () => {
@@ -347,8 +360,8 @@ function JukeboxApp() {
     if (!track) return;
 
     setActionError(null);
-    await playTrack(track);
-  }, [library.tracks, library.selectedTrack, token, playTrack]);
+    await handlePlay(track);
+  }, [library.tracks, library.selectedTrack, token, handlePlay]);
 
   const handleCancel = useCallback(() => {
     setKeysPanelOpen(false);
