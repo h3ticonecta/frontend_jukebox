@@ -7,6 +7,9 @@ const IGNORED_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Nu
 
 const MINI_SIZE = 'w-[min(380px,42vw)] h-[min(214px,24vw)]';
 
+/** Tempo no mini player até voltar sozinho à tela cheia: 5 minutos. */
+const MINI_AUTO_EXPAND_MS = 5 * 60 * 1000;
+
 /**
  * Palco de vídeo do jukebox.
  *
@@ -49,6 +52,18 @@ export default function VideoStage({ mediaRef, currentSong }) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [fullScreen, songId]);
+
+  // Retorno automático à tela cheia 5 minutos após a minimização.
+  // Cancela se o usuário expandir/fechar antes ou se a faixa trocar.
+  useEffect(() => {
+    if (!miniVisible) return undefined;
+
+    const timer = window.setTimeout(() => {
+      setMinimizedSongId(null);
+    }, MINI_AUTO_EXPAND_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [miniVisible, songId]);
 
   const closeAll = () => {
     setDismissedSongId(songId);
