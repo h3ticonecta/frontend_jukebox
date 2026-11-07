@@ -76,6 +76,11 @@ export function useJukeboxKeyboard({
     focusAlbum(library.albums[0]);
   }, [library.albums, focusAlbum]);
 
+  const enterTracksFromAlbums = useCallback(() => {
+    if (!library.tracks.length) return;
+    focusTrack(library.selectedTrack || library.tracks[0]);
+  }, [library.tracks, library.selectedTrack, focusTrack]);
+
   const enterGenresFromAlbums = useCallback(() => {
     if (library.selectedGenre) {
       focusGenre(library.selectedGenre);
@@ -251,7 +256,13 @@ export function useJukeboxKeyboard({
           onSkip();
           break;
         case 'tocar_cd':
-          onPlayCd?.();
+          if (focusZone === 'genres') {
+            enterAlbumsFromGenres();
+          } else if (focusZone === 'albums') {
+            enterTracksFromAlbums();
+          } else if (focusZone === 'tracks') {
+            onPlayCd?.();
+          }
           break;
         case 'vol_mais':
           onVolume(0.1);
@@ -274,6 +285,7 @@ export function useJukeboxKeyboard({
       moveAlbumVertical,
       moveTrack,
       enterAlbumsFromGenres,
+      enterTracksFromAlbums,
       leaveTracksUp,
       focusAlbum,
       activateFocused,
