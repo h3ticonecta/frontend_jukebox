@@ -22,6 +22,7 @@ const ICONS = {
   hits: Hash,
   fila: ClipboardList,
   pular: SkipForward,
+  vol: Volume2,
   vol_mais: Volume2,
   vol_menos: Volume1,
   cancelar: X,

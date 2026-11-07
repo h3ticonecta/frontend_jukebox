@@ -8,6 +8,7 @@ export const TECLAS_DISPLAY_ORDER = [
   'fila',
   'pular',
   'tocar_cd',
+  'vol',
   'vol_mais',
   'vol_menos',
   'cancelar',
@@ -63,4 +64,14 @@ export function sortTeclas(teclas = []) {
 
 export function findAcaoByEvent(teclas, event) {
   return teclas.find((item) => eventMatchesTecla(event, item.tecla))?.acao || null;
+}
+
+/** Backend: migração `vol_mais` / `vol_menos` → `vol` (prioridade vol, vol_mais, vol_menos). */
+export function resolveVolumeTecla(teclas = []) {
+  const vol = teclas.find((item) => item?.acao === 'vol' && item?.tecla);
+  if (vol) return vol.tecla;
+  const mais = teclas.find((item) => item?.acao === 'vol_mais' && item?.tecla);
+  if (mais) return mais.tecla;
+  const menos = teclas.find((item) => item?.acao === 'vol_menos' && item?.tecla);
+  return menos?.tecla || null;
 }

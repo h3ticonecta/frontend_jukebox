@@ -3,12 +3,14 @@ import { loginMaquina } from '../api/auth';
 import { fetchMaquinaConfig } from '../api/maquinas';
 import {
   clearMaquinaSession,
+  getComportamentoVolume,
   getMaquinaInfo,
   getMaquinaToken,
   getMaquinaTeclas,
   setMaquinaSession,
   patchMaquinaInfo,
   updateMaquinaTeclas,
+  updateMaquinaVolumeConfig,
 } from '../lib/storage';
 
 function mapLoginErrorMessage(err) {
@@ -35,6 +37,7 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => getMaquinaToken());
   const [machine, setMachine] = useState(() => getMaquinaInfo());
   const [teclas, setTeclas] = useState(() => getMaquinaTeclas());
+  const [comportamentoVolume, setComportamentoVolume] = useState(() => getComportamentoVolume());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -48,12 +51,14 @@ export function AuthProvider({ children }) {
         throw new Error('Servidor não retornou o token da máquina. Verifique o backend.');
       }
       const sessionTeclas = data.teclas || [];
+      const volumeConfig = data.comportamento_volume || null;
       setMaquinaSession({
         token: authToken,
         id: data.id,
         nome_jukebox: data.nome_jukebox,
         usuario: data.usuario,
         teclas: sessionTeclas,
+        comportamento_volume: volumeConfig,
       });
       setToken(authToken);
       setMachine({
@@ -62,6 +67,7 @@ export function AuthProvider({ children }) {
         usuario: data.usuario,
       });
       setTeclas(sessionTeclas);
+      setComportamentoVolume(volumeConfig);
       return data;
     } catch (err) {
       setError(mapLoginErrorMessage(err));
@@ -77,6 +83,7 @@ export function AuthProvider({ children }) {
     setToken(null);
     setMachine(null);
     setTeclas([]);
+    setComportamentoVolume(null);
     setError(null);
   }, []);
 
@@ -87,6 +94,11 @@ export function AuthProvider({ children }) {
       if (data?.teclas) {
         setTeclas(data.teclas);
         updateMaquinaTeclas(data.teclas);
+      }
+      if (data?.comportamento_volume !== undefined) {
+        const volumeConfig = data.comportamento_volume || null;
+        setComportamentoVolume(volumeConfig);
+        updateMaquinaVolumeConfig(volumeConfig);
       }
       if (data?.nome_jukebox || data?.usuario || data?.id) {
         setMachine((current) => ({
@@ -117,6 +129,7 @@ export function AuthProvider({ children }) {
       token,
       machine,
       teclas,
+      comportamentoVolume,
       isAuthenticated: Boolean(token),
       isLoading,
       error,
@@ -125,7 +138,7 @@ export function AuthProvider({ children }) {
       refreshConfig,
       clearError: () => setError(null),
     }),
-    [token, machine, teclas, isLoading, error, login, logout, refreshConfig]
+    [token, machine, teclas, comportamentoVolume, isLoading, error, login, logout, refreshConfig]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

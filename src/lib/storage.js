@@ -64,6 +64,14 @@ export function getMaquinaTeclas() {
   return getMaquinaInfo()?.teclas || [];
 }
 
+export function getComportamentoVolume() {
+  return getMaquinaInfo()?.comportamento_volume || null;
+}
+
+export function updateComportamentoVolume(comportamento_volume) {
+  patchMaquinaInfo({ comportamento_volume });
+}
+
 export function updateMaquinaTeclas(teclas) {
   const token = getMaquinaToken();
   const info = getMaquinaInfo() || {};
@@ -76,6 +84,13 @@ export function patchMaquinaInfo(patch) {
   const info = getMaquinaInfo() || {};
   if (!token || !patch) return;
   setMaquinaSession({ token, ...info, ...patch });
+}
+
+export function updateMaquinaVolumeConfig(comportamento_volume) {
+  const token = getMaquinaToken();
+  if (!token) return;
+  const info = getMaquinaInfo() || {};
+  setMaquinaSession({ token, ...info, comportamento_volume });
 }
 
 export function getCreditsBalance() {

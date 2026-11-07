@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { findAcaoByEvent } from '../lib/keyboard';
+import { findAcaoByEvent, resolveVolumeTecla } from '../lib/keyboard';
 
 function isTypingTarget(target) {
   if (!target) return false;
@@ -11,10 +11,15 @@ export function useKeyboardShortcuts({ teclas = [], enabled = true, onAction }) 
   useEffect(() => {
     if (!enabled || !teclas.length || !onAction) return undefined;
 
+    const volumeTecla = resolveVolumeTecla(teclas);
+    const teclasSemVolume = volumeTecla
+      ? teclas.filter((item) => item?.tecla !== volumeTecla)
+      : teclas;
+
     const handleKeyDown = (event) => {
       if (isTypingTarget(event.target)) return;
 
-      const acao = findAcaoByEvent(teclas, event);
+      const acao = findAcaoByEvent(teclasSemVolume, event);
       if (!acao) return;
 
       event.preventDefault();

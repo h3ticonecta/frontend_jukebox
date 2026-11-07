@@ -7,6 +7,7 @@ import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { useJukeboxKeyboard } from './hooks/useJukeboxKeyboard';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useLibrary } from './hooks/useLibrary';
+import { useVolumeShortcuts } from './hooks/useVolumeShortcuts';
 import { buildMusicaTocadaPayload, buildPlayerSubtitle } from './lib/library';
 import {
   addCredits,
@@ -345,6 +346,11 @@ function JukeboxApp() {
   useKeyboardShortcuts({
     teclas,
     onAction: keyboard.handleKeyboardAction,
+  });
+
+  useVolumeShortcuts({
+    teclas,
+    onStep: (delta) => audio.adjustVolume(delta),
   });
 
   useEffect(() => {

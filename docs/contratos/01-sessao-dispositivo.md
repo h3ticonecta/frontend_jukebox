@@ -57,12 +57,19 @@ A senha **nunca** é persistida no dispositivo — só no formulário de login.
   "token": "a1b2c3d4e5f6...",
   "teclas": [
     { "acao": "cima", "label": "Cima", "tecla": "Q" },
-    { "acao": "credito", "label": "Crédito", "tecla": "K" }
-  ]
+    { "acao": "credito", "label": "Crédito", "tecla": "K" },
+    { "acao": "vol", "label": "Vol", "tecla": "V" }
+  ],
+  "comportamento_volume": {
+    "modo": "unico_botao",
+    "clique_unico": "aumentar",
+    "cliques_repetidos": "diminuir",
+    "pressionar_segurar": "diminuir_continuo"
+  }
 }
 ```
 
-O front grava `id`, `nome_jukebox`, `usuario`, `token` e `teclas` (`setMaquinaSession`).
+O front grava `id`, `nome_jukebox`, `usuario`, `token`, `teclas` e `comportamento_volume` (`setMaquinaSession`).
 
 ### Erros
 
@@ -90,12 +97,14 @@ Authorization: Maquina <token>
   "nome_jukebox": "Bar Central",
   "usuario": "jukebox01",
   "teclas": [
-    { "acao": "credito", "label": "Crédito", "tecla": "K" }
-  ]
+    { "acao": "credito", "label": "Crédito", "tecla": "K" },
+    { "acao": "vol", "label": "Vol", "tecla": "V" }
+  ],
+  "comportamento_volume": { "...": "..." }
 }
 ```
 
-Chamado ao montar o app (se há token) e ao abrir o painel TECLAS (`refreshConfig`). Atualiza `teclas` e, se presentes, `nome_jukebox` / `usuario` / `id` no estado e no `localStorage` (`patchMaquinaInfo`).
+Chamado ao montar o app (se há token) e ao abrir o painel TECLAS (`refreshConfig`). Atualiza `teclas`, `comportamento_volume` e, se presentes, `nome_jukebox` / `usuario` / `id` no estado e no `localStorage`.
 
 **Somente o admin** altera teclas (Django ou API com token admin); o app **exibe** e **reage**.
 
@@ -106,7 +115,7 @@ Chamado ao montar o app (se há token) e ao abrir o painel TECLAS (`refreshConfi
 | Campo | Chave localStorage |
 |-------|-------------------|
 | `token` | `jukebox_maquina_token` |
-| `id`, `nome_jukebox`, `usuario`, `teclas` | `jukebox_maquina_info` |
+| `id`, `nome_jukebox`, `usuario`, `teclas`, `comportamento_volume` | `jukebox_maquina_info` |
 | Último SUCESSO (`genre.path`) | `jukebox_last_genre_path` |
 | Último artista/banda (`album.path`) | `jukebox_last_album_path` |
 | `needs_sync` da última resposta | `jukebox_needs_sync` |

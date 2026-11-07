@@ -26,6 +26,8 @@ Atalhos físicos do jukebox são configurados **somente no admin Django**. O app
 | Navegação estilo TAB (foco visual) | ✅ |
 | Tecla crédito → inserir 1 crédito | ✅ |
 | Tecla `tocar_cd` (Tocar CD) | ✅ |
+| Tecla `vol` (botão único de volume) | ✅ |
+| `comportamento_volume` persistido no login/config | ✅ |
 
 ---
 
@@ -42,11 +44,33 @@ Atalhos físicos do jukebox são configurados **somente no admin Django**. O app
 | `fila` | Fila | `F` |
 | `pular` | Pular | `P` |
 | `tocar_cd` | Tocar CD | `C` |
-| `vol_mais` | Vol+ | `PgUp` |
-| `vol_menos` | Vol- | `PgDn` |
+| `vol` | Vol | `V` |
 | `cancelar` | Cancelar | `Enter` |
 
-O admin pode remapear só o campo `tecla`; `label` vem do backend para exibição.
+`vol_mais` / `vol_menos` são **legado** — migram para `vol` (prioridade: tecla de `vol`, senão `vol_mais`, senão `vol_menos`). O admin remapeia só `tecla`; `label` vem do backend.
+
+### `comportamento_volume` (API)
+
+Login e `GET /config/` incluem:
+
+```json
+{
+  "comportamento_volume": {
+    "modo": "unico_botao",
+    "clique_unico": "aumentar",
+    "cliques_repetidos": "diminuir",
+    "pressionar_segurar": "diminuir_continuo"
+  }
+}
+```
+
+| Gestão | Efeito no app (`useVolumeShortcuts`) |
+|--------|--------------------------------------|
+| Um clique na tecla `vol` | +10% ao soltar (após debounce ~400 ms) |
+| Cliques em sequência (ou tecla repetida pelo OS) | −10% por sequência |
+| Manter pressionado | −10% a cada ~140 ms (início ~520 ms) |
+
+O front usa a **tecla** de `vol` (ou legado); o JSON só documenta o comportamento esperado.
 
 ---
 
@@ -67,8 +91,7 @@ O admin pode remapear só o campo `tecla`; `label` vem do backend para exibiçã
   { "acao": "fila", "label": "Fila", "tecla": "F" },
   { "acao": "pular", "label": "Pular", "tecla": "P" },
   { "acao": "tocar_cd", "label": "Tocar CD", "tecla": "C" },
-  { "acao": "vol_mais", "label": "Vol+", "tecla": "PgUp" },
-  { "acao": "vol_menos", "label": "Vol-", "tecla": "PgDn" },
+  { "acao": "vol", "label": "Vol", "tecla": "V" },
   { "acao": "cancelar", "label": "Cancelar", "tecla": "Enter" }
 ]
 ```
@@ -110,8 +133,7 @@ Valores especiais de exibição:
 | `fila` | **Ativa** o item focado: destaca fila (2s) e, se o foco está em uma faixa, adiciona à fila local |
 | `pular` | Pula faixa e toca próxima da fila |
 | `tocar_cd` | **Zona `genres`:** foco no 1º artista. **Zona `albums`:** só desce o foco para a lista de músicas (não toca). **Zona `tracks`:** toca **somente** a faixa focada (ou a 1ª) — não enfileira o álbum inteiro; use `fila` para cada música escolhida |
-| `vol_mais` | Volume +10% |
-| `vol_menos` | Volume −10% |
+| `vol` | Um clique +10%; cliques repetidos / segurar −10% (ver `useVolumeShortcuts`) |
 | `cancelar` | Fecha painéis e limpa erros |
 
 ### Zonas de foco (`useJukeboxKeyboard`)

@@ -24,7 +24,7 @@ Lista numerada de faixas do artista/álbum selecionado. Ao tocar, registra event
 | Tempo atual / duração (`duration_seconds` da API) | ✅ |
 | Volume 0–100% + `localStorage` | ✅ |
 | Anterior / Próximo (fila ou `tracks`) | ✅ |
-| Teclas `pular`, `vol_mais`, `vol_menos` | ✅ |
+| Teclas `pular` e `vol` (botão único; legado vol_mais/menos migra) | ✅ |
 | Player com `media_url` direto | ✅ |
 | Duração na lista lateral (`duration_seconds`) | ✅ |
 | Linha inteira clicável (touch/mouse) | ✅ |
@@ -132,7 +132,7 @@ Visual original do jukebox (`glass-surface`, vinil girando, barra de progresso n
 
 - **Próximo / pular / fim da faixa:** próxima na fila local (com débito); sem fila, para o player
 - **Anterior:** reinicia se `currentTime > 3s`; senão faixa anterior na playlist
-- **Volume:** persiste em `localStorage`; teclas `vol_mais` / `vol_menos` ajustam ±10%
+- **Volume:** persiste em `localStorage`; tecla `vol` ajusta ±10% (`useVolumeShortcuts`); legado `vol_mais` / `vol_menos` usado como tecla de fallback
 
 ## Regras de negócio
 
