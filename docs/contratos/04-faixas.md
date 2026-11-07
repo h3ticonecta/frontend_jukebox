@@ -65,7 +65,7 @@ Authorization: Maquina <token>
 | `title` | `track.title` | Linha principal (uma vez só) |
 | `name` | fallback sem extensão | — |
 | `folder_path` | `track.artist` | Subtítulo (última pasta, ex: `Beatles`) |
-| `key` | `track.key` | ID + envio em tocadas |
+| `key` / `path` | `track.key` via `resolveTrackKey()` | ID + `musica_key` em tocadas (`path`, `file_key`, ou `name`+pasta) |
 | `media_url` | `track.media_url` | `<audio src>` |
 | `cover_url` | `track.cover_url` | Capa no player/fila |
 | `duration_seconds` | `track.duration_seconds` | Duração na lista e player (`4:21`); `null` → `--:--` |
@@ -104,7 +104,7 @@ Authorization: Maquina <token>
 }
 ```
 
-Chamado em `handlePlay()` (`src/App.jsx`) antes de iniciar o áudio.
+Montado com `buildMusicaTocadaPayload()` (`src/lib/library.js`) em `playTrack()` antes do áudio. `pasta` com barra final; erros `400` exibem campos da API (`formatApiErrorMessage` em `client.js`).
 
 ---
 

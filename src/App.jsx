@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { CREDITS_PER_SONG, DEFAULT_SONG_PRICE } from './api/config';
+import { CREDITS_PER_SONG } from './api/config';
 import { registrarCredito, registrarMusicaTocada } from './api/maquinas';
 import { addBillingEvent } from './lib/billing';
 import { useAuth } from './context/AuthContext';
@@ -7,7 +7,7 @@ import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { useJukeboxKeyboard } from './hooks/useJukeboxKeyboard';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useLibrary } from './hooks/useLibrary';
-import { buildPlayerSubtitle } from './lib/library';
+import { buildMusicaTocadaPayload, buildPlayerSubtitle } from './lib/library';
 import {
   addCredits,
   deductCredits,
@@ -103,16 +103,17 @@ function JukeboxApp() {
       }
 
       try {
-        await registrarMusicaTocada(token, {
-          musica_key: track.key,
-          musica_nome: track.title,
-          titulo: track.title,
-          pasta: track.pasta || album?.path || '',
-          media_type: track.media_type || 'audio',
-          media_url: track.media_url,
-          cover_url: track.cover_url || album?.cover || null,
-          valor: DEFAULT_SONG_PRICE,
-        });
+        const tocadaPayload = buildMusicaTocadaPayload(song, album);
+        if (!tocadaPayload.musica_key) {
+          setActionError('Faixa sem chave no catálogo — não foi possível registrar a tocada.');
+          return false;
+        }
+        if (!tocadaPayload.media_url) {
+          setActionError('Faixa sem URL de áudio.');
+          return false;
+        }
+
+        await registrarMusicaTocada(token, tocadaPayload);
 
         if (!fromQueue) {
           const nextCredits = deductCredits(CREDITS_PER_SONG);

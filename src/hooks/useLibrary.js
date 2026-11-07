@@ -34,8 +34,8 @@ function mapFolder(folder, index) {
   return mapFolderFromApi(folder, index, GRADIENTS);
 }
 
-function mapTrack(track, index) {
-  return mapTrackFromApi(track, index);
+function mapTrack(track, index, albumPath = '') {
+  return mapTrackFromApi(track, index, albumPath);
 }
 
 function isAbortError(error) {
@@ -50,7 +50,7 @@ function parseAlbumsPayload(data, genre) {
     genre,
     {
       mapFolder: (folder, index) => mapFolder(folder, index),
-      mapTrack: (track, index) => mapTrack(track, index),
+      mapTrack: (track, index) => mapTrack(track, index, genre.path),
     }
   );
 }
@@ -240,7 +240,9 @@ export function useLibrary(token) {
       const result = await loadPrefix(albumPath, 'tracks', { silent });
       if (!result || selectedAlbumPathRef.current !== albumPath) return;
 
-      const folderTracks = getNavigationTracksFromResponse(result.data).map(mapTrack);
+      const folderTracks = getNavigationTracksFromResponse(result.data).map((track, index) =>
+        mapTrack(track, index, albumPath)
+      );
       cacheRef.current.setTracks(albumPath, folderTracks);
       setTracks(folderTracks);
       setSelectedAlbum(album);

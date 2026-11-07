@@ -10,6 +10,22 @@ export class ApiError extends Error {
   }
 }
 
+function formatApiErrorMessage(data, status) {
+  if (data?.error?.message) return data.error.message;
+  if (typeof data?.detail === 'string') return data.detail;
+  if (Array.isArray(data?.detail)) return data.detail.join(', ');
+  if (data && typeof data === 'object') {
+    const parts = [];
+    Object.entries(data).forEach(([field, messages]) => {
+      if (field === 'error') return;
+      const text = Array.isArray(messages) ? messages.join(' ') : String(messages);
+      parts.push(`${field}: ${text}`);
+    });
+    if (parts.length > 0) return parts.join(' · ');
+  }
+  return `Erro na requisição (${status})`;
+}
+
 export async function apiRequest(path, options = {}) {
   const { token = getMaquinaToken(), tokenType = 'Maquina', body, headers = {}, ...rest } = options;
 
@@ -39,8 +55,7 @@ export async function apiRequest(path, options = {}) {
 
   if (!response.ok) {
     const message =
-      data?.error?.message ||
-      data?.detail ||
+      (data && formatApiErrorMessage(data, response.status)) ||
       data?.message ||
       `Erro na requisição (${response.status})`;
     throw new ApiError(message, response.status, data);

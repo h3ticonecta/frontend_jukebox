@@ -1,8 +1,63 @@
+import { DEFAULT_SONG_PRICE } from '../api/config';
 import { parseDurationSeconds } from './utils';
 
 function stripExtension(filename) {
   if (!filename) return '';
   return filename.replace(/\.[^.]+$/, '');
+}
+
+/** Chave R2 usada em tocadas — API pode enviar `key`, `path` ou só `name` + pasta. */
+export function resolveTrackKey(track) {
+  if (!track) return null;
+
+  const direct =
+    track.key || track.path || track.file_key || track.file_path || track.r2_key || track.object_key;
+  if (direct) return String(direct);
+
+  const folder = track.folder_path || track.folder || track.prefix || '';
+  if (track.name && folder) {
+    const base = folder.endsWith('/') ? folder : `${folder}/`;
+    return `${base}${track.name}`;
+  }
+
+  return track.name ? String(track.name) : null;
+}
+
+export function resolveTrackFolderPath(track, fallbackPath = '') {
+  const explicit = track?.folder_path || track?.folder || track?.prefix || track?.pasta;
+  if (explicit) return String(explicit);
+
+  const key = resolveTrackKey(track);
+  if (key && key.includes('/')) {
+    return key.slice(0, key.lastIndexOf('/') + 1);
+  }
+
+  return fallbackPath || '';
+}
+
+export function normalizeMusicFolderPath(path) {
+  if (!path) return '';
+  const trimmed = String(path).trim();
+  if (!trimmed) return '';
+  return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+}
+
+export function buildMusicaTocadaPayload(track, album, valor = DEFAULT_SONG_PRICE) {
+  const musicaKey = resolveTrackKey(track);
+  const pasta = normalizeMusicFolderPath(
+    resolveTrackFolderPath(track, album?.path || '')
+  );
+
+  return {
+    musica_key: musicaKey,
+    musica_nome: track.title,
+    titulo: track.title,
+    pasta,
+    media_type: track.media_type || 'audio',
+    media_url: track.media_url || track.audio_url || null,
+    cover_url: track.cover_url || track.cover || album?.cover || null,
+    valor,
+  };
 }
 
 export function getArtistFromFolderPath(folderPath) {
@@ -95,24 +150,26 @@ export function mapFolderFromApi(folder, index, gradients) {
   };
 }
 
-export function mapTrackFromApi(track, index) {
+export function mapTrackFromApi(track, index, albumPath = '') {
   const title = track.title || stripExtension(track.name);
+  const key = resolveTrackKey(track);
+  const folderPath = resolveTrackFolderPath(track, albumPath);
 
   const isMedia =
     track.media_type === 'audio' || track.media_type === 'video' || !track.media_type;
 
   return {
-    id: track.key,
-    key: track.key,
+    id: key || `track-${index}`,
+    key,
     number: String(index + 1).padStart(2, '0'),
     title,
     duration_seconds: isMedia ? parseDurationSeconds(track.duration_seconds) : null,
-    media_url: track.media_url || track.audio_url,
+    media_url: track.media_url || track.audio_url || track.media?.media_url || null,
     cover_url: track.cover_url || track.cover?.media_url || null,
-    pasta: track.folder_path || '',
-    folder_path: track.folder_path || '',
+    pasta: folderPath,
+    folder_path: folderPath,
     media_type: track.media_type || 'audio',
-    artist: getArtistFromFolderPath(track.folder_path),
+    artist: getArtistFromFolderPath(folderPath),
   };
 }
 
