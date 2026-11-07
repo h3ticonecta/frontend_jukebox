@@ -28,6 +28,7 @@ import PlayerBar from './components/jukebox/PlayerBar';
 import SongSidePanel from './components/jukebox/SongSidePanel';
 import PrefetchBanner from './components/jukebox/PrefetchBanner';
 import SyncBanner from './components/jukebox/SyncBanner';
+import VolumePopup from './components/jukebox/VolumePopup';
 import WaitQueuePanel from './components/jukebox/WaitQueuePanel';
 import CreditToast from './components/shared/CreditToast';
 
@@ -43,10 +44,12 @@ function JukeboxApp() {
   const [billingOpen, setBillingOpen] = useState(false);
   const [highlightQueue, setHighlightQueue] = useState(false);
   const [creditToastVisible, setCreditToastVisible] = useState(false);
+  const [volumePopupVisible, setVolumePopupVisible] = useState(false);
 
   const queueRef = useRef(queue);
   const tracksRef = useRef(library.tracks);
   const creditToastTimerRef = useRef(null);
+  const volumePopupTimerRef = useRef(null);
   const audioRefHolder = useRef(null);
   const resumeStartedRef = useRef(false);
   queueRef.current = queue;
@@ -185,6 +188,28 @@ function JukeboxApp() {
     },
   });
   audioRefHolder.current = audio;
+
+  // Popup de volume: exibe a cada mudança (tecla vol, legado ou slider)
+  // e esconde automaticamente após breve intervalo sem alterações.
+  const lastVolumeRef = useRef(audio.volume);
+  useEffect(() => {
+    if (lastVolumeRef.current === audio.volume) return undefined;
+    lastVolumeRef.current = audio.volume;
+
+    setVolumePopupVisible(true);
+    if (volumePopupTimerRef.current) window.clearTimeout(volumePopupTimerRef.current);
+    volumePopupTimerRef.current = window.setTimeout(() => {
+      setVolumePopupVisible(false);
+      volumePopupTimerRef.current = null;
+    }, 1600);
+
+    return () => {
+      if (volumePopupTimerRef.current) {
+        window.clearTimeout(volumePopupTimerRef.current);
+        volumePopupTimerRef.current = null;
+      }
+    };
+  }, [audio.volume]);
 
   useEffect(() => {
     const upcoming = audio.currentSong ? queue.slice(1) : queue;
@@ -478,6 +503,7 @@ function JukeboxApp() {
       </JukeboxShell>
 
       <CreditToast visible={creditToastVisible} />
+      <VolumePopup volume={audio.volume} visible={volumePopupVisible} />
       {billingOpen && (
         <BillingModal
           token={token}

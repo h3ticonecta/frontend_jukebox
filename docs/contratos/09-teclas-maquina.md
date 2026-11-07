@@ -133,7 +133,7 @@ Valores especiais de exibição:
 | `fila` | **Ativa** o item focado: destaca fila (2s) e, se o foco está em uma faixa, adiciona à fila local |
 | `pular` | Pula faixa e toca próxima da fila |
 | `tocar_cd` | **Zona `genres`:** foco no 1º artista. **Zona `albums`:** só desce o foco para a lista de músicas (não toca). **Zona `tracks`:** toca **somente** a faixa focada (ou a 1ª) — não enfileira o álbum inteiro; use `fila` para cada música escolhida |
-| `vol` | Um clique +10%; cliques repetidos / segurar −10% (ver `useVolumeShortcuts`) |
+| `vol` | Um clique +10%; cliques repetidos / segurar −10% (ver `useVolumeShortcuts`). Cada mudança abre o `VolumePopup` central com o percentual e a barra segmentada (some sozinho ~1,6 s após a última alteração) |
 | `cancelar` | Fecha painéis e limpa erros |
 
 ### Zonas de foco (`useJukeboxKeyboard`)

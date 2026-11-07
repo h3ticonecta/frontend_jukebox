@@ -4,6 +4,7 @@
 
 - `src/components/jukebox/SongSidePanel.jsx`
 - `src/components/jukebox/PlayerBar.jsx` — barra fixa inferior
+- `src/components/jukebox/VolumePopup.jsx` — popup central ao mudar o volume
 - `src/hooks/useAudioPlayer.js` — reprodução
 - `src/hooks/useLibrary.js` → `loadAlbumTracks()`
 - `src/lib/library.js` → `mapTrackFromApi()`, `buildPlayerSubtitle()`
@@ -23,6 +24,7 @@ Lista numerada de faixas do artista/álbum selecionado. Ao tocar, registra event
 | Player fixo inferior customizado | ✅ |
 | Tempo atual / duração (`duration_seconds` da API) | ✅ |
 | Volume 0–100% + `localStorage` | ✅ |
+| Popup central de volume (`VolumePopup`) | ✅ |
 | Anterior / Próximo (fila ou `tracks`) | ✅ |
 | Teclas `pular` e `vol` (botão único; legado vol_mais/menos migra) | ✅ |
 | Player com `media_url` direto | ✅ |
@@ -132,7 +134,7 @@ Visual original do jukebox (`glass-surface`, vinil girando, barra de progresso n
 
 - **Próximo / pular / fim da faixa:** próxima na fila local (com débito); sem fila, para o player
 - **Anterior:** reinicia se `currentTime > 3s`; senão faixa anterior na playlist
-- **Volume:** persiste em `localStorage`; tecla `vol` ajusta ±10% (`useVolumeShortcuts`); legado `vol_mais` / `vol_menos` usado como tecla de fallback
+- **Volume:** persiste em `localStorage`; tecla `vol` ajusta ±10% (`useVolumeShortcuts`); legado `vol_mais` / `vol_menos` usado como tecla de fallback. Toda mudança de volume (tecla ou slider) abre o `VolumePopup`: overlay escuro central com "VOLUME", percentual em âmbar e barra segmentada (20 blocos), que some ~1,6 s após a última alteração (`pointer-events-none`, não bloqueia toques)
 
 ## Regras de negócio
 
