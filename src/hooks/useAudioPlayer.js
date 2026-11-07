@@ -47,11 +47,18 @@ export function useAudioPlayer({ onEnded } = {}) {
 
     const onTimeUpdate = () => {
       setCurrentTime(node.currentTime || 0);
+      if (Number.isFinite(node.duration) && node.duration > 0) {
+        setDuration((current) =>
+          current != null && current > 0 ? current : node.duration
+        );
+      }
     };
 
     const syncDurationFromAudio = () => {
       if (Number.isFinite(node.duration) && node.duration > 0) {
-        setDuration((current) => current ?? node.duration);
+        setDuration((current) =>
+          current != null && current > 0 ? current : node.duration
+        );
       }
     };
 

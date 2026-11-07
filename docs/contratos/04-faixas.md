@@ -123,7 +123,7 @@ Visual original do jukebox (`glass-surface`, vinil girando, barra de progresso n
 
 | Região | Conteúdo |
 |--------|----------|
-| Topo | Barra de progresso (`currentTime / duration_seconds`) |
+| Topo | Linha do tempo em âmbar (`PlaybackTimeline`) em toda a largura do rodapé enquanto toca; brilho no preenchimento; arraste para buscar quando a duração é conhecida (API ou `loadedmetadata`) |
 | Esquerda | Créditos + vinil + título / subtítulo (`buildPlayerSubtitle()`) |
 | Centro | Espaço flexível |
 | Direita | Anterior · Play/Pause · Próximo · tempo · volume · `Clock` + contagem em espera |

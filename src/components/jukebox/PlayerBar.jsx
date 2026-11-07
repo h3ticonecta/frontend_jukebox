@@ -41,6 +41,56 @@ function VolumeSlider({ volume, onChange }) {
   );
 }
 
+function PlaybackTimeline({ currentTime, duration, isPlaying, onSeek }) {
+  const hasDuration = duration != null && duration > 0;
+  const progress = hasDuration ? Math.min(100, (currentTime / duration) * 100) : 0;
+
+  const handleSeek = (event) => {
+    if (!hasDuration || !onSeek) return;
+    const pct = Number(event.target.value) / 100;
+    onSeek(pct * duration);
+  };
+
+  if (!isPlaying && currentTime <= 0) {
+    return <div className="w-full h-px bg-border/60" aria-hidden="true" />;
+  }
+
+  return (
+    <div
+      className={cn(
+        'relative w-full shrink-0',
+        isPlaying ? 'h-1.5' : 'h-1'
+      )}
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={hasDuration ? duration : undefined}
+      aria-valuenow={currentTime}
+      aria-label="Linha do tempo da música"
+    >
+      <div className="absolute inset-0 bg-muted/70" />
+      <div
+        className={cn(
+          'absolute inset-y-0 left-0 bg-primary transition-[width] duration-150 ease-linear',
+          isPlaying && 'shadow-[0_0_14px_hsl(var(--primary)/0.75)]'
+        )}
+        style={{ width: `${progress}%` }}
+      />
+      {hasDuration && onSeek && (
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={0.05}
+          value={progress}
+          onChange={handleSeek}
+          className="absolute inset-0 z-10 w-full h-full cursor-pointer opacity-0 touch-manipulation"
+          aria-label="Buscar posição na música"
+        />
+      )}
+    </div>
+  );
+}
+
 function WaitingBadge({ queueCount, showLabel = false }) {
   return (
     <div className="flex items-center gap-2 shrink-0">
@@ -73,12 +123,11 @@ export default function PlayerBar({
   onNext,
   onVolumeChange,
   onInsertCredit,
+  onSeek,
 }) {
   const displaySubtitle =
     subtitle ||
     (currentSong?.artist && currentSong.artist !== currentSong.title ? currentSong.artist : '');
-  const progress =
-    duration != null && duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
 
   return (
     <>
@@ -101,9 +150,12 @@ export default function PlayerBar({
         </div>
       ) : (
         <div className="fixed bottom-0 left-0 right-0 glass-surface border-t border-primary/20 neon-border-amber z-40 shrink-0">
-          <div className="w-full h-1 bg-muted">
-            <div className="h-full bg-primary" style={{ width: `${progress}%` }} />
-          </div>
+          <PlaybackTimeline
+            currentTime={currentTime}
+            duration={duration}
+            isPlaying={isPlaying}
+            onSeek={onSeek}
+          />
 
           <div className="flex items-center gap-3 px-4 h-[72px]">
             <div className="flex items-center gap-3 min-w-0 shrink-0">

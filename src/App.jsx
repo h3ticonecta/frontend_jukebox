@@ -417,6 +417,7 @@ function JukeboxApp() {
             onNext={handlePlayNext}
             onVolumeChange={audio.setVolume}
             onInsertCredit={handleInsertCredit}
+            onSeek={audio.seek}
           />
         }
       >
