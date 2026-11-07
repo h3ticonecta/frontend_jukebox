@@ -13,9 +13,11 @@ const HOLD_TICK_MS = 140;
 
 /**
  * Atalho físico único de volume (backend: `acao: vol` ou legado vol_mais / vol_menos).
- * - Um clique: aumenta o volume
- * - Cliques em sequência (janela de debounce): diminui ao soltar
- * - Manter pressionado (sem repetição de evento): diminui de forma contínua
+ * - Um clique: +10% ao soltar (após debounce ~400 ms)
+ * - Cliques em sequência (janela de debounce): −10% por clique
+ * - Manter pressionado: −10% contínuo (início ~520 ms, depois a cada ~140 ms),
+ *   inclusive quando o SO emite auto-repeat (event.repeat) — o repeat é tratado
+ *   como "tecla ainda pressionada", não como cancelamento do hold
  */
 export function useVolumeShortcuts({ teclas = [], enabled = true, onStep }) {
   const onStepRef = useRef(onStep);
@@ -26,7 +28,9 @@ export function useVolumeShortcuts({ teclas = [], enabled = true, onStep }) {
     if (!enabled || !volumeKey || !onStepRef.current) return undefined;
 
     let active = false;
-    let pendingRepeat = false;
+    let hadRepeat = false;
+    let ticked = false;
+    let lastKeyUpAt = 0;
     let clickTimer = null;
     let holdTimer = null;
     let tickTimer = null;
@@ -49,6 +53,20 @@ export function useVolumeShortcuts({ teclas = [], enabled = true, onStep }) {
       }
     };
 
+    // Inicia o decréscimo contínuo (idempotente): usado tanto pelo timer
+    // de hold (botão sem auto-repeat) quanto pelo auto-repeat do SO.
+    const startTicking = () => {
+      if (tickTimer) return;
+      if (holdTimer) {
+        window.clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+      tickTimer = window.setInterval(() => {
+        ticked = true;
+        onStepRef.current?.(-0.1);
+      }, HOLD_TICK_MS);
+    };
+
     const matches = (event) => eventMatchesTecla(event, volumeKey);
 
     const handleKeyDown = (event) => {
@@ -57,23 +75,26 @@ export function useVolumeShortcuts({ teclas = [], enabled = true, onStep }) {
       event.preventDefault();
 
       if (event.repeat) {
+        // Auto-repeat do SO = tecla continua pressionada: garante o
+        // decréscimo contínuo em vez de encerrar o hold.
         if (active) {
-          pendingRepeat = true;
-          stopHold();
+          hadRepeat = true;
+          startTicking();
         }
         return;
       }
 
       if (active) return;
       active = true;
-      pendingRepeat = false;
+      hadRepeat = false;
+      ticked = false;
 
       clearClickTimer();
       stopHold();
 
       holdTimer = window.setTimeout(() => {
         holdTimer = null;
-        tickTimer = window.setInterval(() => onStepRef.current?.(-0.1), HOLD_TICK_MS);
+        startTicking();
       }, HOLD_START_MS);
     };
 
@@ -83,22 +104,34 @@ export function useVolumeShortcuts({ teclas = [], enabled = true, onStep }) {
       if (!matches(event)) return;
       event.preventDefault();
 
-      const wasHeldDown = Boolean(tickTimer);
+      const wasTicking = ticked;
+      const withRepeat = hadRepeat;
+      const now = Date.now();
+      const isSequence = now - lastKeyUpAt < DEBOUNCE_MS;
+
       stopHold();
       active = false;
+      hadRepeat = false;
+      ticked = false;
+      lastKeyUpAt = now;
+      clearClickTimer();
 
-      if (pendingRepeat) {
-        pendingRepeat = false;
-        clearClickTimer();
+      // Segurou: os ticks contínuos já baixaram o volume.
+      if (wasTicking) return;
+
+      // Auto-repeat do SO sem tempo de tick (soltou logo após o repeat).
+      if (withRepeat) {
         onStepRef.current?.(-0.1);
         return;
       }
 
-      if (wasHeldDown) {
+      // Cliques em sequência: cada clique após o primeiro diminui.
+      if (isSequence) {
+        onStepRef.current?.(-0.1);
         return;
       }
 
-      clearClickTimer();
+      // Clique único: aumenta ao soltar, após o debounce.
       clickTimer = window.setTimeout(() => {
         clickTimer = null;
         onStepRef.current?.(0.1);

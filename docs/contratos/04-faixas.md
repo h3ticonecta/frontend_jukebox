@@ -134,7 +134,7 @@ Visual original do jukebox (`glass-surface`, vinil girando, barra de progresso n
 
 - **Próximo / pular / fim da faixa:** próxima na fila local (com débito); sem fila, para o player
 - **Anterior:** reinicia se `currentTime > 3s`; senão faixa anterior na playlist
-- **Volume:** persiste em `localStorage`; tecla `vol` ajusta ±10% (`useVolumeShortcuts`); legado `vol_mais` / `vol_menos` usado como tecla de fallback. Toda mudança de volume (tecla ou slider) abre o `VolumePopup`: overlay escuro central com "VOLUME", percentual em âmbar e barra segmentada (20 blocos), que some ~1,6 s após a última alteração (`pointer-events-none`, não bloqueia toques)
+- **Volume:** persiste em `localStorage`; tecla `vol` ajusta ±10% (`useVolumeShortcuts`); legado `vol_mais` / `vol_menos` usado como tecla de fallback. Toda mudança de volume (tecla ou slider) abre o `VolumePopup`: overlay escuro central com "VOLUME", percentual em âmbar e barra segmentada (20 blocos), que permanece visível durante o ajuste contínuo (segurar a tecla) e some ~1,6 s após a última alteração (`pointer-events-none`, não bloqueia toques)
 
 ## Regras de negócio
 
