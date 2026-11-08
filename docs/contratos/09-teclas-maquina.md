@@ -144,7 +144,7 @@ Valores especiais de exibição:
 
 | Zona | Destaque visual | Teclas que movem |
 |------|-----------------|------------------|
-| `genres` | Moldura laranja em volta de **toda a faixa** do carrossel (`.genre-carousel-focus`) + anel ciano no vinil do gênero focado (cópia do meio) | `esquerda` / `direita` (loop no carrossel); `baixo` → 1º artista |
+| `genres` | Moldura laranja em volta de **toda a faixa** do carrossel (`.genre-carousel-focus`) + anel ciano no vinil do gênero focado (cópia do meio) + **retângulo** em volta do card do gênero (vinil + nome; âmbar se selecionado, ciano se focado) | `esquerda` / `direita` (loop no carrossel); `baixo` → 1º artista |
 | `albums` | Anel ciano no card do artista | `esquerda` / `direita` (grid 3 col., quebra de linha); `cima` / `baixo` (mesma coluna) |
 | `tracks` | Linha ciano na lista de músicas | `cima` / `baixo`; `cima` no topo volta aos artistas |
 

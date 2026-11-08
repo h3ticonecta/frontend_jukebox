@@ -16,7 +16,16 @@ function GenreSlide({
 }) {
   return (
     <div
-      className="flex flex-col items-center gap-2.5 shrink-0 w-[200px]"
+      className={cn(
+        // p-2 + -m-2: moldura não altera o tamanho de layout do slide
+        'flex flex-col items-center gap-2.5 shrink-0 w-[200px] rounded-2xl border p-2 -m-2 transition-colors duration-200',
+        isSelected &&
+          'border-primary/70 bg-primary/5 shadow-[0_0_20px_hsl(var(--primary)/0.22)]',
+        !isSelected &&
+          isFocused &&
+          'border-secondary/70 bg-secondary/5 shadow-[0_0_20px_hsl(var(--secondary)/0.22)]',
+        !isSelected && !isFocused && 'border-transparent'
+      )}
       data-genre-id={genre.id}
       data-copy-index={copyItemIndex}
       data-loop-copy={copyIndex}

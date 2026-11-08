@@ -97,7 +97,7 @@ Implementado em `GenreCarousel.jsx`:
 | Clique | Disco, nome e contagem selecionam gênero e carregam artistas/bandas; pausam o carrossel por 5s. Após um arraste, o clique fantasma é ignorado (~400ms) |
 | Centralizar seleção | Ao mudar `selectedGenre` (clique ou tecla E/R), `pauseForInteraction` + `scrollToItemIndex` no mesmo `useLayoutEffect` (cópia do meio); sem `scrollIntoView` duplicado no teclado |
 | Bordas | Fade lateral via `.genre-marquee-mask` (`index.css`) |
-| Foco na zona SUCESSOS | Moldura laranja (`.genre-carousel-focus`) em volta de **toda a faixa** do carrossel (todos os discos visíveis) quando `focusZone === 'genres'` (`genresZoneFocused`); indica que o cursor está na seção SUCESSOS mesmo com o marquee em movimento; vinil focado na cópia do meio mantém anel ciano (`isFocused`) |
+| Foco na zona SUCESSOS | Moldura laranja (`.genre-carousel-focus`) em volta de **toda a faixa** do carrossel (todos os discos visíveis) quando `focusZone === 'genres'` (`genresZoneFocused`); indica que o cursor está na seção SUCESSOS mesmo com o marquee em movimento; vinil focado na cópia do meio mantém anel ciano (`isFocused`); card do gênero (vinil + nome) ganha **retângulo** arredondado — âmbar se selecionado, ciano se apenas focado (`p-2 -m-2`, sem alterar o layout) |
 
 ### Componentes envolvidos
 
