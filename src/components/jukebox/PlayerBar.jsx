@@ -5,7 +5,7 @@ function VinylThumb({ cover, isSpinning }) {
   return (
     <div
       className={cn(
-        'w-12 h-12 rounded-full relative shrink-0 overflow-hidden border-2 border-primary/40',
+        'w-10 h-10 rounded-full relative shrink-0 overflow-hidden border-2 border-primary/40',
         isSpinning && 'animate-spin-vinyl'
       )}
     >
@@ -13,7 +13,7 @@ function VinylThumb({ cover, isSpinning }) {
         <img src={cover} alt="" className="w-full h-full object-cover" />
       ) : (
         <div className="w-full h-full bg-muted flex items-center justify-center">
-          <Disc className="text-primary" size={20} />
+          <Disc className="text-primary" size={18} />
         </div>
       )}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-background" />
@@ -23,15 +23,15 @@ function VinylThumb({ cover, isSpinning }) {
 
 function VolumeSlider({ volume, onChange }) {
   return (
-    <div className="flex items-center gap-2 shrink-0">
-      <Volume2 size={18} className="text-foreground/80" />
+    <div className="flex items-center gap-1.5 shrink-0">
+      <Volume2 size={16} className="text-foreground/80" />
       <input
         type="range"
         min="0"
         max="100"
         value={volume}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="player-volume-slider w-24 h-1 cursor-pointer appearance-none rounded-full bg-muted"
+        className="player-volume-slider w-20 h-1 cursor-pointer appearance-none rounded-full bg-muted"
         style={{
           background: `linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--primary)) ${volume}%, hsl(var(--muted)) ${volume}%, hsl(var(--muted)) 100%)`,
         }}
@@ -93,17 +93,17 @@ function PlaybackTimeline({ currentTime, duration, isPlaying, onSeek }) {
 
 function WaitingBadge({ queueCount, showLabel = false }) {
   return (
-    <div className="flex items-center gap-2 shrink-0">
-      <Clock size={showLabel ? 24 : 22} className="text-secondary" />
+    <div className="flex items-center gap-1.5 shrink-0">
+      <Clock size={showLabel ? 20 : 18} className="text-secondary" />
       <span
         className={cn(
           'font-display text-secondary font-bold tabular-nums',
-          showLabel ? 'text-2xl' : 'text-lg'
+          showLabel ? 'text-xl' : 'text-base'
         )}
       >
         {queueCount}
       </span>
-      {showLabel && <span className="text-sm text-muted-foreground">em espera</span>}
+      {showLabel && <span className="text-xs text-muted-foreground">em espera</span>}
     </div>
   );
 }
@@ -131,16 +131,16 @@ export default function PlayerBar({
   return (
     <>
       {!currentSong ? (
-        <div className="fixed bottom-0 left-0 right-0 h-20 glass-surface border-t border-border flex items-center justify-between z-40 px-4 shrink-0">
+        <div className="fixed bottom-0 left-0 right-0 h-14 glass-surface border-t border-border flex items-center justify-between z-40 px-4 shrink-0">
           <button
             type="button"
             onClick={onInsertCredit}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             title="Inserir crédito (R$ 1,00)"
           >
-            <Coins size={28} className="text-primary" />
-            <span className="text-2xl font-display text-primary neon-glow-amber font-bold">{credits}</span>
-            <span className="text-sm text-muted-foreground">créditos</span>
+            <Coins size={24} className="text-primary" />
+            <span className="text-xl font-display text-primary neon-glow-amber font-bold">{credits}</span>
+            <span className="text-xs text-muted-foreground">créditos</span>
           </button>
           <p className="text-muted-foreground text-sm font-display">Selecione uma música para começar</p>
           <WaitingBadge queueCount={queueCount} showLabel />
@@ -154,16 +154,16 @@ export default function PlayerBar({
             onSeek={onSeek}
           />
 
-          <div className="flex items-center gap-3 px-4 h-[72px]">
-            <div className="flex items-center gap-3 min-w-0 shrink-0">
+          <div className="flex items-center gap-3 px-4 h-[56px]">
+            <div className="flex items-center gap-2.5 min-w-0 shrink-0">
               <button
                 type="button"
                 onClick={onInsertCredit}
                 className="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity"
                 title="Inserir crédito (R$ 1,00)"
               >
-                <Coins className="text-primary" size={26} />
-                <span className="text-xl font-display text-primary neon-glow-amber font-bold">{credits}</span>
+                <Coins className="text-primary" size={22} />
+                <span className="text-lg font-display text-primary neon-glow-amber font-bold">{credits}</span>
               </button>
 
               <VinylThumb cover={currentSong.cover || currentSong.cover_url} isSpinning={isPlaying} />
@@ -180,39 +180,39 @@ export default function PlayerBar({
 
             <div className="flex-1" />
 
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2.5 shrink-0">
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={onPrevious}
-                  className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary active:scale-90 transition-colors touch-manipulation"
+                  className="p-1.5 min-w-[40px] min-h-[40px] flex items-center justify-center text-foreground hover:text-primary active:scale-90 transition-colors touch-manipulation"
                   aria-label="Anterior"
                 >
-                  <SkipBack size={22} fill="currentColor" />
+                  <SkipBack size={20} fill="currentColor" />
                 </button>
                 <button
                   type="button"
                   onClick={onTogglePlay}
-                  className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-primary text-[#121619] flex items-center justify-center hover:brightness-110 active:scale-95 transition-all touch-manipulation"
+                  className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full bg-primary text-[#121619] flex items-center justify-center hover:brightness-110 active:scale-95 transition-all touch-manipulation"
                   aria-label={isPlaying ? 'Pausar' : 'Tocar'}
                 >
                   {isPlaying ? (
-                    <Pause size={22} fill="currentColor" />
+                    <Pause size={20} fill="currentColor" />
                   ) : (
-                    <Play size={22} fill="currentColor" className="ml-0.5" />
+                    <Play size={20} fill="currentColor" className="ml-0.5" />
                   )}
                 </button>
                 <button
                   type="button"
                   onClick={onNext}
-                  className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary active:scale-90 transition-colors touch-manipulation"
+                  className="p-1.5 min-w-[40px] min-h-[40px] flex items-center justify-center text-foreground hover:text-primary active:scale-90 transition-colors touch-manipulation"
                   aria-label="Próximo"
                 >
-                  <SkipForward size={22} fill="currentColor" />
+                  <SkipForward size={20} fill="currentColor" />
                 </button>
               </div>
 
-              <p className="text-sm text-foreground tabular-nums shrink-0 min-w-[5.5rem] text-center">
+              <p className="text-xs text-foreground tabular-nums shrink-0 min-w-[4.5rem] text-center">
                 {formatDuration(currentTime)} / {formatDuration(duration)}
               </p>
 

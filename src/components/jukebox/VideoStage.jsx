@@ -91,10 +91,10 @@ export default function VideoStage({ mediaRef, currentSong }) {
           ref={mediaRef}
           className={cn(
             'absolute bg-black transition-all duration-300 ease-out',
-            fullScreen && 'bottom-0 right-0 w-full h-full object-contain pb-[76px]',
+            fullScreen && 'bottom-0 right-0 w-full h-full object-contain pb-[60px]',
             miniVisible &&
-              `bottom-24 right-4 ${MINI_SIZE} object-cover rounded-xl border border-secondary/60 shadow-[0_8px_32px_rgba(0,0,0,0.85)] pointer-events-auto cursor-pointer`,
-            !fullScreen && !miniVisible && 'bottom-24 right-4 w-px h-px opacity-0 pointer-events-none'
+              `bottom-[4.5rem] right-4 ${MINI_SIZE} object-cover rounded-xl border border-secondary/60 shadow-[0_8px_32px_rgba(0,0,0,0.85)] pointer-events-auto cursor-pointer`,
+            !fullScreen && !miniVisible && 'bottom-[4.5rem] right-4 w-px h-px opacity-0 pointer-events-none'
           )}
           preload="auto"
           autoPlay
@@ -127,7 +127,7 @@ export default function VideoStage({ mediaRef, currentSong }) {
 
         {miniVisible && (
           <div
-            className={cn('absolute bottom-24 right-4 pointer-events-none', MINI_SIZE)}
+            className={cn('absolute bottom-[4.5rem] right-4 pointer-events-none', MINI_SIZE)}
             aria-hidden="true"
           >
             <div className="absolute top-1.5 right-1.5 flex items-center gap-1.5 pointer-events-auto">
@@ -158,7 +158,7 @@ export default function VideoStage({ mediaRef, currentSong }) {
         <button
           type="button"
           onClick={reopenFull}
-          className="fixed bottom-24 right-4 z-30 flex items-center gap-2 px-4 py-3 min-h-[48px] rounded-lg glass-surface border border-secondary/50 text-secondary shadow-lg active:scale-95 transition-all touch-manipulation"
+          className="fixed bottom-[4.5rem] right-4 z-30 flex items-center gap-2 px-4 py-3 min-h-[48px] rounded-lg glass-surface border border-secondary/50 text-secondary shadow-lg active:scale-95 transition-all touch-manipulation"
           aria-label="Mostrar vídeo"
           title="Mostrar vídeo"
         >

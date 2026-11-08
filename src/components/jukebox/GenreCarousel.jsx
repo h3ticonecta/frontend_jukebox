@@ -18,7 +18,7 @@ function GenreSlide({
     <div
       className={cn(
         // p-2 + -m-2: moldura não altera o tamanho de layout do slide
-        'flex flex-col items-center gap-2.5 shrink-0 w-[200px] rounded-2xl border p-2 -m-2 transition-colors duration-200',
+        'flex flex-col items-center gap-2 shrink-0 w-[170px] rounded-2xl border p-2 -m-2 transition-colors duration-200',
         isSelected &&
           'border-primary/70 bg-primary/5 shadow-[0_0_20px_hsl(var(--primary)/0.22)]',
         !isSelected &&
@@ -44,7 +44,7 @@ function GenreSlide({
       <button
         type="button"
         onClick={() => onActivate(genre)}
-        className="text-sm font-semibold text-foreground/80 text-center leading-tight max-w-full px-1 min-h-[2.5rem] line-clamp-2 touch-manipulation hover:text-foreground active:scale-[0.98] transition-colors"
+        className="text-sm font-semibold text-foreground/80 text-center leading-tight max-w-full px-1 min-h-[2.2rem] line-clamp-2 touch-manipulation hover:text-foreground active:scale-[0.98] transition-colors"
       >
         {genre.name}
       </button>
@@ -113,15 +113,15 @@ export default function GenreCarousel({
   }
 
   return (
-    <section id="hits-section" className="px-4 py-4 border-b border-border shrink-0">
-      <div className="flex items-center gap-2 mb-4">
+    <section id="hits-section" className="px-4 py-2.5 border-b border-border shrink-0">
+      <div className="flex items-center gap-2 mb-2">
         <Star className="text-primary fill-primary" size={16} />
         <h2 className="text-sm font-display text-primary neon-glow-amber tracking-wider">SUCESSOS</h2>
       </div>
 
       <div
         className={cn(
-          'rounded-[1.25rem] px-3 py-3 transition-shadow duration-200',
+          'rounded-[1.25rem] px-3 py-2 transition-shadow duration-200',
           genresZoneFocused && 'genre-carousel-focus'
         )}
       >
@@ -131,7 +131,7 @@ export default function GenreCarousel({
           style={{ WebkitOverflowScrolling: 'touch' }}
           onDragStart={(event) => event.preventDefault()}
         >
-          <div ref={trackRef} className="genre-marquee-track flex w-max gap-8 pt-8 pb-3">
+          <div ref={trackRef} className="genre-marquee-track flex w-max gap-8 pt-5 pb-2">
             {loopGenres.map((genre, index) => {
               const copyIndex = Math.floor(index / genres.length);
               const copyItemIndex = index % genres.length;

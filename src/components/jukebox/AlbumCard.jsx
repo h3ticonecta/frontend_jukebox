@@ -6,7 +6,7 @@ const SIZES = {
   sm: 'w-12 h-12',
   md: 'w-full h-full',
   lg: 'w-[100px] h-[100px]',
-  xl: 'w-[180px] h-[180px]',
+  xl: 'w-[150px] h-[150px]',
 };
 
 const VINYL_GROOVE_RINGS = [

@@ -133,7 +133,7 @@ audio.play({ ...track, media_url })
 
 ### Barra fixa (`PlayerBar`)
 
-Visual original do jukebox (`glass-surface`, vinil girando, barra de progresso no topo) com controles adicionais:
+Visual original do jukebox (`glass-surface`, vinil girando, barra de progresso no topo) com controles adicionais. Barra **compacta**: 56px de altura no estado tocando (`h-[56px]`) e 56px no estado vazio (`h-14`) — reduzida para dar mais espaço à grade de artistas:
 
 | Região | Conteúdo |
 |--------|----------|

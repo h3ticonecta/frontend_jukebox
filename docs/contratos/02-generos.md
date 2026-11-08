@@ -8,7 +8,7 @@
 
 ## Descrição
 
-Carrossel horizontal **SUCESSOS** com discos de vinil em tamanho grande (~180px). Cada disco representa uma **categoria** (pasta de primeiro nível abaixo de `Musicas/`).
+Carrossel horizontal **SUCESSOS** com discos de vinil em tamanho grande (~150px, faixa compacta em altura para dar mais espaço à grade de artistas). Cada disco representa uma **categoria** (pasta de primeiro nível abaixo de `Musicas/`).
 
 O carrossel rola **automaticamente da direita para a esquerda** em loop infinito. A animação pausa ao passar o mouse para permitir seleção.
 
@@ -22,7 +22,7 @@ O carrossel rola **automaticamente da direita para a esquerda** em loop infinito
 | Cancela fetch anterior ao trocar SUCESSO | ✅ |
 | Contagem "N artistas" | ✅ |
 | Capa no centro do vinil | ✅ (depende de `cover_url` — ver contrato 10) |
-| Discos grandes (`size="xl"`, 180px) | ✅ |
+| Discos grandes (`size="xl"`, 150px) | ✅ |
 | Carrossel infinito automático | ✅ |
 | Pausa no hover | ✅ |
 | Rotação ao selecionar | ✅ |
@@ -84,9 +84,9 @@ Implementado em `GenreCarousel.jsx`:
 
 | Aspecto | Detalhe |
 |---------|---------|
-| Tamanho do disco | `AlbumCard` com `size="xl"` → **180×180px** |
-| Espaço do brilho | `pt-8` na faixa do carrossel — o `overflow-y-hidden` não corta o glow/`box-shadow` acima dos vinis |
-| Largura do item | 200px (disco + labels) |
+| Tamanho do disco | `AlbumCard` com `size="xl"` → **150×150px** |
+| Espaço do brilho | `pt-5` na faixa do carrossel — o `overflow-y-hidden` não corta o glow/`box-shadow` acima dos vinis |
+| Largura do item | 170px (disco + labels) |
 | Loop | Lista triplicada (`[...genres, ...genres, ...genres]`); faixa ativa na cópia do meio (`loopWidth..2×loopWidth`); largura medida entre `data-loop-copy="0"` e `"1"`; `ResizeObserver` só quando a largura mudar |
 | Animação | `useInfiniteMarquee` — modo **auto**: `translate3d` contínuo; modo **manual** (arraste/touch/wheel): `scrollLeft` nativo com `touch-pan-x`; troca transparente entre modos após 5s |
 | Direção | Direita → esquerda |

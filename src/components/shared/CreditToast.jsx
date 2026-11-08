@@ -5,7 +5,7 @@ export default function CreditToast({ visible, message = '+1 crédito inserido' 
   return (
     <div
       className={cn(
-        'fixed bottom-24 left-4 z-50 flex items-center gap-2.5 px-4 py-3 rounded-lg',
+        'fixed bottom-[4.5rem] left-4 z-50 flex items-center gap-2.5 px-4 py-3 rounded-lg',
         'glass-surface border border-primary/40 neon-border-amber shadow-lg',
         'transition-all duration-300 ease-out',
         visible
