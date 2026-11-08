@@ -51,7 +51,9 @@ Cada contrato documenta:
 | Ambiente | Variável | Valor |
 |----------|----------|-------|
 | Desenvolvimento | `VITE_API_BASE_URL` | `https://backendjukebox-dev.up.railway.app` |
-| Produção | `VITE_API_BASE_URL` | URL do deploy Railway |
+| Produção | `VITE_API_BASE_URL` | `https://paineljukebox.h3ti.com.br` (domínio customizado do backend; presente no `ALLOWED_HOSTS` do Django) |
+
+> Nota: o domínio Railway `backendjukebox-dev.up.railway.app` **não** está no `ALLOWED_HOSTS` do Django — chamadas diretas de API por ele recebem `400 DisallowedHost`. O frontend de produção (`jukebox.h3ti.com.br`) já aponta para `paineljukebox.h3ti.com.br`.
 
 ## Código-fonte principal
 
