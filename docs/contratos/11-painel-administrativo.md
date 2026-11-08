@@ -4,7 +4,8 @@
 
 - `src/components/admin/AdminPage.jsx` — gate de autenticação da rota `#/admin`
 - `src/components/admin/AdminLoginCard.jsx` — login do administrador
-- `src/components/admin/AdminDashboard.jsx` — dashboard (cards, filtros, gráfico)
+- `src/components/admin/AdminDashboard.jsx` — dashboard (cards, filtros, gráfico) + navegação por abas
+- `src/components/admin/AdminRoletaTab.jsx` — aba **Roleta** (editor do contrato 12)
 - `src/api/painel.js` — `fetchPainelAdministrativo()`
 - `src/api/auth.js` — `loginAdmin()` (POST `/api/v1/auth/token/`)
 - `src/lib/storage.js` — `getAdminToken()`, `setAdminSession()`, `clearAdminSession()`
@@ -27,7 +28,8 @@ Página **Painel Administrativo** acessível pela rota SPA `/#/admin`, com auten
 | Filtros: período preset / personalizado / máquina / status | ✅ |
 | Exportar PDF (frontend, `window.print()` em HTML limpo) | ✅ |
 | Logout + tratamento de 401 (sessão expirada) | ✅ |
-| Abas Máquinas / Configurações / Usuários | ⏳ Em breve (badge na UI) |
+| Aba **Roleta** (editor de configuração da roleta por máquina) | ✅ — contrato [12](./12-roleta.md) |
+| Abas Máquinas / Usuários | ⏳ Em breve (badge na UI) |
 
 ---
 
@@ -78,10 +80,10 @@ Query enviada pelo front (`fetchPainelAdministrativo`):
 1. A rota `#/admin` é renderizada **antes** do gate de login da máquina — o painel não exige nem interfere na sessão da jukebox.
 2. Filtro de período personalizado só consulta a API após início **e** fim escolhidos (mesmo padrão do `BillingModal`).
 3. Gráfico usa `grafico_faturamento_por_maquina[]` (pré-agregado do backend); largura mínima de barra de 2% para valores > 0.
-4. Abas "Máquinas", "Configurações" e "Usuários" aparecem desabilitadas com badge "em breve" (contratos futuros).
+4. Navegação por abas com estado `activeTab` (`dashboard` | `roleta`): botões de atualizar/exportar PDF e os filtros só aparecem na aba Dashboard.
+5. Abas "Máquinas" e "Usuários" aparecem desabilitadas com badge "em breve" (contratos futuros).
 
 ## Pendências
 
 - [ ] Aba Máquinas (CRUD `/api/v1/maquinas/`)
-- [ ] Aba Configurações (buckets/músicas)
 - [ ] Aba Usuários (gestão de usuários admin)

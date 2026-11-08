@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   CalendarDays,
   Coins,
+  Dices,
   Disc,
   DollarSign,
   FileDown,
@@ -10,10 +11,10 @@ import {
   MonitorCog,
   Music,
   RefreshCw,
-  Settings,
   Users,
 } from 'lucide-react';
 import { fetchPainelAdministrativo } from '../../api/painel';
+import AdminRoletaTab from './AdminRoletaTab';
 import { formatBRL, formatCustomPeriodLabel, toIsoDate } from '../../lib/billing';
 import { exportPainelPdf } from '../../lib/painelPrint';
 import { getAdminUsername } from '../../lib/storage';
@@ -36,7 +37,7 @@ const STATUS_OPTIONS = [
 const TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, enabled: true },
   { id: 'maquinas', label: 'Máquinas', icon: MonitorCog, enabled: false },
-  { id: 'configuracoes', label: 'Configurações', icon: Settings, enabled: false },
+  { id: 'roleta', label: 'Roleta', icon: Dices, enabled: true },
   { id: 'usuarios', label: 'Usuários', icon: Users, enabled: false },
 ];
 
@@ -128,6 +129,7 @@ export default function AdminDashboard({ token, onLogout }) {
   const [painel, setPainel] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const [periodId, setPeriodId] = useState('tudo');
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -241,26 +243,30 @@ export default function AdminDashboard({ token, onLogout }) {
             </div>
           </div>
           <div className="flex items-center gap-2 ml-auto">
-            <button
-              type="button"
-              onClick={() => load(currentFilters)}
-              disabled={loading}
-              className="p-2.5 min-w-[44px] min-h-[44px] rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 disabled:opacity-50 transition-colors touch-manipulation"
-              title="Atualizar dados"
-              aria-label="Atualizar dados"
-            >
-              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-            </button>
-            <button
-              type="button"
-              onClick={handleExportPdf}
-              disabled={!painel || loading}
-              className="flex items-center gap-2 px-3 min-h-[44px] rounded-lg border border-primary/50 text-primary hover:bg-primary/10 disabled:opacity-50 transition-colors touch-manipulation"
-              title="Exportar PDF"
-            >
-              <FileDown size={16} />
-              <span className="text-sm font-semibold">Exportar PDF</span>
-            </button>
+            {activeTab === 'dashboard' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => load(currentFilters)}
+                  disabled={loading}
+                  className="p-2.5 min-w-[44px] min-h-[44px] rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 disabled:opacity-50 transition-colors touch-manipulation"
+                  title="Atualizar dados"
+                  aria-label="Atualizar dados"
+                >
+                  <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportPdf}
+                  disabled={!painel || loading}
+                  className="flex items-center gap-2 px-3 min-h-[44px] rounded-lg border border-primary/50 text-primary hover:bg-primary/10 disabled:opacity-50 transition-colors touch-manipulation"
+                  title="Exportar PDF"
+                >
+                  <FileDown size={16} />
+                  <span className="text-sm font-semibold">Exportar PDF</span>
+                </button>
+              </>
+            )}
             <a
               href="#/"
               className="flex items-center px-3 min-h-[44px] rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors touch-manipulation"
@@ -285,11 +291,14 @@ export default function AdminDashboard({ token, onLogout }) {
               key={tab.id}
               type="button"
               disabled={!tab.enabled}
+              onClick={() => tab.enabled && setActiveTab(tab.id)}
               className={cn(
                 'flex items-center gap-2 px-3 py-2 text-sm border-b-2 -mb-px transition-colors shrink-0 touch-manipulation',
-                tab.enabled
+                activeTab === tab.id
                   ? 'border-primary text-primary font-semibold'
-                  : 'border-transparent text-muted-foreground/60 cursor-not-allowed'
+                  : tab.enabled
+                    ? 'border-transparent text-muted-foreground hover:text-foreground'
+                    : 'border-transparent text-muted-foreground/60 cursor-not-allowed'
               )}
               title={tab.enabled ? tab.label : `${tab.label} — em breve`}
             >
@@ -302,6 +311,8 @@ export default function AdminDashboard({ token, onLogout }) {
           ))}
         </nav>
 
+        {activeTab === 'dashboard' && (
+          <>
         <section className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             {PERIOD_OPTIONS.map((period) => (
@@ -447,6 +458,15 @@ export default function AdminDashboard({ token, onLogout }) {
         <p className="text-center text-[11px] text-muted-foreground pb-4">
           Filtros ativos: {periodoLabel} · {maquinaLabel} · {statusLabel}
         </p>
+          </>
+        )}
+
+        {activeTab === 'roleta' && (
+          <AdminRoletaTab
+            token={token}
+            onAuthError={() => onLogout('Sessão do administrador expirada. Entre novamente.')}
+          />
+        )}
       </div>
     </div>
   );
