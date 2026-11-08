@@ -1,7 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CREDITS_PER_SONG } from './api/config';
 import { registrarCredito, registrarMusicaTocada } from './api/maquinas';
+import { fetchRoletaMaquina } from './api/roleta';
 import { addBillingEvent } from './lib/billing';
+import {
+  ROLETA_SESSION_MS,
+  addRoletaGiros,
+  getRoletaFaixasParticipantes,
+  getRoletaGiros,
+  hasRoletaBonusRecarga,
+  mergeRoletaFaixas,
+  normalizeRoletaConfig,
+  resolveInsercaoRoleta,
+  setRoletaBonusRecarga,
+} from './lib/roleta';
 import { useAuth } from './context/AuthContext';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { useJukeboxKeyboard } from './hooks/useJukeboxKeyboard';
@@ -28,6 +40,8 @@ import JukeboxShell from './components/jukebox/JukeboxShell';
 import PlayerBar from './components/jukebox/PlayerBar';
 import SongSidePanel from './components/jukebox/SongSidePanel';
 import PrefetchBanner from './components/jukebox/PrefetchBanner';
+import RoletaFab from './components/jukebox/RoletaFab';
+import RoletaModal from './components/jukebox/RoletaModal';
 import SyncBanner from './components/jukebox/SyncBanner';
 import VideoStage from './components/jukebox/VideoStage';
 import VolumePopup from './components/jukebox/VolumePopup';
@@ -46,7 +60,11 @@ function JukeboxApp() {
   const [billingOpen, setBillingOpen] = useState(false);
   const [highlightQueue, setHighlightQueue] = useState(false);
   const [creditToastVisible, setCreditToastVisible] = useState(false);
+  const [creditToastMessage, setCreditToastMessage] = useState(undefined);
   const [volumePopupVisible, setVolumePopupVisible] = useState(false);
+  const [roletaConfig, setRoletaConfig] = useState(null);
+  const [roletaGiros, setRoletaGiros] = useState(() => getRoletaGiros());
+  const [roletaOpen, setRoletaOpen] = useState(false);
 
   const queueRef = useRef(queue);
   const tracksRef = useRef(library.tracks);
@@ -54,6 +72,8 @@ function JukeboxApp() {
   const volumePopupTimerRef = useRef(null);
   const audioRefHolder = useRef(null);
   const resumeStartedRef = useRef(false);
+  const roletaConfigRef = useRef(null);
+  const roletaSessionRef = useRef({ total: 0, timer: null });
   queueRef.current = queue;
   tracksRef.current = library.tracks;
 
@@ -275,7 +295,8 @@ function JukeboxApp() {
     }
   }, [playFromPlaylist]);
 
-  const showCreditToast = useCallback(() => {
+  const showCreditToast = useCallback((message) => {
+    setCreditToastMessage(message);
     setCreditToastVisible(true);
     if (creditToastTimerRef.current) {
       window.clearTimeout(creditToastTimerRef.current);
@@ -291,8 +312,58 @@ function JukeboxApp() {
       if (creditToastTimerRef.current) {
         window.clearTimeout(creditToastTimerRef.current);
       }
+      if (roletaSessionRef.current.timer) {
+        window.clearTimeout(roletaSessionRef.current.timer);
+      }
     };
   }, []);
+
+  // Contrato 12 — config da roleta da máquina (falha silenciosa = roleta desligada)
+  useEffect(() => {
+    if (!token) return undefined;
+    let cancelled = false;
+    fetchRoletaMaquina(token)
+      .then((data) => {
+        if (cancelled) return;
+        const cfg = normalizeRoletaConfig(data);
+        roletaConfigRef.current = cfg;
+        setRoletaConfig(cfg);
+        // Giros pendentes de uma sessão anterior reabrem a roleta no boot
+        if (cfg?.ativada && getRoletaGiros() > 0) {
+          setRoletaOpen(true);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  // Sessão de inserção: pulsos de R$ 1 acumulam; 20s sem pulso fecha a sessão,
+  // aplica bônus de recarga pendente e concede giros conforme a faixa atingida.
+  const closeRoletaSession = useCallback(() => {
+    const session = roletaSessionRef.current;
+    session.timer = null;
+    const total = session.total;
+    session.total = 0;
+    if (!total) return;
+
+    if (hasRoletaBonusRecarga()) {
+      setRoletaBonusRecarga(false);
+      const extra = Math.floor(total * 0.5);
+      if (extra > 0) {
+        const next = addCredits(extra);
+        setCredits(next);
+        showCreditToast(`Bônus +50%: +${extra} créditos`);
+      }
+    }
+
+    const premio = resolveInsercaoRoleta(roletaConfigRef.current, total);
+    if (!premio || premio.giros <= 0) return;
+    mergeRoletaFaixas(premio.faixasParticipantes);
+    setRoletaGiros(addRoletaGiros(premio.giros));
+    setRoletaOpen(true);
+  }, [showCreditToast]);
 
   const handleInsertCredit = useCallback(async () => {
     if (!token) return;
@@ -303,10 +374,34 @@ function JukeboxApp() {
       setCredits(next);
       addBillingEvent({ type: 'credito', valor: 1, creditos: 1 });
       showCreditToast();
+
+      const session = roletaSessionRef.current;
+      session.total += 1;
+      if (session.timer) window.clearTimeout(session.timer);
+      session.timer = window.setTimeout(closeRoletaSession, ROLETA_SESSION_MS);
     } catch (err) {
       setActionError(err.message || 'Erro ao registrar crédito');
     }
-  }, [token, showCreditToast]);
+  }, [token, showCreditToast, closeRoletaSession]);
+
+  const handleRoletaConsumeGiro = useCallback(() => {
+    setRoletaGiros(addRoletaGiros(-1));
+  }, []);
+
+  const handleRoletaRefundGiro = useCallback(() => {
+    setRoletaGiros(addRoletaGiros(1));
+  }, []);
+
+  // Prêmio de músicas grátis = créditos locais (1 música = 1 crédito);
+  // não é venda — não gera POST /creditos/ nem evento de faturamento.
+  const handleRoletaPrizeMusicas = useCallback((musicas) => {
+    if (!musicas || musicas <= 0) return;
+    setCredits(addCredits(musicas));
+  }, []);
+
+  const handleRoletaPrizeBonus = useCallback(() => {
+    setRoletaBonusRecarga(true);
+  }, []);
 
   const handleAddToQueue = useCallback(
     (track) => {
@@ -368,6 +463,7 @@ function JukeboxApp() {
   const handleCancel = useCallback(() => {
     setKeysPanelOpen(false);
     setBillingOpen(false);
+    setRoletaOpen(false);
     setActionError(null);
   }, []);
 
@@ -516,7 +612,7 @@ function JukeboxApp() {
         </div>
       </JukeboxShell>
 
-      <CreditToast visible={creditToastVisible} />
+      <CreditToast visible={creditToastVisible} message={creditToastMessage} />
       <VideoStage mediaRef={audio.audioRef} currentSong={audio.currentSong} />
       <VolumePopup volume={audio.volume} visible={volumePopupVisible} />
       {billingOpen && (
@@ -524,6 +620,22 @@ function JukeboxApp() {
           token={token}
           machineName={machine?.nome_jukebox}
           onClose={() => setBillingOpen(false)}
+        />
+      )}
+      {!roletaOpen && roletaConfig?.ativada && (
+        <RoletaFab giros={roletaGiros} onClick={() => setRoletaOpen(true)} />
+      )}
+      {roletaOpen && roletaConfig?.ativada && (
+        <RoletaModal
+          config={roletaConfig}
+          giros={roletaGiros}
+          credits={credits}
+          faixasParticipantes={getRoletaFaixasParticipantes()}
+          onConsumeGiro={handleRoletaConsumeGiro}
+          onRefundGiro={handleRoletaRefundGiro}
+          onPrizeMusicas={handleRoletaPrizeMusicas}
+          onPrizeBonus={handleRoletaPrizeBonus}
+          onClose={() => setRoletaOpen(false)}
         />
       )}
     </>

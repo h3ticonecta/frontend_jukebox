@@ -5,6 +5,10 @@
 - `src/api/roleta.js` — `fetchRoletaAdmin()`, `saveRoletaAdmin()` (admin) e `fetchRoletaMaquina()` (jukebox)
 - `src/components/admin/AdminRoletaTab.jsx` — editor da roleta no painel `#/admin` (aba **Roleta**)
 - `src/components/admin/AdminDashboard.jsx` — navegação por abas (`activeTab`: `dashboard` | `roleta`)
+- `src/lib/roleta.js` — lógica do jogo: sessão de inserção, sorteio ponderado, cumulatividade, limite diário, persistência
+- `src/components/jukebox/RoletaModal.jsx` — roda da roleta (SVG) + animação de giro
+- `src/components/jukebox/RoletaFab.jsx` — atalho flutuante "Roleta ×N" quando há giros pendentes
+- `src/App.jsx` — gatilho automático na inserção de créditos, concessão de giros, aplicação de prêmios
 
 ## Descrição
 
@@ -25,8 +29,9 @@ Também editável no Django Admin (bloco "Configuração da Roleta" em Modificar
 | API admin `PUT /maquinas/{id}/roleta/` (salvar) | ✅ Integrado |
 | Aba Roleta no painel: seleção de máquina, toggle, pesos, regras, faixas | ✅ |
 | Resumo de probabilidades calculado no front (total, chance %, vantagem %) | ✅ |
-| API jukebox `GET /maquinas/roleta/` (`fetchRoletaMaquina`) | ✅ Pronto (sem UI ainda) |
-| Jogo da roleta na jukebox (giro, animação, aplicação de prêmios) | ❌ Pendente — aguardando definição de UX/regras |
+| API jukebox `GET /maquinas/roleta/` (`fetchRoletaMaquina`) | ✅ Integrado |
+| Jogo da roleta na jukebox (overlay **ROULETA DA SORTE**, gatilho automático, prêmios) | ✅ Implementado (regras abaixo; UI alinhada ao print) |
+| Registro de prêmios da roleta no backend | ❌ Local — prêmios não geram `POST /creditos/` |
 
 ---
 
@@ -113,7 +118,59 @@ Authorization: Maquina <token>
 - `ativada: false` → resumo mínimo
 - `ativada: true` → mesmo JSON do admin
 
-Pronto em `fetchRoletaMaquina()` (`src/api/roleta.js`), ainda **sem UI** na jukebox.
+Consumido por `fetchRoletaMaquina()` no boot da jukebox (falha silenciosa = roleta desligada até o próximo boot).
+
+---
+
+## Jogo na jukebox (regras implementadas no front)
+
+Definidas com o operador: **gatilho automático** após inserção de valor e roda com os **5 setores globais**; cumulatividade conforme print da regra.
+
+### Gatilho — sessão de inserção
+
+- O aceitador pulsa R$ 1 por vez (`handleInsertCredit`); cada pulso soma em uma **sessão** (`roletaSessionRef` em `App.jsx`).
+- **20s sem novo pulso** (`ROLETA_SESSION_MS` em `src/lib/roleta.js`) fecham a sessão.
+- Ao fechar: a **maior faixa** com `valor <= total inserido` concede seus `giros_liberados`; participam do sorteio **todas as faixas** com `valor <= total` (ex.: R$ 100 → 5 giros, faixas A–E).
+- Giros concedidos **abrem a roleta automaticamente**; giros acumulam com pendentes anteriores.
+- Roleta desativada, config não carregada ou total abaixo da menor faixa → nada acontece.
+
+### Roda e sorteio (UI = print **ROULETA DA SORTE**)
+
+- Overlay tela cheia: título em degradê ciano→rosa, subtítulo "Gire e ganhe músicas extras!", ponteiro ciano no topo, miolo escuro, botão **GIRAR ROLETA** abaixo da roda, pill "Giros disponíveis: N".
+- Roda SVG com os setores globais de peso **> 0** (fatias proporcionais aos pesos). Setor com peso 0 não aparece — o print com 3 fatias é o caso em que +2 e bônus 50% estão em 0.
+- Sorteio ponderado no client (`pickRoletaSector`), animação de ~4,8s até o setor sorteado sob o ponteiro.
+- Setores estreitos (span < 24°) não têm rótulo interno.
+
+### Resultados
+
+| Setor | Efeito |
+|---|---|
+| **+2 músicas** | Sorteia uma faixa participante (uniforme) e paga o prêmio **cumulativo**: `musica_gratis.quantidade` da faixa sorteada **+ todas as inferiores** (ex.: faixa C com A–E → 2+4+6 = 12 músicas) |
+| **+1 música** | Paga somente o `musica_gratis.quantidade` da **faixa sorteada** (sem cumulatividade) |
+| **Bônus 50% na recarga** | Flag `jukebox_roleta_bonus_recarga`; a **próxima sessão de inserção** ganha `floor(total × 50%)` créditos extras (toast "Bônus +50%: +N créditos") |
+| **Tente novamente** | Giro **devolvido** (não consome) |
+| **Não foi dessa vez** | Giro consumido, sem prêmio |
+
+### Regras e limites
+
+- **Créditos mínimos**: saldo `>= regras.creditos_minimos_girar` para girar (aviso no modal; giros são mantidos).
+- **Limite diário do +2**: contador local por dia (`jukebox_roleta_daily`); permitido enquanto `premios2 + 1 <= (giros + 1) × pct / 100`. Ao atingir o limite, **o peso do setor +2 migra para "não foi dessa vez"** naquele dia.
+- **Prêmio de músicas = créditos locais** (`addCredits`, 1 música = 1 crédito). Não há `POST /creditos/` nem evento de faturamento — prêmio não é venda.
+
+### Persistência local (`src/lib/roleta.js`)
+
+| Chave | Conteúdo |
+|---|---|
+| `jukebox_roleta_giros` | Giros pendentes (ao zerar, limpa as faixas participantes) |
+| `jukebox_roleta_faixas_participantes` | Maior nº de faixas acumuladas enquanto houver giros |
+| `jukebox_roleta_bonus_recarga` | Flag do bônus 50% pendente |
+| `jukebox_roleta_daily` | `{ date, giros, premios2 }` do dia (limite diário) |
+
+### Abertura da UI
+
+- Automática ao conceder giros; no **boot** se houver giros pendentes e roleta ativada.
+- **FAB** "Roleta ×N" (canto inferior esquerdo) quando fechada com giros pendentes.
+- Fechar no meio do giro **não perde o prêmio** (o giro conclui em background e aplica o resultado).
 
 ---
 
@@ -123,12 +180,14 @@ Pronto em `fetchRoletaMaquina()` (`src/api/roleta.js`), ainda **sem UI** na juke
 2. `faixas_valor` é enviada **completa** no PUT e **substitui** as faixas anteriores (comportamento do backend); por isso o body omite `id` e `ordem`.
 3. Resumo de probabilidades calculado no client: `chance = (premio_mais_2_musicas + premio_mais_1_musica + bonus_recarga_50pct) / total_pesos`; `vantagem = 100 − chance`. Exibido com 1 casa decimal (igual ao `resumo` do backend).
 4. `valor` da faixa é serializado com 2 casas decimais (`"5.00"`).
-5. `sem_premio` com `quantidade: 1` deve ser exibido como **"-"** na roleta da jukebox (quando implementada).
-6. Prêmios **cumulativos** por faixa maior: regra aplicada no app da jukebox (o backend só armazena as faixas) — **aguardando o print da regra** para implementação.
+5. `sem_premio` com `quantidade: 1` não vira fatia da roda (a roda usa os 5 setores globais). Na lista de prêmios da **faixa** no admin, continua cadastrável.
+6. Prêmios **cumulativos** por faixa maior (print da regra): a maior faixa `valor <= total inserido` concede os giros; no prêmio **+2 músicas** o app soma `musica_gratis` da faixa sorteada **+ todas as inferiores** participantes da sessão. O backend só armazena as faixas.
 
 ## Pendências
 
-- [ ] UI do jogo na jukebox: gatilho do giro (botão vs. automático após inserção), animação da roleta, aplicação de prêmios (créditos grátis, giros extras, bônus de recarga)
-- [ ] Regra de cumulatividade por faixa maior (aguardando print/especificação)
-- [ ] Controle diário do limite de prêmio +2 músicas (`max_premio_mais_2_musicas_dia_percent`) — definir onde o contador vive (local vs. backend)
-- [ ] Avaliar `PATCH` parcial (hoje o front usa sempre `PUT` completo)
+- [ ] Endpoint backend para **registrar prêmios/giros** da roleta (hoje tudo local: giros, contadores, prêmios em créditos)
+- [ ] Prêmios de faixa `giro_extra` / `sem_premio`: não sorteados por faixa nesta versão — os setores globais "tente novamente"/"não foi dessa vez" cobrem esses papéis
+- [ ] Tecla física da máquina para girar/abrir a roleta (hoje só toque/clique)
+- [ ] Som de giro/prêmio
+- [ ] Validar em campo a janela de sessão de 20s (aceitador real)
+- [ ] Avaliar `PATCH` parcial no editor admin (hoje o front usa sempre `PUT` completo)

@@ -30,7 +30,7 @@ Cada contrato documenta:
 | 09 | Teclas da máquina | [09-teclas-maquina.md](./contratos/09-teclas-maquina.md) | ✅ Integrado |
 | 10 | Capas de pastas | [10-capas-pastas.md](./contratos/10-capas-pastas.md) | ⏳ Backend |
 | 11 | Painel Administrativo | [11-painel-administrativo.md](./contratos/11-painel-administrativo.md) | ✅ Integrado |
-| 12 | Roleta (configuração) | [12-roleta.md](./contratos/12-roleta.md) | ⚠️ Parcial |
+| 12 | Roleta (config + jogo) | [12-roleta.md](./contratos/12-roleta.md) | ✅ Integrado |
 
 ## Status geral (atualizado)
 
@@ -47,7 +47,7 @@ Cada contrato documenta:
 | Capas herdadas no sync | ⏳ Usa `cover_url` direto | ⏳ Pendente |
 | Painel Administrativo (`#/admin`) | ✅ | ✅ |
 | Roleta — editor no painel admin | ✅ | ✅ |
-| Roleta — jogo na jukebox | ❌ Pendente | ✅ |
+| Roleta — jogo na jukebox | ✅ | ✅ (prêmios ainda locais) |
 
 ## Base URL
 
@@ -80,4 +80,4 @@ Cada contrato documenta:
 | Créditos e tocadas | [06](./contratos/06-creditos.md), [04](./contratos/04-faixas.md) |
 | Capas no sync | [10](./contratos/10-capas-pastas.md) |
 | Painel Administrativo | [11](./contratos/11-painel-administrativo.md) |
-| Roleta (configuração por máquina) | [12](./contratos/12-roleta.md) |
+| Roleta (configuração + jogo) | [12](./contratos/12-roleta.md) |
