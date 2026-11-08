@@ -22,6 +22,7 @@ const ROLETA_KEYS = {
   DAILY: 'jukebox_roleta_daily',
 };
 
+/** Idle após o último pulso: aplica bônus 50% e zera a sessão (a overlay já abriu na hora). */
 export const ROLETA_SESSION_MS = 20000;
 
 /** Setores fixos da roleta global (ordem de exibição na roda). */
@@ -205,18 +206,30 @@ export function normalizeRoletaConfig(data) {
 // Regras do jogo
 
 /**
- * Sessão de inserção fechada → giros concedidos e nº de faixas participantes.
- * Retorna null quando a roleta está desativada ou o total não atinge uma faixa.
+ * Créditos desta sessão → giros a conceder (total absoluto, não o delta).
+ *
+ * Libera quando:
+ * - o total atinge `creditos_minimos_girar` (texto do Django: "créditos comprados
+ *   para liberar a roleta"), ou
+ * - o total atinge alguma faixa de valor.
+ *
+ * Giros = `giros_liberados` da maior faixa `valor <= total`, ou 1 se não houver faixa.
+ * Retorna null se a roleta estiver desligada ou o total ainda for insuficiente.
  */
 export function resolveInsercaoRoleta(config, totalInserido) {
   if (!config?.ativada) return null;
   const total = Number(totalInserido) || 0;
   if (total <= 0) return null;
-  const participantes = config.faixas.filter((f) => f.valor <= total);
-  if (participantes.length === 0) return null;
+
+  const minimo = Number(config.regras?.creditosMinimos) || 0;
+  const participantes = (config.faixas || []).filter((f) => f.valor <= total);
+  const atingiuFaixa = participantes.length > 0;
+  const atingiuMinimo = minimo > 0 ? total >= minimo : atingiuFaixa;
+  if (!atingiuMinimo && !atingiuFaixa) return null;
+
   const maior = participantes[participantes.length - 1];
-  if (maior.giros <= 0) return null;
-  return { giros: maior.giros, faixasParticipantes: participantes.length };
+  const giros = maior?.giros > 0 ? maior.giros : 1;
+  return { giros, faixasParticipantes: Math.max(1, participantes.length) };
 }
 
 /** Sorteio ponderado; ao bloquear o +2 (limite diário), o peso migra para "não foi". */

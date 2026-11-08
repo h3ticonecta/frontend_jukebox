@@ -129,10 +129,11 @@ Definidas com o operador: **gatilho automático** após inserção de valor e ro
 ### Gatilho — sessão de inserção
 
 - O aceitador pulsa R$ 1 por vez (`handleInsertCredit`); cada pulso soma em uma **sessão** (`roletaSessionRef` em `App.jsx`).
-- **20s sem novo pulso** (`ROLETA_SESSION_MS` em `src/lib/roleta.js`) fecham a sessão.
-- Ao fechar: a **maior faixa** com `valor <= total inserido` concede seus `giros_liberados`; participam do sorteio **todas as faixas** com `valor <= total` (ex.: R$ 100 → 5 giros, faixas A–E).
-- Giros concedidos **abrem a roleta automaticamente**; giros acumulam com pendentes anteriores.
-- Roleta desativada, config não carregada ou total abaixo da menor faixa → nada acontece.
+- A overlay **abre no pulso que atinge o limiar** — não espera o idle. Limiar = `creditos_minimos_girar` (texto do Django: "créditos comprados para liberar a roleta") **ou** a menor faixa de valor, o que ocorrer primeiro.
+- Giros = `giros_liberados` da **maior faixa** com `valor <= total` da sessão; se não houver faixa, concede **1 giro**. Pulsos seguintes na mesma sessão só somam o **delta**.
+- **20s sem novo pulso** (`ROLETA_SESSION_MS`) encerram a sessão: aplicam o bônus 50% pendente e zeram o acumulado (os giros já estão na overlay/localStorage).
+- Roleta desativada na **máquina logada**, config não carregada ou total abaixo do mínimo → nada acontece.
+- Se o GET da config falhou no boot, a inserção tenta de novo (`fetchRoletaMaquina`).
 
 ### Roda e sorteio (UI = print **ROULETA DA SORTE**)
 
@@ -189,5 +190,5 @@ Definidas com o operador: **gatilho automático** após inserção de valor e ro
 - [ ] Prêmios de faixa `giro_extra` / `sem_premio`: não sorteados por faixa nesta versão — os setores globais "tente novamente"/"não foi dessa vez" cobrem esses papéis
 - [ ] Tecla física da máquina para girar/abrir a roleta (hoje só toque/clique)
 - [ ] Som de giro/prêmio
-- [ ] Validar em campo a janela de sessão de 20s (aceitador real)
+- [ ] Validar em campo a janela de idle de 20s (aceitador real) — a overlay em si abre no pulso do mínimo, não no idle
 - [ ] Avaliar `PATCH` parcial no editor admin (hoje o front usa sempre `PUT` completo)

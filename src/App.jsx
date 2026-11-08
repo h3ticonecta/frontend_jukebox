@@ -73,7 +73,7 @@ function JukeboxApp() {
   const audioRefHolder = useRef(null);
   const resumeStartedRef = useRef(false);
   const roletaConfigRef = useRef(null);
-  const roletaSessionRef = useRef({ total: 0, timer: null });
+  const roletaSessionRef = useRef({ total: 0, girosGranted: 0, timer: null });
   queueRef.current = queue;
   tracksRef.current = library.tracks;
 
@@ -339,13 +339,28 @@ function JukeboxApp() {
     };
   }, [token]);
 
-  // Sessão de inserção: pulsos de R$ 1 acumulam; 20s sem pulso fecha a sessão,
-  // aplica bônus de recarga pendente e concede giros conforme a faixa atingida.
+  const applyRoletaInsercao = useCallback((total) => {
+    const premio = resolveInsercaoRoleta(roletaConfigRef.current, total);
+    if (!premio || premio.giros <= 0) return;
+
+    const session = roletaSessionRef.current;
+    const delta = premio.giros - (session.girosGranted || 0);
+    if (delta > 0) {
+      mergeRoletaFaixas(premio.faixasParticipantes);
+      setRoletaGiros(addRoletaGiros(delta));
+      session.girosGranted = premio.giros;
+    }
+    setRoletaOpen(true);
+  }, []);
+
+  // Idle da sessão: bônus 50% da recarga + zera o acumulado (giros já foram
+  // concedidos no pulso que atingiu o mínimo / a faixa).
   const closeRoletaSession = useCallback(() => {
     const session = roletaSessionRef.current;
     session.timer = null;
     const total = session.total;
     session.total = 0;
+    session.girosGranted = 0;
     if (!total) return;
 
     if (hasRoletaBonusRecarga()) {
@@ -357,12 +372,6 @@ function JukeboxApp() {
         showCreditToast(`Bônus +50%: +${extra} créditos`);
       }
     }
-
-    const premio = resolveInsercaoRoleta(roletaConfigRef.current, total);
-    if (!premio || premio.giros <= 0) return;
-    mergeRoletaFaixas(premio.faixasParticipantes);
-    setRoletaGiros(addRoletaGiros(premio.giros));
-    setRoletaOpen(true);
   }, [showCreditToast]);
 
   const handleInsertCredit = useCallback(async () => {
@@ -375,14 +384,26 @@ function JukeboxApp() {
       addBillingEvent({ type: 'credito', valor: 1, creditos: 1 });
       showCreditToast();
 
+      if (!roletaConfigRef.current) {
+        try {
+          const data = await fetchRoletaMaquina(token);
+          const cfg = normalizeRoletaConfig(data);
+          roletaConfigRef.current = cfg;
+          setRoletaConfig(cfg);
+        } catch {
+          // Sem config = roleta desligada neste ciclo
+        }
+      }
+
       const session = roletaSessionRef.current;
       session.total += 1;
+      applyRoletaInsercao(session.total);
       if (session.timer) window.clearTimeout(session.timer);
       session.timer = window.setTimeout(closeRoletaSession, ROLETA_SESSION_MS);
     } catch (err) {
       setActionError(err.message || 'Erro ao registrar crédito');
     }
-  }, [token, showCreditToast, closeRoletaSession]);
+  }, [token, showCreditToast, closeRoletaSession, applyRoletaInsercao]);
 
   const handleRoletaConsumeGiro = useCallback(() => {
     setRoletaGiros(addRoletaGiros(-1));
