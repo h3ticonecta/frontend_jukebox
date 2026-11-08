@@ -15,6 +15,11 @@ const PERSISTENT_KEYS = {
   RESUME_PLAYBACK: 'jukebox_should_resume_playback',
 };
 
+const ADMIN_KEYS = {
+  TOKEN: 'jukebox_admin_token',
+  USER: 'jukebox_admin_user',
+};
+
 const LEGACY_SESSION_KEYS = {
   QUEUE: 'jukebox_session_queue',
   CURRENT_SONG: 'jukebox_session_current_song',
@@ -58,6 +63,31 @@ export function clearMaquinaSession() {
   localStorage.removeItem(PERSISTENT_KEYS.RESUME_PLAYBACK);
   sessionStorage.removeItem(LEGACY_SESSION_KEYS.QUEUE);
   sessionStorage.removeItem(LEGACY_SESSION_KEYS.CURRENT_SONG);
+}
+
+export function getAdminToken() {
+  const token = localStorage.getItem(ADMIN_KEYS.TOKEN);
+  if (!token || token === 'undefined' || token === 'null') {
+    return null;
+  }
+  return token;
+}
+
+export function setAdminSession({ token, username }) {
+  if (!token || token === 'undefined' || token === 'null') {
+    throw new Error('Token do administrador não recebido do servidor.');
+  }
+  localStorage.setItem(ADMIN_KEYS.TOKEN, token);
+  localStorage.setItem(ADMIN_KEYS.USER, username || '');
+}
+
+export function getAdminUsername() {
+  return localStorage.getItem(ADMIN_KEYS.USER) || '';
+}
+
+export function clearAdminSession() {
+  localStorage.removeItem(ADMIN_KEYS.TOKEN);
+  localStorage.removeItem(ADMIN_KEYS.USER);
 }
 
 export function getMaquinaTeclas() {

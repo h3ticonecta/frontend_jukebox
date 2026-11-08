@@ -19,6 +19,7 @@ import {
 } from './lib/storage';
 import { syncQueueMediaCache } from './lib/queueMediaCache';
 import MachineLoginCard from './components/auth/MachineLoginCard';
+import AdminPage from './components/admin/AdminPage';
 import AlbumBrowser from './components/jukebox/AlbumBrowser';
 import BillingModal from './components/jukebox/BillingModal';
 import GenreCarousel from './components/jukebox/GenreCarousel';
@@ -529,8 +530,27 @@ function JukeboxApp() {
   );
 }
 
+function useHashRoute() {
+  const [hash, setHash] = useState(() => window.location.hash);
+
+  useEffect(() => {
+    const handleHashChange = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  return hash;
+}
+
 function App() {
   const { isAuthenticated } = useAuth();
+  const hash = useHashRoute();
+
+  // Rota SPA do Painel Administrativo (contrato 11) — auth própria,
+  // independente do login da máquina.
+  if (hash.startsWith('#/admin')) {
+    return <AdminPage />;
+  }
 
   if (!isAuthenticated) {
     return <MachineLoginCard />;

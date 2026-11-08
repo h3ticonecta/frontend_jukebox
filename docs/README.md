@@ -29,6 +29,7 @@ Cada contrato documenta:
 | 08 | Convenções da API | [08-convencoes-api.md](./contratos/08-convencoes-api.md) | — |
 | 09 | Teclas da máquina | [09-teclas-maquina.md](./contratos/09-teclas-maquina.md) | ✅ Integrado |
 | 10 | Capas de pastas | [10-capas-pastas.md](./contratos/10-capas-pastas.md) | ⏳ Backend |
+| 11 | Painel Administrativo | [11-painel-administrativo.md](./contratos/11-painel-administrativo.md) | ✅ Integrado |
 
 ## Status geral (atualizado)
 
@@ -43,6 +44,7 @@ Cada contrato documenta:
 | Teclas configuráveis | ✅ | ✅ |
 | Fila persistente / API | ❌ Local | ⏳ Pendente |
 | Capas herdadas no sync | ⏳ Usa `cover_url` direto | ⏳ Pendente |
+| Painel Administrativo (`#/admin`) | ✅ | ✅ |
 
 ## Base URL
 
@@ -70,3 +72,4 @@ Cada contrato documenta:
 | Login, teclas, config | [01](./contratos/01-sessao-dispositivo.md), [09](./contratos/09-teclas-maquina.md) |
 | Créditos e tocadas | [06](./contratos/06-creditos.md), [04](./contratos/04-faixas.md) |
 | Capas no sync | [10](./contratos/10-capas-pastas.md) |
+| Painel Administrativo | [11](./contratos/11-painel-administrativo.md) |
