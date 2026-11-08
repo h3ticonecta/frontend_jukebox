@@ -146,7 +146,8 @@ export default function AdminDashboard({ token, onLogout }) {
         const data = await fetchPainelAdministrativo(token, filters);
         setPainel(data);
       } catch (err) {
-        if (err?.status === 401) {
+        // Backend responde 400 (ou 401) quando o token está ausente/inválido
+        if (err?.status === 401 || err?.status === 400) {
           onLogout('Sessão do administrador expirada. Entre novamente.');
           return;
         }

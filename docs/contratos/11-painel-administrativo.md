@@ -38,7 +38,7 @@ Página **Painel Administrativo** acessível pela rota SPA `/#/admin`, com auten
 | Login | `POST /api/v1/auth/token/` com `{ "username", "password" }` → `{ "token" }` (`loginAdmin()` em `src/api/auth.js`) |
 | Header | `Authorization: Token <token-admin>` (`tokenType: 'Token'` no `apiRequest`) |
 | Sessão local | `localStorage`: `jukebox_admin_token` + `jukebox_admin_user` |
-| 401 na API | Limpa sessão e volta ao login com aviso "Sessão expirada" |
+| 400/401 na API (token ausente/inválido) | Limpa sessão e volta ao login com aviso "Sessão expirada" |
 | Erro de login | `non_field_errors` do DRF → "Usuário ou senha inválidos." |
 
 ---
