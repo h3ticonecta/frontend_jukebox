@@ -55,6 +55,8 @@ Cada contrato documenta:
 
 > **Host check do Django (corrigido no backend em nov/2026):** `backendjukebox-dev.up.railway.app` agora está fixo no `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS` — chamadas diretas funcionam sem `400 DisallowedHost`. Domínios customizados (ex.: `paineljukebox.h3ti.com.br`) entram via variável de ambiente `EXTRA_ALLOWED_HOSTS` no Railway. Superusuário do admin é criado/sincronizado a cada deploy via `DJANGO_SUPERUSER_USERNAME`/`DJANGO_SUPERUSER_PASSWORD`/`DJANGO_SUPERUSER_EMAIL` — são as credenciais do **Painel Administrativo** (`#/admin`). Health check: `GET /health/` deve responder `{"status":"ok","database":"postgresql","persistent":true}`.
 
+> **Bancos separados por ambiente:** dev (`backendjukebox-dev.up.railway.app`) e produção (`paineljukebox.h3ti.com.br`) são **serviços Railway distintos, cada um com seu PostgreSQL**. O superusuário `admin` precisa ser criado/sincronizado **em cada serviço** (definir `DJANGO_SUPERUSER_*` nas Variables do serviço correspondente + redeploy). Criar o usuário só no dev **não** faz o login funcionar no `#/admin` de produção — e vice-versa.
+
 ## Código-fonte principal
 
 | Área | Arquivos |
