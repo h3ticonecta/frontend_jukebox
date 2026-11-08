@@ -51,9 +51,9 @@ Cada contrato documenta:
 | Ambiente | Variável | Valor |
 |----------|----------|-------|
 | Desenvolvimento | `VITE_API_BASE_URL` | `https://backendjukebox-dev.up.railway.app` |
-| Produção | `VITE_API_BASE_URL` | `https://paineljukebox.h3ti.com.br` (domínio customizado do backend; presente no `ALLOWED_HOSTS` do Django) |
+| Produção | `VITE_API_BASE_URL` | `https://paineljukebox.h3ti.com.br` (domínio customizado do backend) |
 
-> Nota: o domínio Railway `backendjukebox-dev.up.railway.app` **não** está no `ALLOWED_HOSTS` do Django — chamadas diretas de API por ele recebem `400 DisallowedHost`. O frontend de produção (`jukebox.h3ti.com.br`) já aponta para `paineljukebox.h3ti.com.br`.
+> **Host check do Django (corrigido no backend em nov/2026):** `backendjukebox-dev.up.railway.app` agora está fixo no `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS` — chamadas diretas funcionam sem `400 DisallowedHost`. Domínios customizados (ex.: `paineljukebox.h3ti.com.br`) entram via variável de ambiente `EXTRA_ALLOWED_HOSTS` no Railway. Superusuário do admin é criado/sincronizado a cada deploy via `DJANGO_SUPERUSER_USERNAME`/`DJANGO_SUPERUSER_PASSWORD`/`DJANGO_SUPERUSER_EMAIL` — são as credenciais do **Painel Administrativo** (`#/admin`). Health check: `GET /health/` deve responder `{"status":"ok","database":"postgresql","persistent":true}`.
 
 ## Código-fonte principal
 
