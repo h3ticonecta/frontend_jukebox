@@ -171,6 +171,7 @@ Definidas com o operador: **gatilho automático** após inserção de valor e ro
 
 - Automática ao conceder giros; no **boot** se houver giros pendentes e roleta ativada.
 - **FAB** "Roleta ×N" (canto inferior esquerdo) quando fechada com giros pendentes.
+- **Fecha sozinha** quando `giros disponíveis = 0` (depois de ~2s mostrando o resultado do último giro; "Tente novamente" devolve o giro e a overlay permanece).
 - Fechar no meio do giro **não perde o prêmio** (o giro conclui em background e aplica o resultado).
 
 ---

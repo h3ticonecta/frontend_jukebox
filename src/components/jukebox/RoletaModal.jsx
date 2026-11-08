@@ -10,6 +10,7 @@ import {
 import { cn } from '../../lib/utils';
 
 const SPIN_MS = 4800;
+const CLOSE_AFTER_RESULT_MS = 2200;
 const WHEEL_SIZE = 360;
 const CENTER = WHEEL_SIZE / 2;
 const RADIUS = 168;
@@ -48,6 +49,8 @@ export default function RoletaModal({
   const [resultado, setResultado] = useState(null);
   const [aviso, setAviso] = useState(null);
   const spinTimerRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(
     () => () => {
@@ -55,6 +58,14 @@ export default function RoletaModal({
     },
     []
   );
+
+  // Sem giros restantes: espera o resultado do último giro e fecha a overlay.
+  useEffect(() => {
+    if (spinning || giros > 0) return undefined;
+    const delay = resultado ? CLOSE_AFTER_RESULT_MS : 400;
+    const timer = window.setTimeout(() => onCloseRef.current?.(), delay);
+    return () => window.clearTimeout(timer);
+  }, [giros, spinning, resultado]);
 
   const setores = useMemo(() => {
     const visiveis = config.setores.filter((s) => s.peso > 0);
