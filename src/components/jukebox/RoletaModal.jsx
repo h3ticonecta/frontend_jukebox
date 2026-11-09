@@ -8,6 +8,7 @@ import {
   registerRoletaPremio2,
   resolveWheelSetores,
 } from '../../lib/roleta';
+import { playRoletaSpinStart } from '../../lib/roletaSpinSound';
 import { cn } from '../../lib/utils';
 
 const SPIN_MS = 4800;
@@ -156,6 +157,7 @@ export default function RoletaModal({
       return rot + 360 * 6 + delta;
     });
 
+    playRoletaSpinStart();
     setSpinning(true);
     onConsumeGiro();
     registerRoletaGiro();
