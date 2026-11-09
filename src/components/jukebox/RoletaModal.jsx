@@ -6,7 +6,9 @@ import {
   pickRoletaSector,
   registerRoletaGiro,
   registerRoletaPremio2,
+  resolveWheelSetores,
 } from '../../lib/roleta';
+import { startRoletaSpinTicks } from '../../lib/roletaSpinSound';
 import { cn } from '../../lib/utils';
 
 const SPIN_MS = 4800;
@@ -49,12 +51,15 @@ export default function RoletaModal({
   const [resultado, setResultado] = useState(null);
   const [aviso, setAviso] = useState(null);
   const spinTimerRef = useRef(null);
+  const spinTicksRef = useRef(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
   useEffect(
     () => () => {
       if (spinTimerRef.current) window.clearTimeout(spinTimerRef.current);
+      spinTicksRef.current?.stop();
+      spinTicksRef.current = null;
     },
     []
   );
@@ -67,22 +72,48 @@ export default function RoletaModal({
     return () => window.clearTimeout(timer);
   }, [giros, spinning, resultado]);
 
+  const setoresBase = useMemo(
+    () => resolveWheelSetores(config, faixasParticipantes),
+    [config, faixasParticipantes]
+  );
+
+  // Fatias visuais iguais; sorteio ponderado pelos pesos de cada setor.
   const setores = useMemo(() => {
-    const visiveis = config.setores.filter((s) => s.peso > 0);
-    const fonte = visiveis.length > 0 ? visiveis : config.setores;
-    const totalPeso = fonte.reduce((acc, s) => acc + s.peso, 0) || 1;
-    let acc = 0;
-    return fonte.map((s) => {
-      const start = (acc / totalPeso) * 360;
-      acc += s.peso;
-      const end = (acc / totalPeso) * 360;
-      return { ...s, start, end, mid: (start + end) / 2, span: end - start, totalPeso };
+    const n = setoresBase.length || 1;
+    const step = 360 / n;
+    return setoresBase.map((s, i) => {
+      const start = i * step;
+      const end = (i + 1) * step;
+      return { ...s, start, end, mid: start + step / 2, span: step };
     });
-  }, [config.setores]);
+  }, [setoresBase]);
 
   const finishSpin = (setor) => {
     spinTimerRef.current = null;
+    spinTicksRef.current?.stop();
+    spinTicksRef.current = null;
     setSpinning(false);
+
+    if (setor.premioTipo === 'musica_gratis') {
+      const musicas = Math.max(0, Number(setor.quantidade) || 0);
+      if (musicas >= 2) registerRoletaPremio2();
+      if (musicas > 0) {
+        onPrizeMusicas(musicas);
+        setResultado({ tone: 'win', texto: `+${musicas} MÚSICA${musicas > 1 ? 'S' : ''} GRÁTIS!` });
+      } else {
+        setResultado({ tone: 'nada', texto: 'FAIXA SEM PRÊMIO DE MÚSICAS' });
+      }
+      return;
+    }
+    if (setor.premioTipo === 'giro_extra') {
+      onRefundGiro();
+      setResultado({ tone: 'retry', texto: 'TENTE NOVAMENTE — GIRO DEVOLVIDO' });
+      return;
+    }
+    if (setor.premioTipo === 'sem_premio') {
+      setResultado({ tone: 'nada', texto: 'NÃO FOI DESSA VEZ' });
+      return;
+    }
 
     if (setor.tipo === 'premio2' || setor.tipo === 'premio1') {
       if (setor.tipo === 'premio2') registerRoletaPremio2();
@@ -117,7 +148,7 @@ export default function RoletaModal({
     setAviso(null);
     setResultado(null);
 
-    const setor = pickRoletaSector(config.setores, {
+    const setor = pickRoletaSector(setoresBase, {
       bloquearPremio2: !dailyPermitePremio2(config.regras.limitePremio2Dia),
     });
     const alvoSetor = setores.find((s) => s.key === setor.key) || setores[0];
@@ -131,6 +162,8 @@ export default function RoletaModal({
       return rot + 360 * 6 + delta;
     });
 
+    spinTicksRef.current?.stop();
+    spinTicksRef.current = startRoletaSpinTicks(SPIN_MS + 200);
     setSpinning(true);
     onConsumeGiro();
     registerRoletaGiro();
@@ -197,7 +230,7 @@ export default function RoletaModal({
               />
             ))}
             {setores
-              .filter((s) => s.span >= 24)
+              .filter((s) => s.span >= 18)
               .map((s) => (
                 <text
                   key={`label-${s.key}`}
