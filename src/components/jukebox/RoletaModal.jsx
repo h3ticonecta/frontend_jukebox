@@ -8,7 +8,7 @@ import {
   registerRoletaPremio2,
   resolveWheelSetores,
 } from '../../lib/roleta';
-import { playRoletaSpinStart } from '../../lib/roletaSpinSound';
+import { startRoletaSpinTicks } from '../../lib/roletaSpinSound';
 import { cn } from '../../lib/utils';
 
 const SPIN_MS = 4800;
@@ -51,12 +51,15 @@ export default function RoletaModal({
   const [resultado, setResultado] = useState(null);
   const [aviso, setAviso] = useState(null);
   const spinTimerRef = useRef(null);
+  const spinTicksRef = useRef(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
   useEffect(
     () => () => {
       if (spinTimerRef.current) window.clearTimeout(spinTimerRef.current);
+      spinTicksRef.current?.stop();
+      spinTicksRef.current = null;
     },
     []
   );
@@ -87,6 +90,8 @@ export default function RoletaModal({
 
   const finishSpin = (setor) => {
     spinTimerRef.current = null;
+    spinTicksRef.current?.stop();
+    spinTicksRef.current = null;
     setSpinning(false);
 
     if (setor.premioTipo === 'musica_gratis') {
@@ -157,7 +162,8 @@ export default function RoletaModal({
       return rot + 360 * 6 + delta;
     });
 
-    playRoletaSpinStart();
+    spinTicksRef.current?.stop();
+    spinTicksRef.current = startRoletaSpinTicks(SPIN_MS + 200);
     setSpinning(true);
     onConsumeGiro();
     registerRoletaGiro();

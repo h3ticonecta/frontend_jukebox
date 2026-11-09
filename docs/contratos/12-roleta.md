@@ -141,7 +141,7 @@ Definidas com o operador: **gatilho automático** após inserção de valor; cum
 - Roda SVG em fatias **iguais** (360° ÷ N setores). **N** vem da lista `premios[]` da **faixa ativa** (maior faixa participante da sessão, mesma ordem do Django); se a faixa não tiver prêmios cadastrados, fallback para os **5 setores globais** (`ROLETA_SETORES` + pesos de `probabilidades`).
 - Rótulos por tipo: `musica_gratis` → `+N músicas` (laranja se N≥2, roxo se N=1); `giro_extra` → “Tente novamente”; `sem_premio` → “Não foi dessa vez”.
 - Sorteio ponderado no client (`pickRoletaSector` sobre os pesos de cada item), animação de ~4,8s até o setor sorteado sob o ponteiro.
-- Som ao iniciar o giro: `playRoletaSpinStart()` (`src/lib/roletaSpinSound.js`, Web Audio API, no clique **GIRAR ROLETA**).
+- Ticks durante o giro: `startRoletaSpinTicks(duração)` (`roletaSpinSound.js`, Web Audio); intervalo aumenta até parar (desacelera com a animação). Encerra em `finishSpin` e no unmount.
 - Resultado `premios[]`: música grátis paga a `quantidade` da linha sorteada; `giro_extra` devolve o giro; `sem_premio` consome o giro.
 
 ### Resultados
@@ -192,6 +192,6 @@ Definidas com o operador: **gatilho automático** após inserção de valor; cum
 
 - [ ] Endpoint backend para **registrar prêmios/giros** da roleta (hoje tudo local: giros, contadores, prêmios em créditos)
 - [ ] Tecla física da máquina para girar/abrir a roleta (hoje só toque/clique)
-- [ ] Som ao parar a roda / revelar prêmio (giro já tem áudio no início — `roletaSpinSound.js`)
+- [ ] Som ao parar a roda / revelar prêmio (ticks no giro — `roletaSpinSound.js`)
 - [ ] Validar em campo a janela de idle de 20s (aceitador real) — a overlay em si abre no pulso do mínimo, não no idle
 - [ ] Avaliar `PATCH` parcial no editor admin (hoje o front usa sempre `PUT` completo)

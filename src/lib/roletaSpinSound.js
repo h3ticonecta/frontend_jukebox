@@ -8,55 +8,72 @@ function getAudioContext() {
   return sharedCtx;
 }
 
-/** Som curto de “arranque” da roda (requer gesto do usuário — ex.: clique em Girar). */
-export function playRoletaSpinStart() {
+/** Clique curto de uma “ranhura” passando no ponteiro. */
+function playRoletaTick(volume = 0.2) {
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
     if (ctx.state === 'suspended') void ctx.resume();
 
     const now = ctx.currentTime;
-    const duration = 1.15;
-
-    const master = ctx.createGain();
-    master.gain.setValueAtTime(0.42, now);
-    master.gain.exponentialRampToValueAtTime(0.001, now + duration);
-    master.connect(ctx.destination);
-
-    const bufferSize = Math.floor(ctx.sampleRate * duration);
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i += 1) {
-      data[i] = Math.random() * 2 - 1;
-    }
-
-    const noise = ctx.createBufferSource();
-    noise.buffer = buffer;
-
-    const band = ctx.createBiquadFilter();
-    band.type = 'bandpass';
-    band.Q.value = 1.4;
-    band.frequency.setValueAtTime(280, now);
-    band.frequency.exponentialRampToValueAtTime(2400, now + 0.12);
-    band.frequency.exponentialRampToValueAtTime(520, now + duration * 0.85);
-
-    noise.connect(band);
-    band.connect(master);
-    noise.start(now);
-    noise.stop(now + duration);
-
-    const click = ctx.createOscillator();
-    const clickGain = ctx.createGain();
-    click.type = 'triangle';
-    click.frequency.setValueAtTime(720, now);
-    click.frequency.exponentialRampToValueAtTime(180, now + 0.07);
-    clickGain.gain.setValueAtTime(0.22, now);
-    clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
-    click.connect(clickGain);
-    clickGain.connect(master);
-    click.start(now);
-    click.stop(now + 0.1);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(920 + Math.random() * 80, now);
+    gain.gain.setValueAtTime(volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.028);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.03);
   } catch {
-    // Ambiente sem Web Audio ou política do navegador
+    // Ambiente sem Web Audio
   }
+}
+
+/**
+ * Ticks durante o giro (intervalo aumenta até o fim, como a roda desacelerando).
+ * Retorna `{ stop }` para cancelar timers.
+ */
+export function startRoletaSpinTicks(durationMs) {
+  const timeouts = [];
+  let stopped = false;
+  const startAt = performance.now();
+  const minInterval = 52;
+  const maxInterval = 360;
+  const total = Math.max(500, Number(durationMs) || 5000);
+
+  const stop = () => {
+    stopped = true;
+    timeouts.forEach((id) => window.clearTimeout(id));
+    timeouts.length = 0;
+  };
+
+  const schedule = () => {
+    if (stopped) return;
+    const elapsed = performance.now() - startAt;
+    if (elapsed >= total) return;
+
+    const progress = Math.min(1, elapsed / total);
+    const eased = 1 - (1 - progress) ** 2.4;
+    const interval = minInterval + (maxInterval - minInterval) * eased;
+    const volume = 0.22 * (1 - progress * 0.25);
+
+    playRoletaTick(volume);
+    const id = window.setTimeout(schedule, interval);
+    timeouts.push(id);
+  };
+
+  try {
+    const ctx = getAudioContext();
+    if (ctx?.state === 'suspended') void ctx.resume();
+  } catch {
+    // ignore
+  }
+
+  playRoletaTick(0.24);
+  const first = window.setTimeout(schedule, minInterval);
+  timeouts.push(first);
+
+  return { stop };
 }
