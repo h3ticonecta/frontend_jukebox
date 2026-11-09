@@ -67,16 +67,15 @@ export default function RoletaModal({
     return () => window.clearTimeout(timer);
   }, [giros, spinning, resultado]);
 
+  // Fatias visuais iguais (5 setores fixos); o sorteio continua ponderado por peso.
   const setores = useMemo(() => {
-    const visiveis = config.setores.filter((s) => s.peso > 0);
-    const fonte = visiveis.length > 0 ? visiveis : config.setores;
-    const totalPeso = fonte.reduce((acc, s) => acc + s.peso, 0) || 1;
-    let acc = 0;
-    return fonte.map((s) => {
-      const start = (acc / totalPeso) * 360;
-      acc += s.peso;
-      const end = (acc / totalPeso) * 360;
-      return { ...s, start, end, mid: (start + end) / 2, span: end - start, totalPeso };
+    const fonte = config.setores?.length ? config.setores : [];
+    const n = fonte.length || 1;
+    const step = 360 / n;
+    return fonte.map((s, i) => {
+      const start = i * step;
+      const end = (i + 1) * step;
+      return { ...s, start, end, mid: start + step / 2, span: step };
     });
   }, [config.setores]);
 

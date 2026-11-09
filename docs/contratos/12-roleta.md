@@ -138,9 +138,8 @@ Definidas com o operador: **gatilho automático** após inserção de valor e ro
 ### Roda e sorteio (UI = print **ROULETA DA SORTE**)
 
 - Overlay tela cheia: título em degradê ciano→rosa, subtítulo "Gire e ganhe músicas extras!", ponteiro ciano no topo, miolo escuro, botão **GIRAR ROLETA** abaixo da roda, pill "Giros disponíveis: N".
-- Roda SVG com os setores globais de peso **> 0** (fatias proporcionais aos pesos). Setor com peso 0 não aparece — o print com 3 fatias é o caso em que +2 e bônus 50% estão em 0.
+- Roda SVG com os **5 setores globais** em fatias **iguais** (72° cada, ordem fixa de `ROLETA_SETORES`). Os **pesos** do admin só afetam o sorteio (`pickRoletaSector`), não o tamanho visual da fatia (evita prêmios espremidos no topo quando peso de “não foi” / “tente novamente” é alto).
 - Sorteio ponderado no client (`pickRoletaSector`), animação de ~4,8s até o setor sorteado sob o ponteiro.
-- Setores estreitos (span < 24°) não têm rótulo interno.
 
 ### Resultados
 
