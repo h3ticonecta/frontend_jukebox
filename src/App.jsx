@@ -339,6 +339,23 @@ function JukeboxApp() {
     };
   }, [token]);
 
+  const refreshRoletaConfig = useCallback(async () => {
+    if (!token) return;
+    try {
+      const data = await fetchRoletaMaquina(token);
+      const cfg = normalizeRoletaConfig(data);
+      roletaConfigRef.current = cfg;
+      setRoletaConfig(cfg);
+    } catch {
+      // Mantém a config anterior
+    }
+  }, [token]);
+
+  const openRoleta = useCallback(() => {
+    void refreshRoletaConfig();
+    setRoletaOpen(true);
+  }, [refreshRoletaConfig]);
+
   const applyRoletaInsercao = useCallback((total) => {
     const premio = resolveInsercaoRoleta(roletaConfigRef.current, total);
     if (!premio || premio.giros <= 0) return;
@@ -350,8 +367,8 @@ function JukeboxApp() {
       setRoletaGiros(addRoletaGiros(delta));
       session.girosGranted = premio.giros;
     }
-    setRoletaOpen(true);
-  }, []);
+    openRoleta();
+  }, [openRoleta]);
 
   // Idle da sessão: bônus 50% da recarga + zera o acumulado (giros já foram
   // concedidos no pulso que atingiu o mínimo / a faixa).
@@ -644,7 +661,7 @@ function JukeboxApp() {
         />
       )}
       {!roletaOpen && roletaConfig?.ativada && (
-        <RoletaFab giros={roletaGiros} onClick={() => setRoletaOpen(true)} />
+        <RoletaFab giros={roletaGiros} onClick={openRoleta} />
       )}
       {roletaOpen && roletaConfig?.ativada && (
         <RoletaModal

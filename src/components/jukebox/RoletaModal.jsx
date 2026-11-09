@@ -6,6 +6,7 @@ import {
   pickRoletaSector,
   registerRoletaGiro,
   registerRoletaPremio2,
+  resolveWheelSetores,
 } from '../../lib/roleta';
 import { cn } from '../../lib/utils';
 
@@ -67,21 +68,46 @@ export default function RoletaModal({
     return () => window.clearTimeout(timer);
   }, [giros, spinning, resultado]);
 
-  // Fatias visuais iguais (5 setores fixos); o sorteio continua ponderado por peso.
+  const setoresBase = useMemo(
+    () => resolveWheelSetores(config, faixasParticipantes),
+    [config, faixasParticipantes]
+  );
+
+  // Fatias visuais iguais; sorteio ponderado pelos pesos de cada setor.
   const setores = useMemo(() => {
-    const fonte = config.setores?.length ? config.setores : [];
-    const n = fonte.length || 1;
+    const n = setoresBase.length || 1;
     const step = 360 / n;
-    return fonte.map((s, i) => {
+    return setoresBase.map((s, i) => {
       const start = i * step;
       const end = (i + 1) * step;
       return { ...s, start, end, mid: start + step / 2, span: step };
     });
-  }, [config.setores]);
+  }, [setoresBase]);
 
   const finishSpin = (setor) => {
     spinTimerRef.current = null;
     setSpinning(false);
+
+    if (setor.premioTipo === 'musica_gratis') {
+      const musicas = Math.max(0, Number(setor.quantidade) || 0);
+      if (musicas >= 2) registerRoletaPremio2();
+      if (musicas > 0) {
+        onPrizeMusicas(musicas);
+        setResultado({ tone: 'win', texto: `+${musicas} MÚSICA${musicas > 1 ? 'S' : ''} GRÁTIS!` });
+      } else {
+        setResultado({ tone: 'nada', texto: 'FAIXA SEM PRÊMIO DE MÚSICAS' });
+      }
+      return;
+    }
+    if (setor.premioTipo === 'giro_extra') {
+      onRefundGiro();
+      setResultado({ tone: 'retry', texto: 'TENTE NOVAMENTE — GIRO DEVOLVIDO' });
+      return;
+    }
+    if (setor.premioTipo === 'sem_premio') {
+      setResultado({ tone: 'nada', texto: 'NÃO FOI DESSA VEZ' });
+      return;
+    }
 
     if (setor.tipo === 'premio2' || setor.tipo === 'premio1') {
       if (setor.tipo === 'premio2') registerRoletaPremio2();
@@ -116,7 +142,7 @@ export default function RoletaModal({
     setAviso(null);
     setResultado(null);
 
-    const setor = pickRoletaSector(config.setores, {
+    const setor = pickRoletaSector(setoresBase, {
       bloquearPremio2: !dailyPermitePremio2(config.regras.limitePremio2Dia),
     });
     const alvoSetor = setores.find((s) => s.key === setor.key) || setores[0];
@@ -196,7 +222,7 @@ export default function RoletaModal({
               />
             ))}
             {setores
-              .filter((s) => s.span >= 24)
+              .filter((s) => s.span >= 18)
               .map((s) => (
                 <text
                   key={`label-${s.key}`}

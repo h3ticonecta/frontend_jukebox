@@ -124,7 +124,7 @@ Consumido por `fetchRoletaMaquina()` no boot da jukebox (falha silenciosa = role
 
 ## Jogo na jukebox (regras implementadas no front)
 
-Definidas com o operador: **gatilho automático** após inserção de valor e roda com os **5 setores globais**; cumulatividade conforme print da regra.
+Definidas com o operador: **gatilho automático** após inserção de valor; cumulatividade conforme print da regra.
 
 ### Gatilho — sessão de inserção
 
@@ -138,8 +138,10 @@ Definidas com o operador: **gatilho automático** após inserção de valor e ro
 ### Roda e sorteio (UI = print **ROULETA DA SORTE**)
 
 - Overlay tela cheia: título em degradê ciano→rosa, subtítulo "Gire e ganhe músicas extras!", ponteiro ciano no topo, miolo escuro, botão **GIRAR ROLETA** abaixo da roda, pill "Giros disponíveis: N".
-- Roda SVG com os **5 setores globais** em fatias **iguais** (72° cada, ordem fixa de `ROLETA_SETORES`). Os **pesos** do admin só afetam o sorteio (`pickRoletaSector`), não o tamanho visual da fatia (evita prêmios espremidos no topo quando peso de “não foi” / “tente novamente” é alto).
-- Sorteio ponderado no client (`pickRoletaSector`), animação de ~4,8s até o setor sorteado sob o ponteiro.
+- Roda SVG em fatias **iguais** (360° ÷ N setores). **N** vem da lista `premios[]` da **faixa ativa** (maior faixa participante da sessão, mesma ordem do Django); se a faixa não tiver prêmios cadastrados, fallback para os **5 setores globais** (`ROLETA_SETORES` + pesos de `probabilidades`).
+- Rótulos por tipo: `musica_gratis` → `+N músicas` (laranja se N≥2, roxo se N=1); `giro_extra` → “Tente novamente”; `sem_premio` → “Não foi dessa vez”.
+- Sorteio ponderado no client (`pickRoletaSector` sobre os pesos de cada item), animação de ~4,8s até o setor sorteado sob o ponteiro.
+- Resultado `premios[]`: música grátis paga a `quantidade` da linha sorteada; `giro_extra` devolve o giro; `sem_premio` consome o giro.
 
 ### Resultados
 
@@ -170,6 +172,7 @@ Definidas com o operador: **gatilho automático** após inserção de valor e ro
 
 - Automática ao conceder giros; no **boot** se houver giros pendentes e roleta ativada.
 - **FAB** "Roleta ×N" (canto inferior esquerdo) quando fechada com giros pendentes.
+- Ao abrir a overlay (`openRoleta`), novo `GET /maquinas/roleta/` para refletir alterações no Django.
 - **Fecha sozinha** quando `giros disponíveis = 0` (depois de ~2s mostrando o resultado do último giro; "Tente novamente" devolve o giro e a overlay permanece).
 - Fechar no meio do giro **não perde o prêmio** (o giro conclui em background e aplica o resultado).
 
@@ -181,13 +184,12 @@ Definidas com o operador: **gatilho automático** após inserção de valor e ro
 2. `faixas_valor` é enviada **completa** no PUT e **substitui** as faixas anteriores (comportamento do backend); por isso o body omite `id` e `ordem`.
 3. Resumo de probabilidades calculado no client: `chance = (premio_mais_2_musicas + premio_mais_1_musica + bonus_recarga_50pct) / total_pesos`; `vantagem = 100 − chance`. Exibido com 1 casa decimal (igual ao `resumo` do backend).
 4. `valor` da faixa é serializado com 2 casas decimais (`"5.00"`).
-5. `sem_premio` com `quantidade: 1` não vira fatia da roda (a roda usa os 5 setores globais). Na lista de prêmios da **faixa** no admin, continua cadastrável.
-6. Prêmios **cumulativos** por faixa maior (print da regra): a maior faixa `valor <= total inserido` concede os giros; no prêmio **+2 músicas** o app soma `musica_gratis` da faixa sorteada **+ todas as inferiores** participantes da sessão. O backend só armazena as faixas.
+5. Cada linha de `premios[]` na faixa ativa vira uma fatia na roda (quantidade N itens no Django = N fatias visuais).
+6. Prêmios **cumulativos** por faixa maior (print da regra): a maior faixa `valor <= total inserido` concede os giros. Com roda **global** (sem `premios[]`), **+2 músicas** soma `musica_gratis` da faixa sorteada **+ inferiores**. Com roda por **faixa**, o prêmio músicas é só a `quantidade` da linha sorteada.
 
 ## Pendências
 
 - [ ] Endpoint backend para **registrar prêmios/giros** da roleta (hoje tudo local: giros, contadores, prêmios em créditos)
-- [ ] Prêmios de faixa `giro_extra` / `sem_premio`: não sorteados por faixa nesta versão — os setores globais "tente novamente"/"não foi dessa vez" cobrem esses papéis
 - [ ] Tecla física da máquina para girar/abrir a roleta (hoje só toque/clique)
 - [ ] Som de giro/prêmio
 - [ ] Validar em campo a janela de idle de 20s (aceitador real) — a overlay em si abre no pulso do mínimo, não no idle

@@ -5,7 +5,7 @@
  * - Pulsos de crédito (R$ 1) acumulam numa sessão; 20s sem novo pulso fecha a sessão.
  * - A maior faixa com valor <= total inserido concede seus `giros_liberados`;
  *   participam do sorteio todas as faixas com valor <= total (cumulatividade).
- * - A roleta gira os 5 SETORES GLOBAIS (pesos do admin).
+ * - A roleta usa os prêmios da **faixa ativa** (`premios[]`) quando houver; senão os 5 setores globais.
  * - "+2 músicas": sorteia uma faixa participante e paga o prêmio CUMULATIVO
  *   (quantidade de música grátis da faixa sorteada + todas as inferiores).
  * - "+1 música": paga somente o prêmio da faixa sorteada (sem cumulatividade).
@@ -179,13 +179,18 @@ export function normalizeRoletaConfig(data) {
   }));
   const faixas = (Array.isArray(data.faixas_valor) ? data.faixas_valor : [])
     .map((f) => {
-      const premioMusica = (Array.isArray(f.premios) ? f.premios : []).find(
-        (p) => p.tipo === 'musica_gratis'
-      );
+      const premiosRaw = Array.isArray(f.premios) ? f.premios : [];
+      const premioMusica = premiosRaw.find((p) => p.tipo === 'musica_gratis');
+      const premios = premiosRaw.map((p) => ({
+        tipo: p.tipo || 'sem_premio',
+        quantidade: Math.max(1, Number(p.quantidade) || 1),
+        peso: Math.max(0, Number(p.peso) || 0),
+      }));
       return {
         valor: Number(f.valor_numero ?? f.valor) || 0,
         giros: Number(f.giros_liberados) || 0,
         premioMusicas: Number(premioMusica?.quantidade) || 0,
+        premios,
       };
     })
     .filter((f) => f.valor > 0)
@@ -232,12 +237,84 @@ export function resolveInsercaoRoleta(config, totalInserido) {
   return { giros, faixasParticipantes: Math.max(1, participantes.length) };
 }
 
+/** Faixa de maior valor entre as participantes da sessão (define os prêmios da roda). */
+export function getFaixaAtiva(config, faixasParticipantes) {
+  const faixas = config?.faixas || [];
+  if (faixas.length === 0) return null;
+  const limite = Math.max(1, Number(faixasParticipantes) || 1);
+  const participantes = faixas.slice(0, Math.min(limite, faixas.length));
+  return participantes[participantes.length - 1] ?? faixas[0];
+}
+
+function visualForPremioFaixa(premio) {
+  const q = Math.max(1, Number(premio.quantidade) || 1);
+  if (premio.tipo === 'musica_gratis') {
+    return {
+      premioTipo: 'musica_gratis',
+      quantidade: q,
+      label: `+${q} música${q > 1 ? 's' : ''}`,
+      rotulo: [`+${q} música${q > 1 ? 's' : ''}`],
+      icone: '♪',
+      cor: q >= 2 ? '#f59e0b' : '#8b5cf6',
+      textoEscuro: q >= 2,
+    };
+  }
+  if (premio.tipo === 'giro_extra') {
+    return {
+      premioTipo: 'giro_extra',
+      quantidade: q,
+      label: 'Giro extra',
+      rotulo: ['Tente', 'novamente'],
+      icone: '🎲',
+      cor: '#3d4658',
+      textoEscuro: false,
+    };
+  }
+  return {
+    premioTipo: 'sem_premio',
+    quantidade: q,
+    label: 'Sem prêmio',
+    rotulo: ['Não foi', 'dessa vez'],
+    icone: '🚫',
+    cor: '#2a3140',
+    textoEscuro: false,
+  };
+}
+
+/**
+ * Setores da roda: prêmios da faixa ativa (ordem do Django) ou fallback global.
+ */
+export function resolveWheelSetores(config, faixasParticipantes) {
+  const faixa = getFaixaAtiva(config, faixasParticipantes);
+  const premios = faixa?.premios;
+  if (Array.isArray(premios) && premios.length > 0) {
+    return premios.map((p, i) => ({
+      key: `faixa_premio_${i}`,
+      ...visualForPremioFaixa(p),
+      peso: Math.max(0, Number(p.peso) || 0),
+      origem: 'faixa',
+    }));
+  }
+  return (config?.setores || []).map((s) => ({ ...s, origem: 'global' }));
+}
+
+function isSetorPremio2(setor) {
+  return (
+    setor.tipo === 'premio2' ||
+    (setor.premioTipo === 'musica_gratis' && Math.max(1, Number(setor.quantidade) || 1) >= 2)
+  );
+}
+
+function isSetorSemPremio(setor) {
+  return setor.tipo === 'nada' || setor.premioTipo === 'sem_premio';
+}
+
 /** Sorteio ponderado; ao bloquear o +2 (limite diário), o peso migra para "não foi". */
 export function pickRoletaSector(setores, { bloquearPremio2 = false } = {}) {
   const pool = setores.map((s) => ({ ...s }));
   if (bloquearPremio2) {
-    const premio2 = pool.find((s) => s.tipo === 'premio2');
-    const nada = pool.find((s) => s.tipo === 'nada');
+    const premio2 = pool.find(isSetorPremio2);
+    const nada = pool.find(isSetorSemPremio);
     if (premio2 && nada) {
       nada.peso += premio2.peso;
       premio2.peso = 0;
