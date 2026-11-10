@@ -92,7 +92,7 @@ Não há `POST /maquinas/creditos/` neste fluxo — o crédito já foi lançado 
 |---|---|
 | `MP_NOT_CONFIGURED` | PIX não configurado. Cadastre a conta Mercado Pago no Admin. |
 | `MP_API_ERROR` | Mensagem do backend ou "Mercado Pago recusou a cobrança." |
-| `401` | Sessão da máquina inválida. |
+| `401` / `UNAUTHORIZED` | Mensagem do backend (ex.: token inválido). Botão para sair e entrar de novo. |
 
 QR expirado ou status recusado/cancelado → botão "Escolher outro valor".
 

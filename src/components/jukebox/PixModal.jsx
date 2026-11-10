@@ -25,13 +25,14 @@ function remainingLabel(expiresAt, now) {
   return `Expira em ${min}:${String(sec).padStart(2, '0')}`;
 }
 
-export default function PixModal({ token, onApproved, onClose }) {
+export default function PixModal({ token, onApproved, onClose, onReLogin }) {
   const [step, setStep] = useState('valor');
   const [valor, setValor] = useState(5);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [cobranca, setCobranca] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [authFailed, setAuthFailed] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
   const approvedRef = useRef(false);
@@ -44,6 +45,7 @@ export default function PixModal({ token, onApproved, onClose }) {
     async (amount) => {
       setLoading(true);
       setError(null);
+      setAuthFailed(false);
       approvedRef.current = false;
       try {
         const data = await criarPixQrCode(token, {
@@ -54,6 +56,7 @@ export default function PixModal({ token, onApproved, onClose }) {
         setValor(Number(data.valor_numero ?? amount));
         setStep('qr');
       } catch (err) {
+        setAuthFailed(err?.status === 401 || err?.status === 403 || err?.data?.error?.code === 'UNAUTHORIZED');
         setError(mapPixError(err));
       } finally {
         setLoading(false);
@@ -168,6 +171,15 @@ export default function PixModal({ token, onApproved, onClose }) {
               ))}
             </div>
             {error && <p className="text-xs text-destructive mb-3">{error}</p>}
+            {authFailed && onReLogin && (
+              <button
+                type="button"
+                onClick={onReLogin}
+                className="w-full h-11 mb-3 rounded-xl border border-destructive/40 text-sm text-destructive hover:bg-destructive/10 touch-manipulation"
+              >
+                Sair e entrar de novo
+              </button>
+            )}
             <button
               type="button"
               onClick={() => gerar(valor)}

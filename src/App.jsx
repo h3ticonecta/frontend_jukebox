@@ -50,7 +50,7 @@ import WaitQueuePanel from './components/jukebox/WaitQueuePanel';
 import CreditToast from './components/shared/CreditToast';
 
 function JukeboxApp() {
-  const { token, machine, teclas, refreshConfig } = useAuth();
+  const { token, machine, teclas, refreshConfig, logout } = useAuth();
   const library = useLibrary(token);
 
   const [queue, setQueue] = useState(() => getPersistedQueue());
@@ -692,6 +692,10 @@ function JukeboxApp() {
           token={token}
           onApproved={handlePixApproved}
           onClose={() => setPixOpen(false)}
+          onReLogin={() => {
+            setPixOpen(false);
+            logout();
+          }}
         />
       )}
       {!roletaOpen && roletaConfig?.ativada && (
