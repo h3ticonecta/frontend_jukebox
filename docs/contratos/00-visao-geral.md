@@ -31,7 +31,7 @@ Arquivo: `src/App.jsx` → `JukeboxShell`
 
 | Região | Componente | Descrição |
 |--------|------------|-----------|
-| Topo | `JukeboxHeader` | Logo, badge da máquina, PIX, Leitura, teclas, download (cache), sync |
+| Topo | `JukeboxHeader` | Logo, badge da máquina, Leitura, teclas, download (cache), sync |
 | Banner | `PrefetchBanner` | Progresso do pré-cache offline (catálogo + capas) |
 | Banner | `SyncBanner` | Aviso quando `needs_sync === true` |
 | Carrossel | `GenreCarousel` | Categorias (SUCESSOS) — discos de vinil |
@@ -39,7 +39,7 @@ Arquivo: `src/App.jsx` → `JukeboxShell`
 | Centro | `SongSidePanel` | Lista de faixas do álbum selecionado |
 | Direita | `WaitQueuePanel` | Fila de espera + faixa tocando |
 | Extrema direita | Área reservada (`JukeboxShell`) | Espaço vazio (`--shell-right-reserve`, 18rem) para banner/anúncio futuro |
-| Rodapé | `PlayerBar` | Créditos, player, progresso, fila |
+| Rodapé | `PlayerBar` | Créditos, CTA PIX central, player, progresso, fila |
 
 ## Placeholders (loading)
 

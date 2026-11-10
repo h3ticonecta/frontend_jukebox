@@ -4,6 +4,7 @@ export const TECLAS_DISPLAY_ORDER = [
   'esquerda',
   'direita',
   'credito',
+  'pix',
   'hits',
   'fila',
   'pular',

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Disc3, Download, Keyboard, Loader2, QrCode, RefreshCw } from 'lucide-react';
+import { Disc3, Download, Keyboard, Loader2, RefreshCw } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import KeysPanel from './KeysPanel';
 
@@ -13,7 +13,6 @@ export default function JukeboxHeader({
   teclas = [],
   keysPanelOpen = false,
   onOpenBilling,
-  onOpenPix,
   onToggleKeysPanel,
   onSyncLibrary,
   onPrefetchCatalog,
@@ -48,16 +47,6 @@ export default function JukeboxHeader({
           </span>
         )}
         <div className="ml-auto flex items-center gap-2">
-          {onOpenPix && (
-            <button
-              type="button"
-              onClick={onOpenPix}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-secondary/40 bg-secondary/10 text-secondary text-xs font-semibold uppercase tracking-wider hover:bg-secondary/20 transition-colors"
-            >
-              <QrCode size={14} />
-              PIX
-            </button>
-          )}
           <button
             type="button"
             onClick={onOpenBilling}

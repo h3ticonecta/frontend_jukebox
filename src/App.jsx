@@ -540,6 +540,7 @@ function JukeboxApp() {
     onVolume: (delta) => audio.adjustVolume(delta),
     onCancel: handleCancel,
     onPlayCd: handlePlayCd,
+    onOpenPix: () => setPixOpen(true),
   });
 
   useKeyboardShortcuts({
@@ -596,7 +597,6 @@ function JukeboxApp() {
               teclas={teclas}
               keysPanelOpen={keysPanelOpen}
               onOpenBilling={() => setBillingOpen(true)}
-              onOpenPix={() => setPixOpen(true)}
               onToggleKeysPanel={handleToggleKeysPanel}
               onSyncLibrary={handleSyncLibrary}
               onPrefetchCatalog={library.prefetchCatalog}
@@ -645,6 +645,7 @@ function JukeboxApp() {
             onVolumeChange={audio.setVolume}
             onInsertCredit={handleInsertCredit}
             onOpenPix={() => setPixOpen(true)}
+            pixFocused={keyboard.pixFocused}
             onSeek={audio.seek}
           />
         }

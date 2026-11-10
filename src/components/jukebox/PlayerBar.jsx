@@ -91,6 +91,30 @@ function PlaybackTimeline({ currentTime, duration, isPlaying, onSeek }) {
   );
 }
 
+function PixCtaButton({ onClick, focused = false, compact = false }) {
+  if (!onClick) return null;
+  return (
+    <button
+      type="button"
+      data-pix-cta
+      onClick={onClick}
+      className={cn(
+        'flex items-center justify-center gap-2 h-10 min-h-[40px] rounded-xl',
+        'bg-secondary text-secondary-foreground font-display font-semibold uppercase',
+        'shadow-[0_0_18px_hsl(var(--neon-cyan)/0.5)] hover:brightness-110 active:scale-[0.98]',
+        'transition-all touch-manipulation w-full',
+        compact ? 'px-5 text-xs tracking-[0.14em] max-w-xs' : 'px-8 text-sm tracking-[0.18em] max-w-md',
+        focused && 'ring-2 ring-primary ring-offset-2 ring-offset-background neon-glow-cyan'
+      )}
+      title="Pagar com PIX"
+      aria-label="Pagar com PIX"
+    >
+      <QrCode size={18} />
+      Pagar com PIX
+    </button>
+  );
+}
+
 function WaitingBadge({ queueCount, showLabel = false }) {
   return (
     <div className="flex items-center gap-1.5 shrink-0">
@@ -123,6 +147,7 @@ export default function PlayerBar({
   onVolumeChange,
   onInsertCredit,
   onOpenPix,
+  pixFocused = false,
   onSeek,
 }) {
   const displaySubtitle =
@@ -132,33 +157,21 @@ export default function PlayerBar({
   return (
     <>
       {!currentSong ? (
-        <div className="fixed bottom-0 left-0 right-0 h-14 glass-surface border-t border-border flex items-center justify-between z-40 px-4 shrink-0">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onInsertCredit}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-              title="Inserir crédito (R$ 1,00)"
-            >
-              <Coins size={24} className="text-primary" />
-              <span className="text-xl font-display text-primary neon-glow-amber font-bold">{credits}</span>
-              <span className="text-xs text-muted-foreground">créditos</span>
-            </button>
-            {onOpenPix && (
-              <button
-                type="button"
-                onClick={onOpenPix}
-                className="flex items-center gap-1 px-2 py-1 rounded-md border border-secondary/40 text-secondary hover:bg-secondary/10 transition-colors"
-                title="Pagar com PIX"
-                aria-label="Pagar com PIX"
-              >
-                <QrCode size={16} />
-                <span className="text-[10px] font-semibold uppercase tracking-wider">PIX</span>
-              </button>
-            )}
+        <div className="fixed bottom-0 left-0 right-0 h-14 glass-surface border-t border-border z-40 px-4 shrink-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+          <button
+            type="button"
+            onClick={onInsertCredit}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity justify-self-start"
+            title="Inserir crédito (R$ 1,00)"
+          >
+            <Coins size={24} className="text-primary" />
+            <span className="text-xl font-display text-primary neon-glow-amber font-bold">{credits}</span>
+            <span className="text-xs text-muted-foreground">créditos</span>
+          </button>
+          <PixCtaButton onClick={onOpenPix} focused={pixFocused} />
+          <div className="justify-self-end">
+            <WaitingBadge queueCount={queueCount} showLabel />
           </div>
-          <p className="text-muted-foreground text-sm font-display">Selecione uma música para começar</p>
-          <WaitingBadge queueCount={queueCount} showLabel />
         </div>
       ) : (
         <div className="fixed bottom-0 left-0 right-0 glass-surface border-t border-primary/20 neon-border-amber z-40 shrink-0">
@@ -180,17 +193,6 @@ export default function PlayerBar({
                 <Coins className="text-primary" size={22} />
                 <span className="text-lg font-display text-primary neon-glow-amber font-bold">{credits}</span>
               </button>
-              {onOpenPix && (
-                <button
-                  type="button"
-                  onClick={onOpenPix}
-                  className="flex items-center justify-center w-9 h-9 rounded-md border border-secondary/40 text-secondary hover:bg-secondary/10 transition-colors shrink-0"
-                  title="Pagar com PIX"
-                  aria-label="Pagar com PIX"
-                >
-                  <QrCode size={16} />
-                </button>
-              )}
 
               <VinylThumb cover={currentSong.cover || currentSong.cover_url} isSpinning={isPlaying} />
 
@@ -204,7 +206,9 @@ export default function PlayerBar({
               </div>
             </div>
 
-            <div className="flex-1" />
+            <div className="flex-1 min-w-[8rem] px-3 flex justify-center">
+              <PixCtaButton onClick={onOpenPix} focused={pixFocused} compact />
+            </div>
 
             <div className="flex items-center gap-2.5 shrink-0">
               <div className="flex items-center gap-1">

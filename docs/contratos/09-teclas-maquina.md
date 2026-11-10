@@ -129,14 +129,15 @@ Valores especiais de exibição:
 | `acao` | Comportamento no front |
 |--------|------------------------|
 | `cima` | Sobe no fluxo vertical: faixa anterior, linha anterior de artistas (mesma coluna) ou, na 1ª linha de artistas, volta ao SUCESSO focado |
-| `baixo` | Desce no fluxo vertical: do SUCESSO para o 1º artista; entre linhas do grid (mesma coluna); da última linha de artistas para a lista de músicas |
+| `baixo` | Desce no fluxo vertical: do SUCESSO para o 1º artista; entre linhas do grid (mesma coluna); da última linha de artistas para a lista de músicas; da **última faixa** (ou última linha de artistas sem faixas) para o CTA **Pagar com PIX** |
 | `esquerda` | No **carrossel SUCESSOS**: gênero anterior (loop infinito). No **grid de artistas**: célula à esquerda; no início da linha, última célula da linha de cima; no 1º artista, volta ao SUCESSO |
 | `direita` | No **carrossel SUCESSOS**: próximo gênero (loop infinito). No **grid de artistas**: célula à direita; no fim da linha, primeira célula da linha de baixo |
 | `credito` | `handleInsertCredit()` → POST créditos + toast |
 | `hits` | Foco na seção SUCESSOS + scroll |
-| `fila` | **Ativa** o item focado: destaca fila (2s) e, se o foco está em uma faixa, adiciona à fila local |
+| `fila` | **Ativa** o item focado: destaca fila (2s) e, se o foco está em uma faixa, adiciona à fila local. Na zona `pix`, abre o modal PIX |
 | `pular` | Pula faixa e toca próxima da fila |
-| `tocar_cd` | **Zona `genres`:** foco no 1º artista. **Zona `albums`:** só desce o foco para a lista de músicas (não toca). **Zona `tracks`:** seleciona a faixa focada (ou a 1ª) — com o player livre, toca na hora; com música em reprodução, entra no **final da fila** (não substitui a atual). Não enfileira o álbum inteiro |
+| `tocar_cd` | **Zona `genres`:** foco no 1º artista. **Zona `albums`:** só desce o foco para a lista de músicas (não toca). **Zona `tracks`:** seleciona a faixa focada (ou a 1ª) — com o player livre, toca na hora; com música em reprodução, entra no **final da fila** (não substitui a atual). **Zona `pix`:** abre o modal PIX. Não enfileira o álbum inteiro |
+| `pix` | Abre o modal PIX (se o backend cadastrar essa ação nas teclas da máquina) |
 | `vol` | Um clique +10%; cliques em sequência / segurar −10% contínuo (ver `useVolumeShortcuts`). Cada mudança abre o `VolumePopup` central com o percentual e a barra segmentada — permanece visível enquanto a tecla é segurada e some ~1,6 s após a última alteração |
 | `cancelar` | Fecha painéis e limpa erros |
 
@@ -146,7 +147,8 @@ Valores especiais de exibição:
 |------|-----------------|------------------|
 | `genres` | Moldura laranja em volta de **toda a faixa** do carrossel (`.genre-carousel-focus`) + anel ciano no vinil do gênero focado (cópia do meio) + **retângulo** em volta do card do gênero (vinil + nome; âmbar se selecionado, ciano se focado) | `esquerda` / `direita` (loop no carrossel); `baixo` → 1º artista |
 | `albums` | Anel ciano no card do artista | `esquerda` / `direita` (grid 3 col., quebra de linha); `cima` / `baixo` (mesma coluna) |
-| `tracks` | Linha ciano na lista de músicas | `cima` / `baixo`; `cima` no topo volta aos artistas |
+| `tracks` | Linha ciano na lista de músicas | `cima` / `baixo`; `cima` no topo volta aos artistas; `baixo` na última faixa → CTA PIX |
+| `pix` | Anel âmbar no botão **Pagar com PIX** (centro do rodapé) | `cima` volta à última faixa (ou artistas); `fila` / `tocar_cd` abre o PIX |
 
 As setas **não disparam clique** (não tocam música). Toque/mouse continuam com o comportamento anterior. A faixa focada é confirmada por `tocar_cd` (toca se o player estiver livre; senão entra na fila) ou por `fila` (sempre adiciona à fila).
 

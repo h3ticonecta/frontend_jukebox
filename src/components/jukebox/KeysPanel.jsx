@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Coins,
   Hash,
+  QrCode,
   SkipForward,
   Volume1,
   Volume2,
@@ -19,6 +20,7 @@ const ICONS = {
   esquerda: ArrowLeft,
   direita: ArrowRight,
   credito: Coins,
+  pix: QrCode,
   hits: Hash,
   fila: ClipboardList,
   pular: SkipForward,
@@ -30,6 +32,7 @@ const ICONS = {
 
 const ICON_COLORS = {
   credito: 'text-primary',
+  pix: 'text-secondary',
   hits: 'text-secondary',
   cancelar: 'text-destructive',
 };

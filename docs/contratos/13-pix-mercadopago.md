@@ -4,8 +4,8 @@
 
 - `src/api/pagamentos.js` — `criarPixQrCode()`, `consultarPix()`, `sincronizarPix()`
 - `src/components/jukebox/PixModal.jsx` — escolha de valor, QR, copia e cola, polling
-- `src/components/jukebox/JukeboxHeader.jsx` — botão **PIX**
-- `src/components/jukebox/PlayerBar.jsx` — atalho PIX ao lado dos créditos
+- `src/components/jukebox/PlayerBar.jsx` — CTA **Pagar com PIX** centralizado no rodapé
+- `src/hooks/useJukeboxKeyboard.js` — zona de foco `pix` (seta para baixo na última faixa)
 - `src/App.jsx` — `handlePixApproved()` (saldo local + roleta; **não** chama `POST /creditos/`)
 
 ## Descrição
@@ -16,7 +16,8 @@ Gera **QR Code PIX** (imagem base64 + copia e cola) na conta Mercado Pago do bac
 
 | Funcionalidade | Status |
 |----------------|--------|
-| Botão PIX (header + rodapé) | ✅ |
+| CTA **Pagar com PIX** centralizado no rodapé | ✅ |
+| Navegação por teclas até o PIX (zona `pix`) | ✅ |
 | Escolha de valor (R$ 5 / 10 / 20 / 50 / 100) | ✅ |
 | `POST /pagamentos/pix/qrcode/` | ✅ |
 | Exibir QR (`qr_code_base64`) + copia e cola (`qr_code`) | ✅ |
@@ -82,7 +83,7 @@ A cada **3 s** enquanto o modal do QR está aberto. `status=aprovado` (ou `appro
 ## Fluxo na jukebox
 
 ```
-1. Toque em PIX (header ou rodapé)
+1. Toque no CTA **Pagar com PIX** (centro do rodapé) ou navegue até ele com `baixo` e confirme com `fila` / `tocar_cd`
 2. Escolhe valor (presets R$ 5, 10, 20, 50, 100)
 3. POST /pagamentos/pix/qrcode/ { valor }
 4. Exibe QR + copia e cola; poll sincronizar a cada 3s
@@ -112,7 +113,7 @@ QR expirado ou status recusado/cancelado → botão "Escolher outro valor".
 
 ## Pendências
 
-- [ ] Tecla física da máquina para abrir o PIX
+- [ ] Tecla física dedicada `acao: pix` no admin (hoje chega pelas setas + `fila`/`tocar_cd`; se o backend enviar `pix`, o atalho abre o modal)
 - [ ] CRUD da conta Mercado Pago no painel `#/admin`
 - [ ] Valores de PIX configuráveis por máquina (hoje presets fixos)
 - [ ] Backend: usar `email` / `payer_email` do POST (ou um default `jukebox-{id}@dominio`) em `payer.email` do Mercado Pago — não o `usuario` da máquina

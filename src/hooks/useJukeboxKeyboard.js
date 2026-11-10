@@ -24,6 +24,7 @@ export function useJukeboxKeyboard({
   onVolume,
   onCancel,
   onPlayCd,
+  onOpenPix,
 }) {
   const [focusZone, setFocusZone] = useState('genres');
 
@@ -162,21 +163,20 @@ export function useJukeboxKeyboard({
         return;
       }
 
-      const lastRow = Math.floor((library.albums.length - 1) / ALBUM_COLS);
-      const lastRowStart = lastRow * ALBUM_COLS;
-      const itemsInLastRow = library.albums.length - lastRowStart;
-      focusAlbum(library.albums[lastRowStart + Math.min(col, itemsInLastRow - 1)]);
+      setFocusZone('pix');
     },
     [library, getCurrentAlbumIndex, focusAlbum, focusTrack, enterGenresFromAlbums]
   );
 
   const moveTrack = useCallback(
     (delta) => {
-      if (!library.tracks.length) return;
+      if (!library.tracks.length) return false;
       const currentIndex = library.tracks.findIndex((track) => track.id === library.selectedTrack?.id);
       const start = currentIndex < 0 ? 0 : currentIndex;
       const nextIndex = Math.max(0, Math.min(library.tracks.length - 1, start + delta));
+      if (nextIndex === start && delta !== 0) return false;
       focusTrack(library.tracks[nextIndex]);
+      return true;
     },
     [library, focusTrack]
   );
@@ -193,17 +193,31 @@ export function useJukeboxKeyboard({
   }, [library.albums, library.selectedAlbum?.id, focusAlbum, enterGenresFromAlbums]);
 
   const activateFocused = useCallback(() => {
+    if (focusZone === 'pix') {
+      onOpenPix?.();
+      return;
+    }
     onHighlightQueue();
 
     if (focusZone === 'tracks' && library.selectedTrack) {
       onAddToQueue(library.selectedTrack);
     }
-  }, [focusZone, library.selectedTrack, onAddToQueue, onHighlightQueue]);
+  }, [focusZone, library.selectedTrack, onAddToQueue, onHighlightQueue, onOpenPix]);
 
   const handleKeyboardAction = useCallback(
     (acao) => {
       switch (acao) {
         case 'cima':
+          if (focusZone === 'pix') {
+            if (library.tracks.length > 0) {
+              focusTrack(library.selectedTrack || library.tracks[library.tracks.length - 1]);
+            } else if (library.albums.length > 0) {
+              focusAlbum(library.selectedAlbum || library.albums[0]);
+            } else {
+              setFocusZone('genres');
+            }
+            break;
+          }
           if (focusZone === 'tracks' && library.tracks.length > 0) {
             const trackIndex = library.tracks.findIndex((track) => track.id === library.selectedTrack?.id);
             if (trackIndex <= 0) {
@@ -216,8 +230,11 @@ export function useJukeboxKeyboard({
           }
           break;
         case 'baixo':
+          if (focusZone === 'pix') {
+            break;
+          }
           if (focusZone === 'tracks' && library.tracks.length > 0) {
-            moveTrack(1);
+            if (!moveTrack(1)) setFocusZone('pix');
           } else if (focusZone === 'albums' && library.albums.length > 0) {
             moveAlbumVertical(1);
           } else if (focusZone === 'genres') {
@@ -245,6 +262,9 @@ export function useJukeboxKeyboard({
         case 'credito':
           onCredit();
           break;
+        case 'pix':
+          onOpenPix?.();
+          break;
         case 'hits':
           setFocusZone('genres');
           onHits();
@@ -256,7 +276,9 @@ export function useJukeboxKeyboard({
           onSkip();
           break;
         case 'tocar_cd':
-          if (focusZone === 'genres') {
+          if (focusZone === 'pix') {
+            onOpenPix?.();
+          } else if (focusZone === 'genres') {
             enterAlbumsFromGenres();
           } else if (focusZone === 'albums') {
             enterTracksFromAlbums();
@@ -295,6 +317,9 @@ export function useJukeboxKeyboard({
       onVolume,
       onCancel,
       onPlayCd,
+      onOpenPix,
+      focusTrack,
+      setFocusZone,
     ]
   );
 
@@ -318,12 +343,18 @@ export function useJukeboxKeyboard({
   const focusedAlbumId = focusZone === 'albums' ? library.selectedAlbum?.id : null;
   const focusedTrackId = focusZone === 'tracks' ? library.selectedTrack?.id : null;
 
+  useEffect(() => {
+    if (focusZone !== 'pix') return;
+    document.querySelector('[data-pix-cta]')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [focusZone]);
+
   return {
     focusZone,
     setFocusZone,
     focusedGenreId,
     focusedAlbumId,
     focusedTrackId,
+    pixFocused: focusZone === 'pix',
     handleKeyboardAction,
   };
 }
