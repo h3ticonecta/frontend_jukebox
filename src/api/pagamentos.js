@@ -17,9 +17,24 @@ function resolveMaquinaToken(token) {
   return value.replace(/^(Maquina|Token)\s+/i, '');
 }
 
+/** Mercado Pago exige payer.email válido; usuário da máquina (ex.: Macgustavo) não serve. */
+function pixPayerEmail() {
+  const info = getMaquinaInfo() || {};
+  const candidates = [info.email, info.usuario, info.nome_jukebox];
+  const looksEmail = candidates.find((value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '')));
+  if (looksEmail) return String(looksEmail).trim().toLowerCase();
+  const slug = String(info.id || info.usuario || 'jukebox')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '') || 'jukebox';
+  return `jukebox-${slug}@h3ti.com.br`;
+}
+
 export async function criarPixQrCode(token, { valor, descricao = 'Créditos jukebox' }) {
   const authToken = resolveMaquinaToken(token);
-  const maquinaId = getMaquinaInfo()?.id;
+  const info = getMaquinaInfo() || {};
+  const maquinaId = info.id;
+  const email = pixPayerEmail();
   if (!authToken) {
     const missing = new Error(
       'Token da máquina ausente. Saia e entre de novo com o usuário da jukebox.'
@@ -35,6 +50,8 @@ export async function criarPixQrCode(token, { valor, descricao = 'Créditos juke
     body: {
       valor: Number(Number(valor).toFixed(2)),
       descricao,
+      email,
+      payer_email: email,
       ...(maquinaId ? { maquina_id: maquinaId } : {}),
     },
   });
@@ -81,7 +98,10 @@ export function mapPixError(err) {
   if (code === 'MP_NOT_CONFIGURED') {
     return 'PIX não configurado. Cadastre a conta Mercado Pago no Admin.';
   }
-  if (code === 'MP_API_ERROR') {
+  if (code === 'MP_API_ERROR' || /payer\.email/i.test(String(apiMessage || ''))) {
+    if (/payer\.email/i.test(String(apiMessage || ''))) {
+      return 'O Mercado Pago exige um e-mail válido do pagador. O app envia um e-mail técnico da máquina; se o erro continuar, o backend precisa usar esse campo (não o usuário da jukebox).';
+    }
     return apiMessage || 'Mercado Pago recusou a cobrança.';
   }
   if (code === 'UNAUTHORIZED' || err?.status === 401 || err?.status === 403) {

@@ -48,8 +48,15 @@ Authorization: Maquina <token>
 ```
 
 ```json
-{ "valor": 5.00, "descricao": "Créditos jukebox" }
+{
+  "valor": 5.00,
+  "descricao": "Créditos jukebox",
+  "email": "jukebox-3@h3ti.com.br",
+  "payer_email": "jukebox-3@h3ti.com.br"
+}
 ```
+
+O Mercado Pago exige `payer.email` válido. O usuário da máquina (ex.: `Macgustavo`) **não** é e-mail — o front envia `jukebox-{id}@h3ti.com.br` (ou o `usuario` se já for um e-mail). O backend deve repassar esse campo ao MP; se ignorar e usar o login da máquina, a API devolve `payer.email must be a valid email`.
 
 Response `201` — campos na UI:
 
@@ -91,7 +98,7 @@ Não há `POST /maquinas/creditos/` neste fluxo — o crédito já foi lançado 
 | Código | Mensagem na UI |
 |---|---|
 | `MP_NOT_CONFIGURED` | PIX não configurado. Cadastre a conta Mercado Pago no Admin. |
-| `MP_API_ERROR` | Mensagem do backend ou "Mercado Pago recusou a cobrança." |
+| `MP_API_ERROR` / `payer.email` | Mercado Pago exige e-mail válido do pagador (não usar o usuário da máquina). |
 | `401` / `UNAUTHORIZED` | Mensagem do backend (ex.: token inválido). Botão para sair e entrar de novo. |
 
 QR expirado ou status recusado/cancelado → botão "Escolher outro valor".
@@ -108,3 +115,4 @@ QR expirado ou status recusado/cancelado → botão "Escolher outro valor".
 - [ ] Tecla física da máquina para abrir o PIX
 - [ ] CRUD da conta Mercado Pago no painel `#/admin`
 - [ ] Valores de PIX configuráveis por máquina (hoje presets fixos)
+- [ ] Backend: usar `email` / `payer_email` do POST (ou um default `jukebox-{id}@dominio`) em `payer.email` do Mercado Pago — não o `usuario` da máquina
