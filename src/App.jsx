@@ -76,6 +76,7 @@ function JukeboxApp() {
   const resumeStartedRef = useRef(false);
   const roletaConfigRef = useRef(null);
   const roletaSessionRef = useRef({ total: 0, girosGranted: 0, timer: null });
+  const pixModalRef = useRef(null);
   queueRef.current = queue;
   tracksRef.current = library.tracks;
 
@@ -543,9 +544,17 @@ function JukeboxApp() {
     onOpenPix: () => setPixOpen(true),
   });
 
+  const handleMachineAction = useCallback(
+    (acao) => {
+      if (pixOpen && pixModalRef.current?.handleAction?.(acao)) return;
+      keyboard.handleKeyboardAction(acao);
+    },
+    [pixOpen, keyboard.handleKeyboardAction]
+  );
+
   useKeyboardShortcuts({
     teclas,
-    onAction: keyboard.handleKeyboardAction,
+    onAction: handleMachineAction,
   });
 
   useVolumeShortcuts({
@@ -645,7 +654,7 @@ function JukeboxApp() {
             onVolumeChange={audio.setVolume}
             onInsertCredit={handleInsertCredit}
             onOpenPix={() => setPixOpen(true)}
-            pixFocused={keyboard.pixFocused}
+            pixFocused={keyboard.pixFocused && !pixOpen}
             onSeek={audio.seek}
           />
         }
@@ -690,6 +699,7 @@ function JukeboxApp() {
       )}
       {pixOpen && (
         <PixModal
+          ref={pixModalRef}
           token={token}
           onApproved={handlePixApproved}
           onClose={() => setPixOpen(false)}

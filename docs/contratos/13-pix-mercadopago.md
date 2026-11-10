@@ -3,10 +3,10 @@
 ## Componentes frontend
 
 - `src/api/pagamentos.js` — `criarPixQrCode()`, `consultarPix()`, `sincronizarPix()`
-- `src/components/jukebox/PixModal.jsx` — escolha de valor, QR, copia e cola, polling
+- `src/components/jukebox/PixModal.jsx` — escolha de valor, QR, copia e cola, polling e navegação por teclas (`handleAction`)
 - `src/components/jukebox/PlayerBar.jsx` — CTA **Pagar com PIX** centralizado no rodapé
 - `src/hooks/useJukeboxKeyboard.js` — zona de foco `pix` (seta para baixo na última faixa)
-- `src/App.jsx` — `handlePixApproved()` (saldo local + roleta; **não** chama `POST /creditos/`)
+- `src/App.jsx` — `handlePixApproved()` (saldo local + roleta; **não** chama `POST /creditos/`); com o modal aberto, teclas vão para o PIX
 
 ## Descrição
 
@@ -18,6 +18,7 @@ Gera **QR Code PIX** (imagem base64 + copia e cola) na conta Mercado Pago do bac
 |----------------|--------|
 | CTA **Pagar com PIX** centralizado no rodapé | ✅ |
 | Navegação por teclas até o PIX (zona `pix`) | ✅ |
+| Navegação por teclas **dentro** do modal (valores / Gerar QR / copiar) | ✅ |
 | Escolha de valor (R$ 5 / 10 / 20 / 50 / 100) | ✅ |
 | `POST /pagamentos/pix/qrcode/` | ✅ |
 | Exibir QR (`qr_code_base64`) + copia e cola (`qr_code`) | ✅ |
@@ -84,7 +85,7 @@ A cada **3 s** enquanto o modal do QR está aberto. `status=aprovado` (ou `appro
 
 ```
 1. Toque no CTA **Pagar com PIX** (centro do rodapé) ou navegue até ele com `baixo` e confirme com `fila` / `tocar_cd`
-2. Escolhe valor (presets R$ 5, 10, 20, 50, 100)
+2. O foco das teclas entra no modal (o anel do CTA some). Setas escolhem o valor; `fila` / `tocar_cd` gera o QR do valor focado
 3. POST /pagamentos/pix/qrcode/ { valor }
 4. Exibe QR + copia e cola; poll sincronizar a cada 3s
 5. status=aprovado → backend já criou Credito (origem: pix)
@@ -108,7 +109,7 @@ QR expirado ou status recusado/cancelado → botão "Escolher outro valor".
 
 1. R$ 1,00 = 1 crédito (igual à inserção por moeda).
 2. Valor do PIX entra de uma vez na sessão da roleta (`session.total += N`), não pulso a pulso.
-3. Tecla cancelar fecha o modal PIX.
+3. Tecla cancelar fecha o modal PIX. Com o modal aberto, setas e `fila`/`tocar_cd` navegam só o diálogo — não a biblioteca nem o CTA do rodapé.
 4. Configuração da conta MP permanece no **Django Admin** (access token não circula no SPA).
 
 ## Pendências

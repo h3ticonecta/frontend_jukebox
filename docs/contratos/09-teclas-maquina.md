@@ -150,6 +150,19 @@ Valores especiais de exibição:
 | `tracks` | Linha ciano na lista de músicas | `cima` / `baixo`; `cima` no topo volta aos artistas; `baixo` na última faixa → CTA PIX |
 | `pix` | Anel âmbar no botão **Pagar com PIX** (centro do rodapé) | `cima` volta à última faixa (ou artistas); `fila` / `tocar_cd` abre o PIX |
 
+### Modal PIX aberto
+
+Com o modal de valor/QR aberto, as teclas **deixam a biblioteca e o CTA do rodapé** e passam a navegar só dentro do diálogo (`PixModal.handleAction`):
+
+| `acao` | No modal |
+|--------|----------|
+| `esquerda` / `direita` / `cima` / `baixo` | Grid 2 colunas dos presets (R$ 5–100); `baixo` no último valor vai para **Gerar QR**; no QR, alterna copiar ↔ escolher outro valor |
+| `fila` / `tocar_cd` / `pix` | Confirma o controle focado: gera o QR do valor destacado; no QR copia o código (ou volta a escolher valor se estiver expirado) |
+| `cancelar` | Fecha o modal |
+| `credito` / `pular` / `vol_*` | Continuam valendo por baixo (crédito, pular faixa, volume) |
+
+O anel âmbar do CTA do rodapé some enquanto o modal está aberto; o controle focado no diálogo recebe o mesmo anel.
+
 As setas **não disparam clique** (não tocam música). Toque/mouse continuam com o comportamento anterior. A faixa focada é confirmada por `tocar_cd` (toca se o player estiver livre; senão entra na fila) ou por `fila` (sempre adiciona à fila).
 
 ---
