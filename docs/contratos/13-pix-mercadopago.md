@@ -86,7 +86,7 @@ A cada **3 s** enquanto o modal do QR está aberto. `status=aprovado` (ou `appro
 
 ```
 1. Toque no CTA **Pagar com PIX** (centro do rodapé) ou navegue até ele com `baixo` e confirme com `fila` / `tocar_cd`
-2. GET /pagamentos/pix-creditos/opcoes/ e o foco das teclas entra no modal. Setas escolhem o valor; `fila` / `tocar_cd` gera o QR do valor focado
+2. GET /pagamentos/pix-creditos/opcoes/ e o foco das teclas entra no modal. Grade 2 colunas: se a última linha tiver só um valor, a célula ao lado é **Sair** (fecha o modal). Setas escolhem valor ou Sair; `fila` / `tocar_cd` gera o QR do valor focado ou fecha em Sair
 3. POST /pagamentos/pix/qrcode/ { valor: valor_pix_numero }
 4. Exibe QR + copia e cola + N créditos; poll sincronizar a cada 3s
 5. status=aprovado → backend já criou Credito (origem: pix, quantidade = creditos_concedidos)

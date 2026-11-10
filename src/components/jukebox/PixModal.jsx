@@ -33,6 +33,10 @@ function presetNavId(index) {
   return `p-${index}`;
 }
 
+function hasSairSlot(count) {
+  return count > 0 && count % PRESET_COLS === 1;
+}
+
 function moveValorNav(nav, acao, authFailed, count) {
   if (count <= 0) {
     if (nav === 'relogin' && acao === 'baixo') return 'gerar';
@@ -41,11 +45,25 @@ function moveValorNav(nav, acao, authFailed, count) {
   }
   const last = count - 1;
   const afterPresets = authFailed ? 'relogin' : 'gerar';
+  const oddSair = hasSairSlot(count);
+  const lastValBeforeFooter = oddSair ? 'sair' : presetNavId(last);
+
+  if (nav === 'sair') {
+    if (acao === 'esquerda') return presetNavId(last);
+    if (acao === 'cima') return last >= PRESET_COLS ? presetNavId(last - PRESET_COLS) : nav;
+    if (acao === 'baixo') return afterPresets;
+    return nav;
+  }
+
   if (nav.startsWith('p-')) {
     const i = Number(nav.slice(2));
     const col = i % PRESET_COLS;
     if (acao === 'esquerda') return col > 0 ? presetNavId(i - 1) : nav;
-    if (acao === 'direita') return col === 0 && i < last ? presetNavId(i + 1) : nav;
+    if (acao === 'direita') {
+      if (col === 0 && i < last) return presetNavId(i + 1);
+      if (oddSair && i === last) return 'sair';
+      return nav;
+    }
     if (acao === 'cima') return i >= PRESET_COLS ? presetNavId(i - PRESET_COLS) : nav;
     if (acao === 'baixo') {
       const down = i + PRESET_COLS;
@@ -54,12 +72,12 @@ function moveValorNav(nav, acao, authFailed, count) {
     return nav;
   }
   if (nav === 'relogin') {
-    if (acao === 'cima') return presetNavId(last);
+    if (acao === 'cima') return lastValBeforeFooter;
     if (acao === 'baixo') return 'gerar';
     return nav;
   }
   if (nav === 'gerar') {
-    if (acao === 'cima') return authFailed ? 'relogin' : presetNavId(last);
+    if (acao === 'cima') return authFailed ? 'relogin' : lastValBeforeFooter;
     return nav;
   }
   return nav;
@@ -281,7 +299,9 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
 
       if (acao === 'fila' || acao === 'tocar_cd' || acao === 'pix') {
         if (step === 'valor') {
-          if (nav === 'relogin') {
+          if (nav === 'sair') {
+            onCloseRef.current?.();
+          } else if (nav === 'relogin') {
             onReLoginRef.current?.();
           } else if (!loading && opcoes.length > 0) {
             const opcao = nav.startsWith('p-') ? opcoes[Number(nav.slice(2))] : selected;
@@ -327,7 +347,7 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl border border-border bg-[#1e2128] shadow-2xl p-6 max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-lg rounded-2xl border border-border bg-[#1e2128] shadow-2xl p-7 sm:p-8 max-h-[90vh] overflow-y-auto"
         role="dialog"
         aria-labelledby="pix-title"
         aria-modal="true"
@@ -372,7 +392,7 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
               </p>
             )}
             {opcoes.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 mb-4">
+              <div className="grid grid-cols-2 gap-2.5 mb-4">
                 {opcoes.map((opcao, index) => {
                   const navId = presetNavId(index);
                   const focused = nav === navId;
@@ -385,7 +405,7 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
                       data-pix-nav-active={focused ? 'true' : undefined}
                       onClick={() => selectOpcao(opcao, index)}
                       className={cn(
-                        'min-h-[3.5rem] rounded-xl border px-2 py-2 touch-manipulation transition-colors flex flex-col items-center justify-center',
+                        'min-h-[4rem] rounded-xl border px-2 py-2 touch-manipulation transition-colors flex flex-col items-center justify-center',
                         isSelected
                           ? 'bg-secondary/20 border-secondary text-secondary'
                           : 'bg-transparent border-border text-muted-foreground hover:text-foreground hover:border-foreground/30',
@@ -401,6 +421,20 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
                     </button>
                   );
                 })}
+                {opcoes.length % PRESET_COLS === 1 && (
+                  <button
+                    type="button"
+                    data-pix-nav="sair"
+                    data-pix-nav-active={nav === 'sair' ? 'true' : undefined}
+                    onClick={onClose}
+                    className={cn(
+                      'min-h-[4rem] rounded-xl border border-border px-2 py-2 touch-manipulation transition-colors flex items-center justify-center text-sm font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30',
+                      navRing(nav === 'sair')
+                    )}
+                  >
+                    Sair
+                  </button>
+                )}
               </div>
             )}
             {error && <p className="text-xs text-destructive mb-3">{error}</p>}
