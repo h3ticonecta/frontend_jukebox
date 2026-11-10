@@ -31,6 +31,7 @@ Cada contrato documenta:
 | 10 | Capas de pastas | [10-capas-pastas.md](./contratos/10-capas-pastas.md) | ⏳ Backend |
 | 11 | Painel Administrativo | [11-painel-administrativo.md](./contratos/11-painel-administrativo.md) | ✅ Integrado |
 | 12 | Roleta (config + jogo) | [12-roleta.md](./contratos/12-roleta.md) | ✅ Integrado |
+| 13 | PIX Mercado Pago | [13-pix-mercadopago.md](./contratos/13-pix-mercadopago.md) | ✅ Integrado |
 
 ## Status geral (atualizado)
 
@@ -48,6 +49,7 @@ Cada contrato documenta:
 | Painel Administrativo (`#/admin`) | ✅ | ✅ |
 | Roleta — editor no painel admin | ✅ | ✅ |
 | Roleta — jogo na jukebox | ✅ | ✅ (prêmios ainda locais) |
+| PIX (QR Mercado Pago) | ✅ | ✅ |
 
 ## Base URL
 
@@ -81,3 +83,4 @@ Cada contrato documenta:
 | Capas no sync | [10](./contratos/10-capas-pastas.md) |
 | Painel Administrativo | [11](./contratos/11-painel-administrativo.md) |
 | Roleta (configuração + jogo) | [12](./contratos/12-roleta.md) |
+| PIX (QR Mercado Pago) | [13](./contratos/13-pix-mercadopago.md) |

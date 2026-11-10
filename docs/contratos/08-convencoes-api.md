@@ -52,6 +52,7 @@ O client lança `ApiError` com `message`, `status` e `data`.
 | Código | Uso no app |
 |--------|------------|
 | `200` | Sucesso |
+| `201` | Criado (QR PIX) |
 | `400` | Credenciais inválidas, body incorreto |
 | `401` | Token inválido |
 | `402` | Créditos insuficientes (futuro) |

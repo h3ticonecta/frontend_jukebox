@@ -59,7 +59,7 @@ showCreditToast()  // "+1 crédito inserido"
 |--------|---------------|
 | Clique no ícone de moedas (`PlayerBar`) | Insere R$ 1,00 (1 crédito) direto |
 | Tecla `credito` (padrão K) | Mesmo fluxo |
-| Modal de valor | ❌ Removido — sempre 1 crédito |
+| Botão **PIX** (header / rodapé) | Modal de valor → QR Mercado Pago — contrato [13](./13-pix-mercadopago.md). Backend lança `origem: pix`; o front só soma o saldo local. |
 
 ---
 

@@ -34,6 +34,7 @@ import MachineLoginCard from './components/auth/MachineLoginCard';
 import AdminPage from './components/admin/AdminPage';
 import AlbumBrowser from './components/jukebox/AlbumBrowser';
 import BillingModal from './components/jukebox/BillingModal';
+import PixModal from './components/jukebox/PixModal';
 import GenreCarousel from './components/jukebox/GenreCarousel';
 import JukeboxHeader from './components/jukebox/JukeboxHeader';
 import JukeboxShell from './components/jukebox/JukeboxShell';
@@ -58,6 +59,7 @@ function JukeboxApp() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [keysPanelOpen, setKeysPanelOpen] = useState(false);
   const [billingOpen, setBillingOpen] = useState(false);
+  const [pixOpen, setPixOpen] = useState(false);
   const [highlightQueue, setHighlightQueue] = useState(false);
   const [creditToastVisible, setCreditToastVisible] = useState(false);
   const [creditToastMessage, setCreditToastMessage] = useState(undefined);
@@ -391,17 +393,19 @@ function JukeboxApp() {
     }
   }, [showCreditToast]);
 
-  const handleInsertCredit = useCallback(async () => {
-    if (!token) return;
-    setActionError(null);
-    try {
-      await registrarCredito(token, { valor: 1, origem: 'moeda' });
-      const next = addCredits(1);
-      setCredits(next);
-      addBillingEvent({ type: 'credito', valor: 1, creditos: 1 });
-      showCreditToast();
+  const applyInsertedAmount = useCallback(
+    async (quantidade, { toastMessage } = {}) => {
+      const qtd = Math.max(0, Math.round(Number(quantidade) || 0));
+      if (!qtd) return;
 
-      if (!roletaConfigRef.current) {
+      const next = addCredits(qtd);
+      setCredits(next);
+      addBillingEvent({ type: 'credito', valor: qtd, creditos: qtd });
+      showCreditToast(
+        toastMessage ?? (qtd === 1 ? undefined : `+${qtd} créditos inseridos`)
+      );
+
+      if (!roletaConfigRef.current && token) {
         try {
           const data = await fetchRoletaMaquina(token);
           const cfg = normalizeRoletaConfig(data);
@@ -413,14 +417,34 @@ function JukeboxApp() {
       }
 
       const session = roletaSessionRef.current;
-      session.total += 1;
+      session.total += qtd;
       applyRoletaInsercao(session.total);
       if (session.timer) window.clearTimeout(session.timer);
       session.timer = window.setTimeout(closeRoletaSession, ROLETA_SESSION_MS);
+    },
+    [token, showCreditToast, closeRoletaSession, applyRoletaInsercao]
+  );
+
+  const handleInsertCredit = useCallback(async () => {
+    if (!token) return;
+    setActionError(null);
+    try {
+      await registrarCredito(token, { valor: 1, origem: 'moeda' });
+      await applyInsertedAmount(1);
     } catch (err) {
       setActionError(err.message || 'Erro ao registrar crédito');
     }
-  }, [token, showCreditToast, closeRoletaSession, applyRoletaInsercao]);
+  }, [token, applyInsertedAmount]);
+
+  const handlePixApproved = useCallback(
+    (cobranca) => {
+      const qtd = Math.max(1, Math.round(Number(cobranca?.valor_numero ?? cobranca?.valor) || 0));
+      applyInsertedAmount(qtd, {
+        toastMessage: `+${qtd} crédito${qtd > 1 ? 's' : ''} via PIX`,
+      });
+    },
+    [applyInsertedAmount]
+  );
 
   const handleRoletaConsumeGiro = useCallback(() => {
     setRoletaGiros(addRoletaGiros(-1));
@@ -501,6 +525,7 @@ function JukeboxApp() {
   const handleCancel = useCallback(() => {
     setKeysPanelOpen(false);
     setBillingOpen(false);
+    setPixOpen(false);
     setRoletaOpen(false);
     setActionError(null);
   }, []);
@@ -571,6 +596,7 @@ function JukeboxApp() {
               teclas={teclas}
               keysPanelOpen={keysPanelOpen}
               onOpenBilling={() => setBillingOpen(true)}
+              onOpenPix={() => setPixOpen(true)}
               onToggleKeysPanel={handleToggleKeysPanel}
               onSyncLibrary={handleSyncLibrary}
               onPrefetchCatalog={library.prefetchCatalog}
@@ -618,6 +644,7 @@ function JukeboxApp() {
             onNext={handlePlayNext}
             onVolumeChange={audio.setVolume}
             onInsertCredit={handleInsertCredit}
+            onOpenPix={() => setPixOpen(true)}
             onSeek={audio.seek}
           />
         }
@@ -658,6 +685,13 @@ function JukeboxApp() {
           token={token}
           machineName={machine?.nome_jukebox}
           onClose={() => setBillingOpen(false)}
+        />
+      )}
+      {pixOpen && (
+        <PixModal
+          token={token}
+          onApproved={handlePixApproved}
+          onClose={() => setPixOpen(false)}
         />
       )}
       {!roletaOpen && roletaConfig?.ativada && (

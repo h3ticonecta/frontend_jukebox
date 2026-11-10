@@ -1,4 +1,4 @@
-import { Clock, Coins, Disc, Pause, Play, SkipBack, SkipForward, Volume2 } from 'lucide-react';
+import { Clock, Coins, Disc, Pause, Play, QrCode, SkipBack, SkipForward, Volume2 } from 'lucide-react';
 import { cn, formatDuration } from '../../lib/utils';
 
 function VinylThumb({ cover, isSpinning }) {
@@ -122,6 +122,7 @@ export default function PlayerBar({
   onNext,
   onVolumeChange,
   onInsertCredit,
+  onOpenPix,
   onSeek,
 }) {
   const displaySubtitle =
@@ -132,16 +133,30 @@ export default function PlayerBar({
     <>
       {!currentSong ? (
         <div className="fixed bottom-0 left-0 right-0 h-14 glass-surface border-t border-border flex items-center justify-between z-40 px-4 shrink-0">
-          <button
-            type="button"
-            onClick={onInsertCredit}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-            title="Inserir crédito (R$ 1,00)"
-          >
-            <Coins size={24} className="text-primary" />
-            <span className="text-xl font-display text-primary neon-glow-amber font-bold">{credits}</span>
-            <span className="text-xs text-muted-foreground">créditos</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onInsertCredit}
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              title="Inserir crédito (R$ 1,00)"
+            >
+              <Coins size={24} className="text-primary" />
+              <span className="text-xl font-display text-primary neon-glow-amber font-bold">{credits}</span>
+              <span className="text-xs text-muted-foreground">créditos</span>
+            </button>
+            {onOpenPix && (
+              <button
+                type="button"
+                onClick={onOpenPix}
+                className="flex items-center gap-1 px-2 py-1 rounded-md border border-secondary/40 text-secondary hover:bg-secondary/10 transition-colors"
+                title="Pagar com PIX"
+                aria-label="Pagar com PIX"
+              >
+                <QrCode size={16} />
+                <span className="text-[10px] font-semibold uppercase tracking-wider">PIX</span>
+              </button>
+            )}
+          </div>
           <p className="text-muted-foreground text-sm font-display">Selecione uma música para começar</p>
           <WaitingBadge queueCount={queueCount} showLabel />
         </div>
@@ -165,6 +180,17 @@ export default function PlayerBar({
                 <Coins className="text-primary" size={22} />
                 <span className="text-lg font-display text-primary neon-glow-amber font-bold">{credits}</span>
               </button>
+              {onOpenPix && (
+                <button
+                  type="button"
+                  onClick={onOpenPix}
+                  className="flex items-center justify-center w-9 h-9 rounded-md border border-secondary/40 text-secondary hover:bg-secondary/10 transition-colors shrink-0"
+                  title="Pagar com PIX"
+                  aria-label="Pagar com PIX"
+                >
+                  <QrCode size={16} />
+                </button>
+              )}
 
               <VinylThumb cover={currentSong.cover || currentSong.cover_url} isSpinning={isPlaying} />
 
