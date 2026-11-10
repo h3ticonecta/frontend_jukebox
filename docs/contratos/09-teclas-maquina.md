@@ -156,7 +156,7 @@ Com o modal de valor/QR aberto, as teclas **deixam a biblioteca e o CTA do rodap
 
 | `acao` | No modal |
 |--------|----------|
-| `esquerda` / `direita` / `cima` / `baixo` | Grid 2 colunas dos presets (R$ 5–100); `baixo` no último valor vai para **Gerar QR**; no QR, alterna copiar ↔ escolher outro valor |
+| `esquerda` / `direita` / `cima` / `baixo` | Grid 2 colunas das opções ativas (`GET /pix-creditos/opcoes/`); `baixo` no último valor vai para **Gerar QR**; no QR, alterna copiar ↔ escolher outro valor |
 | `fila` / `tocar_cd` / `pix` | Confirma o controle focado: gera o QR do valor destacado; no QR copia o código (ou volta a escolher valor se estiver expirado) |
 | `cancelar` | Fecha o modal |
 | `credito` / `pular` / `vol_*` | Continuam valendo por baixo (crédito, pular faixa, volume) |

@@ -1,16 +1,18 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Check, Copy, Loader2, QrCode, X } from 'lucide-react';
 import {
+  PIX_CREDITOS_PADRAO,
   criarPixQrCode,
+  fetchPixCreditoOpcoes,
   mapPixError,
   pixQrImageSrc,
   pixStatusKind,
+  resolvePixCreditosConcedidos,
   sincronizarPix,
 } from '../../api/pagamentos';
 import { formatBRL } from '../../lib/billing';
 import { cn } from '../../lib/utils';
 
-export const PIX_PRESETS = [5, 10, 20, 50, 100];
 const POLL_MS = 3000;
 const SUCCESS_MS = 1800;
 const PRESET_COLS = 2;
@@ -31,8 +33,13 @@ function presetNavId(index) {
   return `p-${index}`;
 }
 
-function moveValorNav(nav, acao, authFailed) {
-  const last = PIX_PRESETS.length - 1;
+function moveValorNav(nav, acao, authFailed, count) {
+  if (count <= 0) {
+    if (nav === 'relogin' && acao === 'baixo') return 'gerar';
+    if (nav === 'gerar' && acao === 'cima' && authFailed) return 'relogin';
+    return nav === 'relogin' || nav === 'gerar' ? nav : 'gerar';
+  }
+  const last = count - 1;
   const afterPresets = authFailed ? 'relogin' : 'gerar';
   if (nav.startsWith('p-')) {
     const i = Number(nav.slice(2));
@@ -77,7 +84,9 @@ function navRing(active) {
 
 const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onReLogin }, ref) {
   const [step, setStep] = useState('valor');
-  const [valor, setValor] = useState(5);
+  const [opcoes, setOpcoes] = useState([]);
+  const [opcoesStatus, setOpcoesStatus] = useState('loading');
+  const [selectedId, setSelectedId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [cobranca, setCobranca] = useState(null);
@@ -90,23 +99,67 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
   const onApprovedRef = useRef(onApproved);
   const onCloseRef = useRef(onClose);
   const onReLoginRef = useRef(onReLogin);
+  const lastCreditosRef = useRef(0);
   onApprovedRef.current = onApproved;
   onCloseRef.current = onClose;
   onReLoginRef.current = onReLogin;
 
+  const selected = opcoes.find((item) => String(item.id) === String(selectedId)) || opcoes[0] || null;
+  const valor = selected?.valor_pix_numero ?? 0;
+  const creditosOpcao = selected?.quantidade_creditos ?? 0;
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setOpcoesStatus('loading');
+      try {
+        const lista = await fetchPixCreditoOpcoes(token);
+        if (cancelled) return;
+        if (lista.length === 0) {
+          setOpcoes([]);
+          setOpcoesStatus('empty');
+          return;
+        }
+        setOpcoes(lista);
+        setSelectedId(lista[0].id);
+        setNav(presetNavId(0));
+        setOpcoesStatus('ready');
+      } catch (err) {
+        if (cancelled) return;
+        const auth = err?.status === 401 || err?.status === 403 || err?.data?.error?.code === 'UNAUTHORIZED';
+        setAuthFailed(auth);
+        if (auth) {
+          setOpcoes([]);
+          setOpcoesStatus('error');
+          setError(mapPixError(err));
+          return;
+        }
+        setOpcoes(PIX_CREDITOS_PADRAO);
+        setSelectedId(PIX_CREDITOS_PADRAO[0].id);
+        setNav(presetNavId(0));
+        setOpcoesStatus('fallback');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
   const gerar = useCallback(
-    async (amount) => {
+    async (amount, creditosHint) => {
       setLoading(true);
       setError(null);
       setAuthFailed(false);
       approvedRef.current = false;
+      lastCreditosRef.current = Math.max(0, Math.round(Number(creditosHint) || 0));
       try {
         const data = await criarPixQrCode(token, {
           valor: Number(amount),
           descricao: 'Créditos jukebox',
         });
-        setCobranca(data);
-        setValor(Number(data.valor_numero ?? amount));
+        const creditos = resolvePixCreditosConcedidos(data, lastCreditosRef.current);
+        lastCreditosRef.current = creditos;
+        setCobranca({ ...data, quantidade_creditos: creditos });
         setStep('qr');
       } catch (err) {
         setAuthFailed(err?.status === 401 || err?.status === 403 || err?.data?.error?.code === 'UNAUTHORIZED');
@@ -128,12 +181,14 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
       try {
         const data = await sincronizarPix(token, id);
         if (cancelled) return;
-        setCobranca(data);
+        const creditos = resolvePixCreditosConcedidos(data, lastCreditosRef.current);
+        lastCreditosRef.current = creditos;
+        setCobranca({ ...data, quantidade_creditos: creditos });
         const kind = pixStatusKind(data.status);
         if (kind === 'aprovado' && !approvedRef.current) {
           approvedRef.current = true;
           setStep('ok');
-          onApprovedRef.current?.(data);
+          onApprovedRef.current?.({ ...data, quantidade_creditos: creditos });
         }
       } catch {
         // Mantém o QR; tenta de novo no próximo ciclo
@@ -157,15 +212,8 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
   }, [step]);
 
   useEffect(() => {
-    if (step === 'valor') {
-      const idx = PIX_PRESETS.indexOf(valor);
-      setNav(presetNavId(idx >= 0 ? idx : 0));
-      return;
-    }
-    if (step === 'qr') {
-      setNav('copy');
-    }
-  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps -- só ao mudar de etapa
+    if (step === 'qr') setNav('copy');
+  }, [step]);
 
   const handleCopy = useCallback(async () => {
     const code = cobranca?.qr_code;
@@ -183,6 +231,13 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
     setCobranca(null);
     setStep('valor');
     setError(null);
+    setNav(presetNavId(0));
+  }, []);
+
+  const selectOpcao = useCallback((opcao, index) => {
+    if (!opcao) return;
+    setSelectedId(opcao.id);
+    setNav(presetNavId(index));
   }, []);
 
   const qrSrc = pixQrImageSrc(cobranca?.qr_code_base64);
@@ -190,6 +245,7 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
   const expired = expireText === 'QR expirado';
   const failed = pixStatusKind(cobranca?.status) === 'falhou';
   const hasRetry = expired || failed;
+  const creditosQr = resolvePixCreditosConcedidos(cobranca, lastCreditosRef.current || creditosOpcao);
 
   useEffect(() => {
     if (step !== 'qr' || !hasRetry) return;
@@ -205,15 +261,15 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
         return true;
       }
 
-      if (step === 'ok') return true;
+      if (step === 'ok' || opcoesStatus === 'loading') return true;
 
       if (acao === 'cima' || acao === 'baixo' || acao === 'esquerda' || acao === 'direita') {
         if (step === 'valor') {
-          const next = moveValorNav(nav, acao, authFailed);
+          const next = moveValorNav(nav, acao, authFailed, opcoes.length);
           setNav(next);
           if (next.startsWith('p-')) {
-            const amount = PIX_PRESETS[Number(next.slice(2))];
-            if (amount) setValor(amount);
+            const opcao = opcoes[Number(next.slice(2))];
+            if (opcao) setSelectedId(opcao.id);
           }
         } else if (step === 'qr') {
           setNav((current) =>
@@ -227,9 +283,9 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
         if (step === 'valor') {
           if (nav === 'relogin') {
             onReLoginRef.current?.();
-          } else if (!loading) {
-            const amount = nav.startsWith('p-') ? PIX_PRESETS[Number(nav.slice(2))] : valor;
-            if (amount) gerar(amount);
+          } else if (!loading && opcoes.length > 0) {
+            const opcao = nav.startsWith('p-') ? opcoes[Number(nav.slice(2))] : selected;
+            if (opcao) gerar(opcao.valor_pix_numero, opcao.quantidade_creditos);
           }
         } else if (step === 'qr') {
           if (nav === 'copy') handleCopy();
@@ -238,10 +294,22 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
         return true;
       }
 
-      if (acao === 'hits') return true;
       return true;
     },
-    [step, nav, authFailed, cobranca?.qr_code, hasRetry, loading, valor, gerar, handleCopy, voltarAoValor]
+    [
+      step,
+      nav,
+      authFailed,
+      cobranca?.qr_code,
+      hasRetry,
+      loading,
+      opcoes,
+      opcoesStatus,
+      selected,
+      gerar,
+      handleCopy,
+      voltarAoValor,
+    ]
   );
 
   useImperativeHandle(ref, () => ({ handleAction }), [handleAction]);
@@ -285,35 +353,56 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
         {step === 'valor' && (
           <>
             <p className="text-sm text-muted-foreground mb-4">
-              Escolha o valor. Cada R$ 1,00 vira 1 crédito na máquina.
+              Escolha o valor. Os créditos liberados seguem a tabela configurada no admin.
             </p>
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {PIX_PRESETS.map((amount, index) => {
-                const navId = presetNavId(index);
-                const focused = nav === navId;
-                return (
-                  <button
-                    key={amount}
-                    type="button"
-                    data-pix-nav={navId}
-                    data-pix-nav-active={focused ? 'true' : undefined}
-                    onClick={() => {
-                      setValor(amount);
-                      setNav(navId);
-                    }}
-                    className={cn(
-                      'h-14 rounded-xl border text-lg font-display tabular-nums touch-manipulation transition-colors',
-                      valor === amount
-                        ? 'bg-secondary/20 border-secondary text-secondary'
-                        : 'bg-transparent border-border text-muted-foreground hover:text-foreground hover:border-foreground/30',
-                      navRing(focused)
-                    )}
-                  >
-                    {formatBRL(amount)}
-                  </button>
-                );
-              })}
-            </div>
+            {opcoesStatus === 'loading' && (
+              <div className="flex items-center justify-center gap-2 h-24 text-sm text-muted-foreground">
+                <Loader2 size={18} className="animate-spin" />
+                Carregando valores…
+              </div>
+            )}
+            {opcoesStatus === 'empty' && (
+              <p className="text-sm text-destructive mb-4">
+                Nenhuma opção PIX ativa. Cadastre em Pagamentos → créditos (configuração).
+              </p>
+            )}
+            {opcoesStatus === 'fallback' && (
+              <p className="text-[11px] text-muted-foreground mb-3">
+                Sem resposta da tabela do admin — usando os valores padrão.
+              </p>
+            )}
+            {opcoes.length > 0 && (
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                {opcoes.map((opcao, index) => {
+                  const navId = presetNavId(index);
+                  const focused = nav === navId;
+                  const isSelected = String(opcao.id) === String(selected?.id);
+                  return (
+                    <button
+                      key={opcao.id}
+                      type="button"
+                      data-pix-nav={navId}
+                      data-pix-nav-active={focused ? 'true' : undefined}
+                      onClick={() => selectOpcao(opcao, index)}
+                      className={cn(
+                        'min-h-[3.5rem] rounded-xl border px-2 py-2 touch-manipulation transition-colors flex flex-col items-center justify-center',
+                        isSelected
+                          ? 'bg-secondary/20 border-secondary text-secondary'
+                          : 'bg-transparent border-border text-muted-foreground hover:text-foreground hover:border-foreground/30',
+                        navRing(focused)
+                      )}
+                    >
+                      <span className="text-lg font-display tabular-nums leading-tight">
+                        {formatBRL(opcao.valor_pix_numero)}
+                      </span>
+                      <span className="text-[11px] tabular-nums opacity-80">
+                        {opcao.quantidade_creditos} crédito{opcao.quantidade_creditos === 1 ? '' : 's'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             {error && <p className="text-xs text-destructive mb-3">{error}</p>}
             {authFailed && onReLogin && (
               <button
@@ -333,15 +422,19 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
               type="button"
               data-pix-nav="gerar"
               data-pix-nav-active={nav === 'gerar' ? 'true' : undefined}
-              onClick={() => gerar(valor)}
-              disabled={loading}
+              onClick={() => selected && gerar(selected.valor_pix_numero, selected.quantidade_creditos)}
+              disabled={loading || !selected}
               className={cn(
                 'w-full h-12 rounded-xl bg-secondary text-secondary-foreground font-semibold hover:brightness-110 disabled:opacity-50 transition-all touch-manipulation flex items-center justify-center gap-2',
                 navRing(nav === 'gerar')
               )}
             >
               {loading ? <Loader2 size={18} className="animate-spin" /> : <QrCode size={18} />}
-              {loading ? 'Gerando QR…' : `Gerar QR de ${formatBRL(valor)}`}
+              {loading
+                ? 'Gerando QR…'
+                : selected
+                  ? `Gerar QR de ${formatBRL(valor)}`
+                  : 'Sem valor disponível'}
             </button>
           </>
         )}
@@ -351,8 +444,11 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
             <p className="text-center text-sm text-muted-foreground mb-1">
               Escaneie o QR ou copie o código
             </p>
-            <p className="text-center text-2xl font-display text-secondary tabular-nums mb-3">
+            <p className="text-center text-2xl font-display text-secondary tabular-nums mb-1">
               {formatBRL(cobranca.valor_numero ?? cobranca.valor)}
+            </p>
+            <p className="text-center text-sm text-muted-foreground mb-3 tabular-nums">
+              {creditosQr} crédito{creditosQr === 1 ? '' : 's'} na máquina
             </p>
 
             <div className="mx-auto w-56 h-56 rounded-xl bg-white p-2 mb-3 flex items-center justify-center">
@@ -412,7 +508,7 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
             <Check size={40} className="mx-auto text-emerald-400" />
             <p className="text-xl font-display text-emerald-400">PIX aprovado!</p>
             <p className="text-sm text-muted-foreground">
-              {Math.round(Number(cobranca?.valor_numero ?? valor) || 0)} crédito(s) liberados
+              {creditosQr} crédito(s) liberados
             </p>
           </div>
         )}

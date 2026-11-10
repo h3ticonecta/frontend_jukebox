@@ -71,6 +71,8 @@ O client lança `ApiError` com `message`, `status` e `data`.
 | `GET` | `/api/v1/maquinas/leitura/` | 06 | Maquina |
 | `POST` | `/api/v1/maquinas/creditos/` | 06 | Maquina |
 | `POST` | `/api/v1/maquinas/tocadas/` | 04 | Maquina |
+| `GET` | `/api/v1/pagamentos/pix-creditos/opcoes/` | 14 | Maquina |
+| `GET/POST/PATCH/DELETE` | `/api/v1/pagamentos/pix-creditos/` | 14 | Token admin |
 
 ### Máquinas (`/api/v1/maquinas/`) — escopo do app
 

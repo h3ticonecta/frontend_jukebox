@@ -29,6 +29,10 @@ Sempre que alterar comportamento de integração, API, UI do jukebox ou regras d
 | Auth, headers, endpoints | `08-convencoes-api.md` |
 | Teclas da máquina | `09-teclas-maquina.md` |
 | Capas no sync (backend) | `10-capas-pastas.md` |
+| Painel administrativo | `11-painel-administrativo.md` |
+| Roleta | `12-roleta.md` |
+| PIX (QR Mercado Pago) | `13-pix-mercadopago.md` |
+| PIX créditos (valores) | `14-pix-creditos-config.md` |
 
 Índice e status geral: `docs/README.md`.
 

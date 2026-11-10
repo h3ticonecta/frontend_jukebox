@@ -2,7 +2,7 @@
 
 ## Componentes frontend
 
-- `src/api/pagamentos.js` — `criarPixQrCode()`, `consultarPix()`, `sincronizarPix()`
+- `src/api/pagamentos.js` — `criarPixQrCode()`, `consultarPix()`, `sincronizarPix()`, `fetchPixCreditoOpcoes()`
 - `src/components/jukebox/PixModal.jsx` — escolha de valor, QR, copia e cola, polling e navegação por teclas (`handleAction`)
 - `src/components/jukebox/PlayerBar.jsx` — CTA **Pagar com PIX** centralizado no rodapé
 - `src/hooks/useJukeboxKeyboard.js` — zona de foco `pix` (seta para baixo na última faixa)
@@ -10,7 +10,7 @@
 
 ## Descrição
 
-Gera **QR Code PIX** (imagem base64 + copia e cola) na conta Mercado Pago do backend. Quando o pagamento é aprovado, o backend registra o **crédito** (`origem: pix`) e o frontend credita o saldo local (R$ 1,00 = 1 crédito).
+Gera **QR Code PIX** (imagem base64 + copia e cola) na conta Mercado Pago do backend. Quando o pagamento é aprovado, o backend registra o **crédito** (`origem: pix`) com `creditos_concedidos` da tabela do contrato [14](./14-pix-creditos-config.md). O frontend credita essa quantidade — **não** assume R$ 1,00 = 1 crédito.
 
 ## Status
 
@@ -19,7 +19,7 @@ Gera **QR Code PIX** (imagem base64 + copia e cola) na conta Mercado Pago do bac
 | CTA **Pagar com PIX** centralizado no rodapé | ✅ |
 | Navegação por teclas até o PIX (zona `pix`) | ✅ |
 | Navegação por teclas **dentro** do modal (valores / Gerar QR / copiar) | ✅ |
-| Escolha de valor (R$ 5 / 10 / 20 / 50 / 100) | ✅ |
+| Escolha de valor (`GET /pix-creditos/opcoes/`, contrato [14](./14-pix-creditos-config.md)) | ✅ |
 | `POST /pagamentos/pix/qrcode/` | ✅ |
 | Exibir QR (`qr_code_base64`) + copia e cola (`qr_code`) | ✅ |
 | Polling `POST /pagamentos/pix/{id}/sincronizar/` a cada 3s | ✅ |
@@ -65,7 +65,8 @@ Response `201` — campos na UI:
 | Campo | Uso |
 |---|---|
 | `id` | Polling / sincronizar |
-| `valor` / `valor_numero` | Rótulo e quantidade de créditos (`Math.round`) |
+| `valor` / `valor_numero` | Rótulo do QR (reais pagos) |
+| `quantidade_creditos` / `creditos_concedidos` | Créditos liberados na máquina (contrato [14](./14-pix-creditos-config.md)) |
 | `qr_code` | PIX copia e cola |
 | `qr_code_base64` | `<img src="data:image/png;base64,…">` (prefixo `data:` acrescentado se ausente) |
 | `status` | `pendente` enquanto paga |
@@ -85,11 +86,11 @@ A cada **3 s** enquanto o modal do QR está aberto. `status=aprovado` (ou `appro
 
 ```
 1. Toque no CTA **Pagar com PIX** (centro do rodapé) ou navegue até ele com `baixo` e confirme com `fila` / `tocar_cd`
-2. O foco das teclas entra no modal (o anel do CTA some). Setas escolhem o valor; `fila` / `tocar_cd` gera o QR do valor focado
-3. POST /pagamentos/pix/qrcode/ { valor }
-4. Exibe QR + copia e cola; poll sincronizar a cada 3s
-5. status=aprovado → backend já criou Credito (origem: pix)
-6. Front: addCredits(valor) + toast "+N créditos via PIX" + sessão da roleta
+2. GET /pagamentos/pix-creditos/opcoes/ e o foco das teclas entra no modal. Setas escolhem o valor; `fila` / `tocar_cd` gera o QR do valor focado
+3. POST /pagamentos/pix/qrcode/ { valor: valor_pix_numero }
+4. Exibe QR + copia e cola + N créditos; poll sincronizar a cada 3s
+5. status=aprovado → backend já criou Credito (origem: pix, quantidade = creditos_concedidos)
+6. Front: addCredits(quantidade_creditos) + toast "+N créditos via PIX" + sessão da roleta (soma o valor pago em R$)
 7. Overlay de sucesso ~1,8s e fecha (a roleta pode abrir em seguida)
 ```
 
@@ -107,8 +108,8 @@ QR expirado ou status recusado/cancelado → botão "Escolher outro valor".
 
 ## Regras de negócio no front
 
-1. R$ 1,00 = 1 crédito (igual à inserção por moeda).
-2. Valor do PIX entra de uma vez na sessão da roleta (`session.total += N`), não pulso a pulso.
+1. Créditos do PIX vêm da tabela do contrato [14](./14-pix-creditos-config.md) (`quantidade_creditos`). Moeda física continua R$ 1,00 = 1 crédito.
+2. A sessão da roleta soma o **valor pago em R$** (`session.total += valor_pix`), não a quantidade de créditos (as faixas da roleta são por valor inserido).
 3. Tecla cancelar fecha o modal PIX. Com o modal aberto, setas e `fila`/`tocar_cd` navegam só o diálogo — não a biblioteca nem o CTA do rodapé.
 4. Configuração da conta MP permanece no **Django Admin** (access token não circula no SPA).
 
@@ -116,5 +117,5 @@ QR expirado ou status recusado/cancelado → botão "Escolher outro valor".
 
 - [ ] Tecla física dedicada `acao: pix` no admin (hoje chega pelas setas + `fila`/`tocar_cd`; se o backend enviar `pix`, o atalho abre o modal)
 - [ ] CRUD da conta Mercado Pago no painel `#/admin`
-- [ ] Valores de PIX configuráveis por máquina (hoje presets fixos)
+- [x] Valores de PIX e créditos configuráveis — contrato [14](./14-pix-creditos-config.md) (tabela global, não por máquina)
 - [ ] Backend: usar `email` / `payer_email` do POST (ou um default `jukebox-{id}@dominio`) em `payer.email` do Mercado Pago — não o `usuario` da máquina

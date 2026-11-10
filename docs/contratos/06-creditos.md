@@ -59,7 +59,7 @@ showCreditToast()  // "+1 crédito inserido"
 |--------|---------------|
 | Clique no ícone de moedas (`PlayerBar`) | Insere R$ 1,00 (1 crédito) direto |
 | Tecla `credito` (padrão K) | Mesmo fluxo |
-| CTA **Pagar com PIX** (centro do rodapé) | Modal de valor → QR Mercado Pago — contrato [13](./13-pix-mercadopago.md). Backend lança `origem: pix`; o front só soma o saldo local. |
+| CTA **Pagar com PIX** (centro do rodapé) | Modal de valor → QR Mercado Pago — contratos [13](./13-pix-mercadopago.md) e [14](./14-pix-creditos-config.md). Backend lança `origem: pix` com `creditos_concedidos`; o front soma essa quantidade no saldo local (R$ 1 = 1 crédito **não** vale neste fluxo). |
 
 ---
 
@@ -160,5 +160,6 @@ Se a rede falhar (exceto 401), fallback local `jukebox_billing_events`.
 ## Pendências
 
 - [ ] Endpoint `GET` de saldo sincronizado com backend
-- [ ] Valores de crédito configuráveis por máquina
+- [ ] Valores de crédito (moeda) configuráveis por máquina
+- [x] Valores PIX → créditos configuráveis — contrato [14](./14-pix-creditos-config.md)
 - [x] Fluxo LEITURA / faturamento (`GET /api/v1/maquinas/leitura/`)

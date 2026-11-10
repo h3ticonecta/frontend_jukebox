@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CREDITS_PER_SONG } from './api/config';
 import { registrarCredito, registrarMusicaTocada } from './api/maquinas';
+import { resolvePixCreditosConcedidos } from './api/pagamentos';
 import { fetchRoletaMaquina } from './api/roleta';
 import { addBillingEvent } from './lib/billing';
 import {
@@ -395,13 +396,15 @@ function JukeboxApp() {
   }, [showCreditToast]);
 
   const applyInsertedAmount = useCallback(
-    async (quantidade, { toastMessage } = {}) => {
+    async (quantidade, { toastMessage, valorInserido } = {}) => {
       const qtd = Math.max(0, Math.round(Number(quantidade) || 0));
       if (!qtd) return;
+      const valorPago = Number(valorInserido);
+      const totalSessao = Number.isFinite(valorPago) && valorPago > 0 ? valorPago : qtd;
 
       const next = addCredits(qtd);
       setCredits(next);
-      addBillingEvent({ type: 'credito', valor: qtd, creditos: qtd });
+      addBillingEvent({ type: 'credito', valor: totalSessao, creditos: qtd });
       showCreditToast(
         toastMessage ?? (qtd === 1 ? undefined : `+${qtd} créditos inseridos`)
       );
@@ -418,7 +421,7 @@ function JukeboxApp() {
       }
 
       const session = roletaSessionRef.current;
-      session.total += qtd;
+      session.total += totalSessao;
       applyRoletaInsercao(session.total);
       if (session.timer) window.clearTimeout(session.timer);
       session.timer = window.setTimeout(closeRoletaSession, ROLETA_SESSION_MS);
@@ -439,9 +442,11 @@ function JukeboxApp() {
 
   const handlePixApproved = useCallback(
     (cobranca) => {
-      const qtd = Math.max(1, Math.round(Number(cobranca?.valor_numero ?? cobranca?.valor) || 0));
+      const qtd = resolvePixCreditosConcedidos(cobranca);
+      if (!qtd) return;
       applyInsertedAmount(qtd, {
         toastMessage: `+${qtd} crédito${qtd > 1 ? 's' : ''} via PIX`,
+        valorInserido: Number(cobranca?.valor_numero ?? cobranca?.valor) || qtd,
       });
     },
     [applyInsertedAmount]

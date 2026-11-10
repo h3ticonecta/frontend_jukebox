@@ -62,7 +62,7 @@ Estados em `useLibrary.loading` (`genres` / `albums` / `tracks`); `isLoading` ag
 4. Seleciona artista → GET /musicas/?prefix=Musicas/{Categoria}/{Artista}/
 5. Play em faixa → POST /maquinas/tocadas/ + debita crédito local + toca media_url
 6. Tecla crédito (K) → POST /maquinas/creditos/ + toast "+1 crédito inserido"
-7. Botão PIX → QR Mercado Pago → polling até `aprovado` → créditos locais (backend já lançou `origem: pix`)
+7. Botão PIX → opções de `GET /pix-creditos/opcoes/` → QR Mercado Pago → polling até `aprovado` → créditos locais pela quantidade configurada (backend já lançou `origem: pix`)
 8. Atalhos de teclado → navegação, fila, volume, pular (mapa do backend)
 ```
 
@@ -89,6 +89,8 @@ graph TD
     A --> E[06-creditos]
     A --> K[13-pix]
     K --> E
+    K --> L[14-pix-creditos]
+    L --> E
     B --> J[10-capas]
     H[08-convencoes] --> A
     H --> B

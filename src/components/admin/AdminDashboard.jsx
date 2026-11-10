@@ -10,10 +10,12 @@ import {
   LogOut,
   MonitorCog,
   Music,
+  QrCode,
   RefreshCw,
   Users,
 } from 'lucide-react';
 import { fetchPainelAdministrativo } from '../../api/painel';
+import AdminPixCreditosTab from './AdminPixCreditosTab';
 import AdminRoletaTab from './AdminRoletaTab';
 import { formatBRL, formatCustomPeriodLabel, toIsoDate } from '../../lib/billing';
 import { exportPainelPdf } from '../../lib/painelPrint';
@@ -38,6 +40,7 @@ const TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, enabled: true },
   { id: 'maquinas', label: 'Máquinas', icon: MonitorCog, enabled: false },
   { id: 'roleta', label: 'Roleta', icon: Dices, enabled: true },
+  { id: 'pix-creditos', label: 'PIX créditos', icon: QrCode, enabled: true },
   { id: 'usuarios', label: 'Usuários', icon: Users, enabled: false },
 ];
 
@@ -463,6 +466,13 @@ export default function AdminDashboard({ token, onLogout }) {
 
         {activeTab === 'roleta' && (
           <AdminRoletaTab
+            token={token}
+            onAuthError={() => onLogout('Sessão do administrador expirada. Entre novamente.')}
+          />
+        )}
+
+        {activeTab === 'pix-creditos' && (
+          <AdminPixCreditosTab
             token={token}
             onAuthError={() => onLogout('Sessão do administrador expirada. Entre novamente.')}
           />

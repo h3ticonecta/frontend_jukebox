@@ -51,7 +51,10 @@ export async function apiRequest(path, options = {}) {
   });
 
   const contentType = response.headers.get('content-type') || '';
-  const data = contentType.includes('application/json') ? await response.json() : null;
+  const data =
+    response.status === 204 || !contentType.includes('application/json')
+      ? null
+      : await response.json();
 
   if (!response.ok) {
     const message =
