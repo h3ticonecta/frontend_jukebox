@@ -30,6 +30,7 @@ import {
   setSessionCurrentSong,
   setSessionQueue,
 } from './lib/storage';
+import { mapUserFacingApiError, normalizeErrorMessage } from './lib/apiErrors';
 import { syncQueueMediaCache } from './lib/queueMediaCache';
 import MachineLoginCard from './components/auth/MachineLoginCard';
 import AdminPage from './components/admin/AdminPage';
@@ -163,7 +164,7 @@ function JukeboxApp() {
         }
         return true;
       } catch (err) {
-        setActionError(err.message || 'Erro ao registrar música tocada');
+        setActionError(mapUserFacingApiError(err, 'Erro ao registrar música tocada'));
         return false;
       }
     },
@@ -436,7 +437,7 @@ function JukeboxApp() {
       await registrarCredito(token, { valor: 1, origem: 'moeda' });
       await applyInsertedAmount(1);
     } catch (err) {
-      setActionError(err.message || 'Erro ao registrar crédito');
+      setActionError(mapUserFacingApiError(err, 'Erro ao registrar crédito'));
     }
   }, [token, applyInsertedAmount]);
 
@@ -534,7 +535,8 @@ function JukeboxApp() {
     setPixOpen(false);
     setRoletaOpen(false);
     setActionError(null);
-  }, []);
+    library.clearConnectivityError();
+  }, [library]);
 
   const keyboard = useJukeboxKeyboard({
     library,
@@ -593,7 +595,7 @@ function JukeboxApp() {
     }
   }, [library]);
 
-  const headerError = actionError || library.error;
+  const headerError = normalizeErrorMessage(actionError || library.error);
   const waitingQueue = audio.currentSong ? queue.slice(1) : queue;
 
   return (

@@ -54,6 +54,10 @@ Ou campos Django REST padrão: `detail`, `non_field_errors`.
 
 O client lança `ApiError` com `message`, `status` e `data`.
 
+Falha de rede (navegador: `Failed to fetch`, sem status HTTP) → `ApiError` com `status: 0` e mensagem fixa em português: **"Sem conexão com o servidor. Verifique a rede ou tente de novo."** (`src/lib/apiErrors.js`, `src/api/client.js`).
+
+Banner vermelho no `JukeboxHeader`: `actionError` ou `library.error`. Erros de conectividade somem quando o catálogo em cache/IndexedDB volta a preencher a tela ou quando um refresh em segundo plano (`silent`) falha mas a UI já está servida do cache; tecla **cancelar** também limpa avisos de conectividade da biblioteca.
+
 ---
 
 ## Códigos HTTP

@@ -1,4 +1,5 @@
 import { API_BASE_URL } from './config';
+import { CONNECTIVITY_ERROR_MESSAGE, isNetworkFetchError } from '../lib/apiErrors';
 import { getMaquinaToken } from '../lib/storage';
 
 export class ApiError extends Error {
@@ -43,12 +44,21 @@ export async function apiRequest(path, options = {}) {
     requestHeaders.Authorization = `${tokenType} ${authToken}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...rest,
-    headers: requestHeaders,
-    body: body !== undefined ? (body instanceof FormData ? body : JSON.stringify(body)) : undefined,
-    signal: rest.signal,
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...rest,
+      headers: requestHeaders,
+      body: body !== undefined ? (body instanceof FormData ? body : JSON.stringify(body)) : undefined,
+      signal: rest.signal,
+    });
+  } catch (err) {
+    if (err?.name === 'AbortError') throw err;
+    if (isNetworkFetchError(err)) {
+      throw new ApiError(CONNECTIVITY_ERROR_MESSAGE, 0, null);
+    }
+    throw err;
+  }
 
   const contentType = response.headers.get('content-type') || '';
   const data =

@@ -14,6 +14,10 @@ import {
 import { runCatalogPrefetch } from '../lib/catalogPrefetch';
 import { createLibraryCache } from '../lib/libraryCache';
 import {
+  clearConnectivityBanner,
+  mapUserFacingApiError,
+} from '../lib/apiErrors';
+import {
   getLastAlbumPath,
   getLastGenrePath,
   getStoredNeedsSync,
@@ -156,8 +160,10 @@ export function useLibrary(token) {
         return { data, seq };
       } catch (err) {
         if (isAbortError(err) || seq !== loadSeqRef.current[scope]) return null;
-        if (!silent) {
-          setError(err.message || 'Erro ao carregar biblioteca');
+        if (silent) {
+          clearConnectivityBanner(setError);
+        } else {
+          setError(mapUserFacingApiError(err, 'Erro ao carregar biblioteca'));
         }
         return null;
       } finally {
@@ -204,6 +210,7 @@ export function useLibrary(token) {
 
       if (cached) {
         applyAlbumsState(preserveSelectedAlbum(cached, selectedAlbumPathRef.current || getLastAlbumPath(), cacheRef.current));
+        clearConnectivityBanner(setError);
       }
 
       const result = await loadPrefix(genrePath, 'albums', { silent });
@@ -271,6 +278,7 @@ export function useLibrary(token) {
         setTracks(cachedTracks);
         setSelectedAlbum(album);
         enrichAlbumTrackDurations(albumPath, cachedTracks);
+        clearConnectivityBanner(setError);
       }
 
       const result = await loadPrefix(albumPath, 'tracks', { silent });
@@ -357,7 +365,7 @@ export function useLibrary(token) {
       }
     } catch (err) {
       if (!isAbortError(err)) {
-        setError(err.message || 'Erro ao preparar cache offline');
+        setError(mapUserFacingApiError(err, 'Erro ao preparar cache offline'));
       }
     } finally {
       prefetchAbortRef.current = null;
@@ -396,8 +404,10 @@ export function useLibrary(token) {
             const albumPath = getLastAlbumPath();
             selectedAlbumPathRef.current = albumPath;
             applyAlbumsState(preserveSelectedAlbum(cachedAlbums, albumPath, cacheRef.current));
+            clearConnectivityBanner(setError);
           }
         }
+        clearConnectivityBanner(setError);
       }
 
       loadGenres();
@@ -432,6 +442,7 @@ export function useLibrary(token) {
       const cached = cacheRef.current.getAlbums(genre.path);
       if (cached) {
         applyAlbumsState(cached);
+        clearConnectivityBanner(setError);
       } else {
         setSelectedAlbum(null);
         setTracks([]);
@@ -456,6 +467,7 @@ export function useLibrary(token) {
       const cachedTracks = cacheRef.current.getTracks(album.path);
       if (cachedTracks) {
         setTracks(cachedTracks);
+        clearConnectivityBanner(setError);
       } else {
         setTracks([]);
       }
@@ -529,6 +541,10 @@ export function useLibrary(token) {
     });
   }, []);
 
+  const clearConnectivityError = useCallback(() => {
+    clearConnectivityBanner(setError);
+  }, []);
+
   return {
     genres,
     albums,
@@ -554,5 +570,6 @@ export function useLibrary(token) {
     isPrefetching,
     prefetchProgress,
     setError,
+    clearConnectivityError,
   };
 }
