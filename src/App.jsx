@@ -632,14 +632,7 @@ function JukeboxApp() {
             isLoading={library.loading.genres}
           />
         }
-        queuePanel={
-          <WaitQueuePanel
-            currentSong={audio.currentSong}
-            isPlaying={audio.isPlaying}
-            queue={waitingQueue}
-            highlighted={highlightQueue}
-          />
-        }
+        queuePanel={null}
         playerBar={
           <PlayerBar
             currentSong={audio.currentSong}
@@ -664,7 +657,7 @@ function JukeboxApp() {
           />
         }
       >
-        <div className="flex flex-1 min-h-0 min-w-0 flex-col md:flex-row">
+        <div className="flex flex-1 min-h-0 min-w-0 w-full">
           <AlbumBrowser
             albums={library.albums}
             albumsTotal={library.albumsFolderTotal}
@@ -676,19 +669,27 @@ function JukeboxApp() {
             }}
             isLoading={library.loading.albums}
           />
-          <SongSidePanel
-            album={library.selectedAlbum || library.selectedGenre}
-            tracks={library.tracks}
-            playingTrackId={audio.currentSong?.id}
-            focusedTrackId={keyboard.focusedTrackId}
-            onPlay={(track) => {
-              library.selectTrack(track);
-              keyboard.setFocusZone('tracks');
-              handlePlay(track);
-            }}
-            onAddToQueue={handleAddToQueue}
-            isLoading={library.loading.tracks}
-          />
+          <div className="jukebox-right-rail w-full md:w-auto">
+            <SongSidePanel
+              album={library.selectedAlbum || library.selectedGenre}
+              tracks={library.tracks}
+              playingTrackId={audio.currentSong?.id}
+              focusedTrackId={keyboard.focusedTrackId}
+              onPlay={(track) => {
+                library.selectTrack(track);
+                keyboard.setFocusZone('tracks');
+                handlePlay(track);
+              }}
+              onAddToQueue={handleAddToQueue}
+              isLoading={library.loading.tracks}
+            />
+            <WaitQueuePanel
+              currentSong={audio.currentSong}
+              isPlaying={audio.isPlaying}
+              queue={waitingQueue}
+              highlighted={highlightQueue}
+            />
+          </div>
         </div>
       </JukeboxShell>
 

@@ -14,7 +14,7 @@ export default function AlbumBrowser({
   const headerTotal = albumsTotal ?? albums.length;
   return (
     <div
-      className="flex-[1.35] min-w-0 flex min-h-0"
+      className="flex-1 min-w-0 flex min-h-0"
       style={{
         paddingLeft: 'var(--browser-pad-x)',
         paddingRight: 'var(--browser-pad-x)',
@@ -51,13 +51,7 @@ export default function AlbumBrowser({
           ) : albums.length === 0 ? (
             <EmptyState icon={FolderOpen} message="Nenhuma pasta encontrada" />
           ) : (
-            <div
-              className="grid grid-cols-3 auto-rows-fr"
-              style={{
-                columnGap: 'var(--browser-grid-gap-x)',
-                rowGap: 'var(--browser-grid-gap-y)',
-              }}
-            >
+            <div className="jukebox-album-grid auto-rows-fr">
               {albums.map((album, index) => (
                 <div
                   key={album.id}

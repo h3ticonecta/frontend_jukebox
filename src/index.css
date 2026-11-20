@@ -32,13 +32,12 @@
   --browser-header-mb: 1rem;
   --browser-scroll-pad: 0.75rem;
   --browser-scroll-bottom: 6rem;
-  --browser-grid-gap-x: 1.35rem;
-  --browser-grid-gap-y: 1.55rem;
-  /** Espaço entre o grid de artistas e a coluna faixas + fila. */
-  --library-rail-gap: 2rem;
-  --tracks-panel-width: 400px;
-  --queue-panel-width: 380px;
-  --shell-right-reserve: 18rem;
+  --browser-grid-gap-x: 1.5rem;
+  --browser-grid-gap-y: 1.65rem;
+  --tracks-panel-width: min(420px, 28vw);
+  --queue-panel-width: min(400px, 26vw);
+  --shell-right-reserve: 0px;
+  --album-grid-min-cell: 9.5rem;
 }
 
 .jukebox-tracks-panel {
@@ -51,13 +50,57 @@
   .jukebox-tracks-panel {
     width: var(--tracks-panel-width);
     height: 100%;
-    margin-left: var(--library-rail-gap);
+    margin-left: 0;
+  }
+}
+
+.jukebox-right-rail {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100%;
+  min-height: 0;
+  margin-left: auto;
+  border-left: 1px solid hsl(var(--border) / 0.35);
+}
+
+@media (min-width: 768px) {
+  .jukebox-right-rail {
+    flex-direction: row;
+    max-width: min(880px, 58vw);
   }
 }
 
 .jukebox-queue-panel {
-  width: var(--queue-panel-width);
-  margin-left: 0.875rem;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .jukebox-queue-panel {
+    width: var(--queue-panel-width);
+    border-left: 2px solid hsl(var(--primary) / 0.3);
+  }
+}
+
+.jukebox-album-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(var(--album-grid-min-cell), 1fr));
+  column-gap: var(--browser-grid-gap-x);
+  row-gap: var(--browser-grid-gap-y);
+  width: 100%;
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --album-grid-min-cell: 11.5rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  :root {
+    --album-grid-min-cell: 13rem;
+  }
 }
 
 @layer base {

@@ -7,8 +7,10 @@ export default function WaitQueuePanel({ currentSong, isPlaying, queue, highligh
   return (
     <div
       className={cn(
-        'jukebox-queue-panel h-full flex flex-col overflow-hidden border-l-2 shrink-0 transition-all duration-300',
-        highlighted ? 'border-secondary ring-2 ring-secondary/50 shadow-[0_0_20px_hsl(var(--secondary)/0.4)]' : 'border-primary/30'
+        'jukebox-queue-panel h-[38vh] md:h-full flex flex-col overflow-hidden shrink-0 transition-all duration-300',
+        highlighted
+          ? 'ring-2 ring-secondary/50 shadow-[0_0_20px_hsl(var(--secondary)/0.4)] md:border-l-2 md:border-secondary'
+          : 'md:border-l-2 md:border-primary/30'
       )}
     >
       <div className="px-3 py-2 flex items-center justify-between shrink-0">

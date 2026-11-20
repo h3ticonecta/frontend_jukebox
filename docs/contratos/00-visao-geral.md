@@ -35,10 +35,9 @@ Arquivo: `src/App.jsx` → `JukeboxShell`
 | Banner | `PrefetchBanner` | Progresso do pré-cache offline (catálogo + capas) |
 | Banner | `SyncBanner` | Aviso quando `needs_sync === true` |
 | Carrossel | `GenreCarousel` | Categorias (SUCESSOS) — discos de vinil |
-| Esquerda | `AlbumBrowser` | Grid 3 col. de artistas/bandas (`flex-[1.35]`, gaps `--browser-grid-gap-*` em `index.css`) |
-| Centro | `SongSidePanel` | Lista de faixas (`.jukebox-tracks-panel`, `--tracks-panel-width` 400px, `--library-rail-gap` afasta da grade) |
-| Direita | `WaitQueuePanel` | Fila de espera (`.jukebox-queue-panel`, `--queue-panel-width` 380px, `margin-left` extra) |
-| Extrema direita | Área reservada (`JukeboxShell`) | Espaço vazio (`--shell-right-reserve`, 18rem) para banner/anúncio futuro |
+| Esquerda | `AlbumBrowser` | Grid 3 col. (`jukebox-album-grid`, células `minmax(--album-grid-min-cell, 1fr)`, `flex-1`) |
+| Direita | `.jukebox-right-rail` | `SongSidePanel` + `WaitQueuePanel` colados à borda (`margin-left: auto`); larguras `--tracks-panel-width` / `--queue-panel-width` |
+| Reserva lateral | `JukeboxShell` | `--shell-right-reserve` em `0` (sem faixa vazia até haver banner) |
 | Rodapé | `PlayerBar` | Créditos, CTA PIX central, player, progresso, fila |
 
 ## Placeholders (loading)
