@@ -219,13 +219,15 @@ export function useJukeboxKeyboard({
     focusTrack,
   ]);
 
+  const enterTracksFromAlbums = useCallback(() => {
+    if (!library.tracks.length) return;
+    focusTrack(library.tracks[0]);
+  }, [library.tracks, focusTrack]);
+
   const confirmTocarCd = useCallback(() => {
     if (!library.tracks.length) return;
-    if (focusZone !== 'tracks') {
-      focusTrack(library.selectedTrack || library.tracks[0]);
-    }
     onPlayCd?.();
-  }, [focusZone, library.tracks, library.selectedTrack, focusTrack, onPlayCd]);
+  }, [library.tracks, onPlayCd]);
 
   const handleKeyboardAction = useCallback(
     (rawAcao) => {
@@ -331,7 +333,9 @@ export function useJukeboxKeyboard({
             } else if (library.tracks.length > 0) {
               confirmTocarCd();
             }
-          } else if (focusZone === 'albums' || focusZone === 'tracks') {
+          } else if (focusZone === 'albums') {
+            enterTracksFromAlbums();
+          } else if (focusZone === 'tracks') {
             confirmTocarCd();
           }
           break;
@@ -356,6 +360,7 @@ export function useJukeboxKeyboard({
       moveAlbumVertical,
       moveTrack,
       enterAlbumsFromGenres,
+      enterTracksFromAlbums,
       confirmTocarCd,
       leaveTracksUp,
       focusAlbum,

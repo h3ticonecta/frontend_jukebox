@@ -136,7 +136,7 @@ Valores especiais de exibição:
 | `hits` | Foco na seção SUCESSOS + scroll |
 | `fila` | **Ativa** o item focado: destaca fila (2s) e, se o foco está em uma faixa, adiciona à fila local. Com faixas visíveis e foco ainda em `genres`/`albums`, desce o foco para a lista e enfileira a faixa destacada. Na zona `pix`, abre o modal PIX |
 | `pular` | Pula faixa e toca próxima da fila |
-| `tocar_cd` | Aliases normalizados no front: `tocar`, `selecionar`, `tocar_faixa`, etc. → `tocar_cd`. **Zona `genres`:** sem artistas e com faixas flat, confirma a 1ª faixa; senão foco no 1º artista. **Zona `albums` / `tracks`:** foca a faixa (destaque ciano na lista) e confirma — com o player livre, toca na hora; com música em reprodução, entra no **final da fila** (não substitui a atual). **Zona `pix`:** abre o modal PIX. Não enfileira o álbum inteiro |
+| `tocar_cd` | Aliases normalizados no front: `tocar`, `selecionar`, `tocar_faixa`, etc. → `tocar_cd`. **Zona `genres`:** sem artistas e com faixas flat, confirma a 1ª faixa; senão foco no 1º artista. **Zona `albums`:** só desce o foco para a lista e destaca a **1ª faixa** (não toca nem enfileira). **Zona `tracks`:** confirma a faixa focada — com o player livre, toca na hora; com música em reprodução, entra no **final da fila** (não substitui a atual). **Zona `pix`:** abre o modal PIX. Não enfileira o álbum inteiro |
 | `pix` | Abre o modal PIX (se o backend cadastrar essa ação nas teclas da máquina) |
 | `vol` | Um clique +3%; cliques em sequência / segurar −3% contínuo (ver `useVolumeShortcuts`, passo `VOLUME_STEP_DELTA` em `storage.js`). Cada mudança abre o `VolumePopup` central com o percentual e a barra segmentada — permanece visível enquanto a tecla é segurada e some ~1,6 s após a última alteração |
 | `cancelar` | Fecha painéis e limpa erros |
@@ -163,7 +163,7 @@ Com o modal de valor/QR aberto, as teclas **deixam a biblioteca e o CTA do rodap
 
 O anel âmbar do CTA do rodapé some enquanto o modal está aberto; o controle focado no diálogo recebe o mesmo anel.
 
-As setas **não disparam clique** (não tocam música). Toque/mouse continuam com o comportamento anterior. A faixa focada é confirmada por `tocar_cd` (toca se o player estiver livre; senão entra na fila) ou por `fila` (sempre adiciona à fila).
+As setas **não disparam clique** (não tocam música). Toque/mouse continuam com o comportamento anterior. No grid de artistas, o 1º `tocar_cd` leva o foco às faixas; o 2º confirma (`tocar_cd` toca ou enfileira; `fila` sempre adiciona à fila).
 
 ---
 
