@@ -37,7 +37,9 @@ export default function SongSidePanel({
           <div className="w-12 h-12 rounded-md shrink-0 skeleton-shimmer" aria-hidden="true" />
         )}
         <div className="min-w-0">
-          <h3 className="text-sm font-display text-foreground truncate">{album.name}</h3>
+          <h3 className="text-sm font-display text-foreground leading-snug line-clamp-2" title={album.name}>
+            {album.name}
+          </h3>
           <p className="text-xs text-muted-foreground">{album.countLabel}</p>
         </div>
       </div>
@@ -56,7 +58,7 @@ export default function SongSidePanel({
               key={track.id}
               data-track-id={track.id}
               className={cn(
-                'flex items-center gap-2 p-2 min-h-[48px] rounded-lg cursor-pointer group transition-colors mb-0.5 touch-manipulation',
+                'flex items-start gap-1.5 p-2 min-h-[48px] rounded-lg cursor-pointer group transition-colors mb-0.5 touch-manipulation',
                 isPlaying && 'bg-primary/15 border border-primary/30',
                 !isPlaying && 'hover:bg-muted/50 active:bg-muted/70',
                 isFocused && !isPlaying && 'bg-secondary/10 border border-secondary/30 ring-1 ring-secondary/40'
@@ -71,11 +73,19 @@ export default function SongSidePanel({
               role="button"
               tabIndex={0}
             >
-              <span className="text-xs w-5 text-center text-muted-foreground shrink-0">
+              <span className="text-xs w-5 text-center text-muted-foreground shrink-0 pt-0.5">
                 {track.number || String(index + 1).padStart(2, '0')}
               </span>
               <div className="flex-1 min-w-0">
-                <p className={cn('text-sm truncate', isPlaying && 'text-primary font-semibold')}>{track.title}</p>
+                <p
+                  className={cn(
+                    'text-[13px] leading-snug line-clamp-2 break-words',
+                    isPlaying && 'text-primary font-semibold'
+                  )}
+                  title={track.title}
+                >
+                  {track.title}
+                </p>
                 <p
                   className={cn(
                     'text-xs tabular-nums flex items-center gap-1.5',
@@ -94,7 +104,7 @@ export default function SongSidePanel({
               <button
                 type="button"
                 title="Adicionar à fila"
-                className="p-2 min-w-[40px] min-h-[40px] flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 active:scale-95 transition-all touch-manipulation text-muted-foreground hover:text-secondary"
+                className="p-1.5 min-w-[34px] min-h-[34px] flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 active:scale-95 transition-all touch-manipulation text-muted-foreground hover:text-secondary shrink-0"
                 onClick={(event) => {
                   event.stopPropagation();
                   onAddToQueue(track);
@@ -105,7 +115,7 @@ export default function SongSidePanel({
               <button
                 type="button"
                 title="Tocar"
-                className="p-2 min-w-[40px] min-h-[40px] flex items-center justify-center text-primary hover:text-primary/80 active:scale-95 transition-colors touch-manipulation"
+                className="p-1.5 min-w-[34px] min-h-[34px] flex items-center justify-center text-primary hover:text-primary/80 active:scale-95 transition-colors touch-manipulation shrink-0"
                 onClick={(event) => {
                   event.stopPropagation();
                   onPlay(track);

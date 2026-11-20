@@ -29,9 +29,13 @@ export default function WaitQueuePanel({ currentSong, isPlaying, queue, highligh
           <div className="rounded-lg ring-2 ring-primary shadow-[0_0_18px_hsl(var(--primary)/0.5)] bg-primary/10 flex items-center justify-between px-3 py-2 gap-3 mb-2">
             <div className="flex-1 min-w-0">
               <span className="text-[10px] uppercase tracking-wider text-primary font-bold">Tocando agora</span>
-              <p className="text-sm text-foreground font-semibold truncate">{currentSong.title}</p>
+              <p className="text-[13px] text-foreground font-semibold leading-snug line-clamp-2 break-words" title={currentSong.title}>
+                {currentSong.title}
+              </p>
               {currentSong.artist && currentSong.artist !== currentSong.title && (
-                <p className="text-xs text-muted-foreground truncate">{currentSong.artist}</p>
+                <p className="text-xs text-muted-foreground leading-snug line-clamp-2 break-words" title={currentSong.artist}>
+                  {currentSong.artist}
+                </p>
               )}
             </div>
             <EqualizerBars isPlaying={isPlaying} />
@@ -52,9 +56,13 @@ export default function WaitQueuePanel({ currentSong, isPlaying, queue, highligh
               >
                 <span className="text-xs w-5 text-center text-secondary font-bold shrink-0">{i + 1}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-foreground truncate">{song.title}</p>
+                  <p className="text-[13px] text-foreground leading-snug line-clamp-2 break-words" title={song.title}>
+                    {song.title}
+                  </p>
                   {song.artist && song.artist !== song.title && (
-                    <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
+                    <p className="text-xs text-muted-foreground leading-snug line-clamp-2 break-words" title={song.artist}>
+                      {song.artist}
+                    </p>
                   )}
                 </div>
               </li>
