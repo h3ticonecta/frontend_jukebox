@@ -7,7 +7,16 @@
 | Desenvolvimento | `VITE_API_BASE_URL=https://backendjukebox-dev.up.railway.app` |
 | Produção | `VITE_API_BASE_URL` no Railway |
 
-Definido em `src/api/config.js` → `API_BASE_URL`.
+Definido em `src/api/config.js` → `API_BASE_URL` (fallback `https://backendjukebox-dev.up.railway.app`).
+
+### Monitoramento (guia de integração backend)
+
+| Endpoint | Arquivo | Uso no app |
+|----------|---------|------------|
+| `GET /health/` | `src/api/auth.js` → `checkHealth()` | Boot do `AuthProvider`; `status === 'ok'` |
+| `GET /` | `src/api/serviceInfo.js` → `getServiceInfo()` | Boot do `AuthProvider`; fallback se health falhar |
+
+Login da máquina exibe aviso se a API estiver inacessível (`apiReachable === false`).
 
 ---
 
@@ -66,6 +75,8 @@ O client lança `ApiError` com `message`, `status` e `data`.
 | Método | Endpoint | Contrato | Auth |
 |--------|----------|----------|------|
 | `POST` | `/api/v1/maquinas/auth/` | 01 | Público |
+| `GET` | `/health/` | 08 | Público |
+| `GET` | `/` | 08 | Público |
 | `GET` | `/api/v1/maquinas/config/` | 01, 09 | Maquina |
 | `GET` | `/api/v1/musicas/?prefix=...` | 02–04 | Maquina |
 | `GET` | `/api/v1/maquinas/leitura/` | 06 | Maquina |
@@ -108,7 +119,16 @@ A biblioteca é navegada exclusivamente via `GET /musicas/?prefix=...`.
 
 ## CORS
 
-O backend deve incluir a URL do frontend em `CORS_ALLOWED_ORIGINS`.
+O backend deve incluir a URL do frontend em `CORS_ALLOWED_ORIGINS` (ex.: `http://localhost:5173`, URL Railway do front).
+
+## Fora de escopo neste frontend (guia backend)
+
+| Item | Motivo |
+|------|--------|
+| Buckets CRUD (`/api/v1/buckets/`) | Admin / infra — não usado no jukebox |
+| Login HTML Django `/admin/` | Não é API |
+| Fila de reprodução na API | Contrato 05 — fila **local** até endpoint existir |
+| Votação de músicas | Sem endpoint |
 
 Áudio/imagem do R2 (`media_url`, `cover_url`) é domínio diferente; `<audio src>` e `<img src>` funcionam sem CORS extra no fetch.
 

@@ -3,7 +3,7 @@ import { Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function MachineLoginCard() {
-  const { login, isLoading, error, clearError } = useAuth();
+  const { login, isLoading, error, clearError, apiReachable } = useAuth();
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
 
@@ -20,6 +20,11 @@ export default function MachineLoginCard() {
           <Settings className="text-primary" size={32} />
           <h1 className="text-2xl font-display text-primary neon-glow-amber">Login da Máquina</h1>
         </div>
+        {apiReachable === false && (
+          <p className="text-xs text-destructive mb-4" role="status">
+            API indisponível — verifique a conexão ou `VITE_API_BASE_URL`.
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

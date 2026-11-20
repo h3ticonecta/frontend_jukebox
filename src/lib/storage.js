@@ -94,6 +94,11 @@ export function getMaquinaTeclas() {
   return getMaquinaInfo()?.teclas || [];
 }
 
+export function getMaquinaConfigUpdatedAt() {
+  const value = getMaquinaInfo()?.config_updated_at;
+  return value == null || value === '' ? null : String(value);
+}
+
 export function getComportamentoVolume() {
   return getMaquinaInfo()?.comportamento_volume || null;
 }

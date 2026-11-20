@@ -4,6 +4,8 @@ Contratos de integração entre o **frontend React** (este repo) e o **backend D
 
 A pasta `docs/contratos/` é a **documentação canônica** deste projeto: endpoints, mapeamento UI e status da integração.
 
+O guia geral de integração com o backend (checklist, poll de teclas, health) está espelhado em [08-convencoes-api.md](./contratos/08-convencoes-api.md) e [01-sessao-dispositivo.md](./contratos/01-sessao-dispositivo.md).
+
 ## Objetivo
 
 Cada contrato documenta:

@@ -8,8 +8,10 @@
 - `src/context/AuthContext.jsx` — estado de sessão
 - `src/components/jukebox/JukeboxHeader.jsx` — badge com nome da jukebox, download (cache) e sync
 - `src/lib/storage.js` — persistência no `localStorage`
-- `src/api/auth.js` — `POST /maquinas/auth/`
+- `src/api/auth.js` — `POST /maquinas/auth/`, `GET /health/`
+- `src/api/serviceInfo.js` — `GET /` (service info)
 - `src/api/maquinas.js` — `GET /maquinas/config/`, créditos, tocadas, leitura
+- `src/lib/maquinaConfigSync.js` — poll de config (`TECLAS_POLL_MS`, foco da janela)
 
 ## Descrição
 
@@ -32,6 +34,8 @@ A senha **nunca** é persistida no dispositivo — só no formulário de login.
 | Badge com `nome_jukebox` | ✅ |
 | Logout | ✅ |
 | Refresh `GET /maquinas/config/` (teclas + nome) | ✅ |
+| Poll config (~5 min) + ao focar a janela (`updated_at`) | ✅ |
+| Health `GET /health/` e service info `GET /` no boot | ✅ |
 | Erros `INVALID_CREDENTIALS` / `MACHINE_INACTIVE` | ✅ |
 
 ---
@@ -100,11 +104,19 @@ Authorization: Maquina <token>
     { "acao": "credito", "label": "Crédito", "tecla": "K" },
     { "acao": "vol", "label": "Vol", "tecla": "V" }
   ],
-  "comportamento_volume": { "...": "..." }
+  "comportamento_volume": { "...": "..." },
+  "updated_at": "2026-03-20T12:00:00Z"
 }
 ```
 
-Chamado ao montar o app (se há token) e ao abrir o painel TECLAS (`refreshConfig`). Atualiza `teclas`, `comportamento_volume` e, se presentes, `nome_jukebox` / `usuario` / `id` no estado e no `localStorage`.
+| Momento | Comportamento |
+|---------|----------------|
+| Login (`POST /auth/`) | Grava `teclas`, `comportamento_volume` e `config_updated_at` (`updated_at`) |
+| Sessão ativa | `startMaquinaConfigSync`: `GET /config/` ao montar, a cada **5 min** e no evento `focus` da janela |
+| Comparação | Só reaplica UI/`localStorage` se `updated_at` mudou (ver `configNeedsUpdate`) |
+| Painel TECLAS | `refreshConfig({ force: true })` — sempre busca o mapa atual |
+
+Arquivos: `src/lib/maquinaConfigSync.js` (`TECLAS_POLL_MS = 5 * 60 * 1000`), `AuthContext.jsx`.
 
 **Somente o admin** altera teclas (Django ou API com token admin); o app **exibe** e **reage**.
 
@@ -115,7 +127,7 @@ Chamado ao montar o app (se há token) e ao abrir o painel TECLAS (`refreshConfi
 | Campo | Chave localStorage |
 |-------|-------------------|
 | `token` | `jukebox_maquina_token` |
-| `id`, `nome_jukebox`, `usuario`, `teclas`, `comportamento_volume` | `jukebox_maquina_info` |
+| `id`, `nome_jukebox`, `usuario`, `teclas`, `comportamento_volume`, `config_updated_at` | `jukebox_maquina_info` |
 | Último SUCESSO (`genre.path`) | `jukebox_last_genre_path` |
 | Último artista/banda (`album.path`) | `jukebox_last_album_path` |
 | `needs_sync` da última resposta | `jukebox_needs_sync` |

@@ -102,7 +102,7 @@ Com uma faixa de vídeo (MP4) tocando em tela cheia (`VideoStage`), **qualquer t
 
 ### Atualizar sem relogar
 
-`GET /api/v1/maquinas/config/` — chamado ao abrir o painel TECLAS e no mount do app.
+`GET /api/v1/maquinas/config/` — resposta inclui `updated_at`. O app compara com `config_updated_at` em `localStorage` e só reaplica se mudou; **poll** a cada 5 min e ao **focar** a janela (`src/lib/maquinaConfigSync.js`). Abrir o painel TECLAS força refresh (`force: true`). Ver contrato [01](./01-sessao-dispositivo.md).
 
 ---
 

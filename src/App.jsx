@@ -577,7 +577,7 @@ function JukeboxApp() {
     async (open) => {
       const nextOpen = typeof open === 'boolean' ? open : !keysPanelOpen;
       if (nextOpen) {
-        await refreshConfig();
+        await refreshConfig({ force: true });
       }
       setKeysPanelOpen(nextOpen);
     },
