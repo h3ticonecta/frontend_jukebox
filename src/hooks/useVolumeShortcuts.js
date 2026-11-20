@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { eventMatchesTecla, resolveVolumeTecla } from '../lib/keyboard';
+import { VOLUME_STEP_DELTA } from '../lib/storage';
 
 function isTypingTarget(target) {
   if (!target) return false;
@@ -13,9 +14,9 @@ const HOLD_TICK_MS = 140;
 
 /**
  * Atalho físico único de volume (backend: `acao: vol` ou legado vol_mais / vol_menos).
- * - Um clique: +10% ao soltar (após debounce ~400 ms)
- * - Cliques em sequência (janela de debounce): −10% por clique
- * - Manter pressionado: −10% contínuo (início ~520 ms, depois a cada ~140 ms),
+ * - Um clique: +3% ao soltar (após debounce ~400 ms)
+ * - Cliques em sequência (janela de debounce): −3% por clique
+ * - Manter pressionado: −3% contínuo (início ~520 ms, depois a cada ~140 ms),
  *   inclusive quando o SO emite auto-repeat (event.repeat) — o repeat é tratado
  *   como "tecla ainda pressionada", não como cancelamento do hold
  */
@@ -63,7 +64,7 @@ export function useVolumeShortcuts({ teclas = [], enabled = true, onStep }) {
       }
       tickTimer = window.setInterval(() => {
         ticked = true;
-        onStepRef.current?.(-0.1);
+        onStepRef.current?.(-VOLUME_STEP_DELTA);
       }, HOLD_TICK_MS);
     };
 
@@ -121,20 +122,20 @@ export function useVolumeShortcuts({ teclas = [], enabled = true, onStep }) {
 
       // Auto-repeat do SO sem tempo de tick (soltou logo após o repeat).
       if (withRepeat) {
-        onStepRef.current?.(-0.1);
+        onStepRef.current?.(-VOLUME_STEP_DELTA);
         return;
       }
 
       // Cliques em sequência: cada clique após o primeiro diminui.
       if (isSequence) {
-        onStepRef.current?.(-0.1);
+        onStepRef.current?.(-VOLUME_STEP_DELTA);
         return;
       }
 
       // Clique único: aumenta ao soltar, após o debounce.
       clickTimer = window.setTimeout(() => {
         clickTimer = null;
-        onStepRef.current?.(0.1);
+        onStepRef.current?.(VOLUME_STEP_DELTA);
       }, DEBOUNCE_MS);
     };
 

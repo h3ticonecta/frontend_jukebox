@@ -66,9 +66,9 @@ Login e `GET /config/` incluem:
 
 | Gestão | Efeito no app (`useVolumeShortcuts`) |
 |--------|--------------------------------------|
-| Um clique na tecla `vol` | +10% ao soltar (após debounce ~400 ms) |
-| Cliques em sequência (janela ~400 ms entre cliques) | −10% por clique |
-| Manter pressionado | −10% a cada ~140 ms (início ~520 ms). Auto-repeat do SO (`event.repeat`) é tratado como "tecla pressionada": mantém o decréscimo contínuo — não cancela o hold |
+| Um clique na tecla `vol` | +3% ao soltar (após debounce ~400 ms) |
+| Cliques em sequência (janela ~400 ms entre cliques) | −3% por clique |
+| Manter pressionado | −3% a cada ~140 ms (início ~520 ms). Auto-repeat do SO (`event.repeat`) é tratado como "tecla pressionada": mantém o decréscimo contínuo — não cancela o hold |
 
 O front usa a **tecla** de `vol` (ou legado); o JSON só documenta o comportamento esperado.
 
@@ -138,7 +138,7 @@ Valores especiais de exibição:
 | `pular` | Pula faixa e toca próxima da fila |
 | `tocar_cd` | **Zona `genres`:** foco no 1º artista. **Zona `albums`:** só desce o foco para a lista de músicas (não toca). **Zona `tracks`:** seleciona a faixa focada (ou a 1ª) — com o player livre, toca na hora; com música em reprodução, entra no **final da fila** (não substitui a atual). **Zona `pix`:** abre o modal PIX. Não enfileira o álbum inteiro |
 | `pix` | Abre o modal PIX (se o backend cadastrar essa ação nas teclas da máquina) |
-| `vol` | Um clique +10%; cliques em sequência / segurar −10% contínuo (ver `useVolumeShortcuts`). Cada mudança abre o `VolumePopup` central com o percentual e a barra segmentada — permanece visível enquanto a tecla é segurada e some ~1,6 s após a última alteração |
+| `vol` | Um clique +3%; cliques em sequência / segurar −3% contínuo (ver `useVolumeShortcuts`, passo `VOLUME_STEP_DELTA` em `storage.js`). Cada mudança abre o `VolumePopup` central com o percentual e a barra segmentada — permanece visível enquanto a tecla é segurada e some ~1,6 s após a última alteração |
 | `cancelar` | Fecha painéis e limpa erros |
 
 ### Zonas de foco (`useJukeboxKeyboard`)

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { VOLUME_STEP_DELTA } from '../lib/storage';
 
 const ALBUM_COLS = 3;
 
@@ -287,10 +288,10 @@ export function useJukeboxKeyboard({
           }
           break;
         case 'vol_mais':
-          onVolume(0.1);
+          onVolume(VOLUME_STEP_DELTA);
           break;
         case 'vol_menos':
-          onVolume(-0.1);
+          onVolume(-VOLUME_STEP_DELTA);
           break;
         case 'cancelar':
           onCancel();

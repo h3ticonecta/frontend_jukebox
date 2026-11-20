@@ -145,6 +145,9 @@ export function deductCredits(amount) {
   return next;
 }
 
+/** Fração 0–1 por passo das teclas de volume (3%). */
+export const VOLUME_STEP_DELTA = 0.03;
+
 export function getVolumePercent() {
   const raw = localStorage.getItem(KEYS.VOLUME);
   const value = Number(raw);
