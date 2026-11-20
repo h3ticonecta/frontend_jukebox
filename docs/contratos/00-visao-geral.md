@@ -35,9 +35,9 @@ Arquivo: `src/App.jsx` → `JukeboxShell`
 | Banner | `PrefetchBanner` | Progresso do pré-cache offline (catálogo + capas) |
 | Banner | `SyncBanner` | Aviso quando `needs_sync === true` |
 | Carrossel | `GenreCarousel` | Categorias (SUCESSOS) — discos de vinil |
-| Esquerda | `AlbumBrowser` | Grid de artistas/bandas do gênero |
-| Centro | `SongSidePanel` | Lista de faixas do álbum selecionado |
-| Direita | `WaitQueuePanel` | Fila de espera + faixa tocando |
+| Esquerda | `AlbumBrowser` | Grid 3 col. de artistas/bandas (`flex-[1.35]`, gaps `--browser-grid-gap-*` em `index.css`) |
+| Centro | `SongSidePanel` | Lista de faixas (`.jukebox-tracks-panel`, `--tracks-panel-width` 400px, `--library-rail-gap` afasta da grade) |
+| Direita | `WaitQueuePanel` | Fila de espera (`.jukebox-queue-panel`, `--queue-panel-width` 380px, `margin-left` extra) |
 | Extrema direita | Área reservada (`JukeboxShell`) | Espaço vazio (`--shell-right-reserve`, 18rem) para banner/anúncio futuro |
 | Rodapé | `PlayerBar` | Créditos, CTA PIX central, player, progresso, fila |
 

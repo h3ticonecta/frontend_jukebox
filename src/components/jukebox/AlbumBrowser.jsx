@@ -14,7 +14,7 @@ export default function AlbumBrowser({
   const headerTotal = albumsTotal ?? albums.length;
   return (
     <div
-      className="flex-1 flex min-h-0"
+      className="flex-[1.35] min-w-0 flex min-h-0"
       style={{
         paddingLeft: 'var(--browser-pad-x)',
         paddingRight: 'var(--browser-pad-x)',

@@ -13,16 +13,19 @@ export default function SongSidePanel({
   onAddToQueue,
   isLoading = false,
 }) {
+  const panelShell =
+    'jukebox-tracks-panel flex flex-col border-t-2 md:border-t-0 md:border-l-2 border-primary/30 min-h-0';
+
   if (!album) {
     return (
-      <div className="flex w-full md:w-[380px] h-[38vh] md:h-full shrink-0 flex-col border-t-2 md:border-t-0 md:border-l-2 border-primary/30 min-h-0">
+      <div className={panelShell}>
         <EmptyState icon={Disc} message="Selecione uma pasta" />
       </div>
     );
   }
 
   return (
-    <div className="flex w-full md:w-[380px] h-[38vh] md:h-full shrink-0 flex-col border-t-2 md:border-t-0 md:border-l-2 border-primary/30 min-h-0 overflow-hidden">
+    <div className={cn(panelShell, 'overflow-hidden')}>
       <div className="px-4 py-3 flex items-center gap-3 border-b border-border shrink-0">
         {album.cover ? (
           <img

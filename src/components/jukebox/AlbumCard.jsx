@@ -162,9 +162,9 @@ export default function AlbumCard({
             <Disc className="text-foreground/80" size={22} />
           </div>
         )}
-        <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/70 to-transparent z-10">
-          <p className="text-foreground text-xs font-display truncate">{albumName}</p>
-          <p className="text-foreground/70 text-[10px] truncate">{artistName}</p>
+        <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent z-10">
+          <p className="text-foreground text-[13px] font-display truncate leading-tight">{albumName}</p>
+          <p className="text-foreground/70 text-[11px] truncate">{artistName}</p>
         </div>
       </div>
     </button>
