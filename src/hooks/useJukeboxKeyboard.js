@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { normalizeMachineAcao } from '../lib/keyboard';
 import { VOLUME_STEP_DELTA } from '../lib/storage';
 
 const ALBUM_COLS = 3;
@@ -77,11 +78,6 @@ export function useJukeboxKeyboard({
     if (!library.albums.length) return;
     focusAlbum(library.albums[0]);
   }, [library.albums, focusAlbum]);
-
-  const enterTracksFromAlbums = useCallback(() => {
-    if (!library.tracks.length) return;
-    focusTrack(library.selectedTrack || library.tracks[0]);
-  }, [library.tracks, library.selectedTrack, focusTrack]);
 
   const enterGenresFromAlbums = useCallback(() => {
     if (library.selectedGenre) {
@@ -202,11 +198,40 @@ export function useJukeboxKeyboard({
 
     if (focusZone === 'tracks' && library.selectedTrack) {
       onAddToQueue(library.selectedTrack);
+      return;
     }
-  }, [focusZone, library.selectedTrack, onAddToQueue, onHighlightQueue, onOpenPix]);
+
+    if (
+      (focusZone === 'albums' || focusZone === 'genres') &&
+      library.tracks.length > 0
+    ) {
+      const track = library.selectedTrack || library.tracks[0];
+      focusTrack(track);
+      onAddToQueue(track);
+    }
+  }, [
+    focusZone,
+    library.selectedTrack,
+    library.tracks,
+    onAddToQueue,
+    onHighlightQueue,
+    onOpenPix,
+    focusTrack,
+  ]);
+
+  const confirmTocarCd = useCallback(() => {
+    if (!library.tracks.length) return;
+    if (focusZone !== 'tracks') {
+      focusTrack(library.selectedTrack || library.tracks[0]);
+    }
+    onPlayCd?.();
+  }, [focusZone, library.tracks, library.selectedTrack, focusTrack, onPlayCd]);
 
   const handleKeyboardAction = useCallback(
-    (acao) => {
+    (rawAcao) => {
+      const acao = normalizeMachineAcao(rawAcao);
+      if (!acao) return;
+
       switch (acao) {
         case 'cima':
           if (focusZone === 'pix') {
@@ -226,6 +251,17 @@ export function useJukeboxKeyboard({
             } else {
               moveTrack(-1);
             }
+          } else if (
+            focusZone === 'albums' &&
+            library.albums.length === 1 &&
+            library.tracks.length > 0
+          ) {
+            const trackIndex = library.tracks.findIndex((track) => track.id === library.selectedTrack?.id);
+            if (trackIndex <= 0) {
+              focusTrack(library.tracks[0]);
+            } else {
+              moveTrack(-1);
+            }
           } else if (focusZone === 'albums' && library.albums.length > 0) {
             moveAlbumVertical(-1);
           }
@@ -236,6 +272,16 @@ export function useJukeboxKeyboard({
           }
           if (focusZone === 'tracks' && library.tracks.length > 0) {
             if (!moveTrack(1)) setFocusZone('pix');
+          } else if (
+            focusZone === 'albums' &&
+            library.albums.length === 1 &&
+            library.tracks.length > 0
+          ) {
+            if (!library.selectedTrack) {
+              focusTrack(library.tracks[0]);
+            } else if (!moveTrack(1)) {
+              setFocusZone('pix');
+            }
           } else if (focusZone === 'albums' && library.albums.length > 0) {
             moveAlbumVertical(1);
           } else if (focusZone === 'genres') {
@@ -280,11 +326,13 @@ export function useJukeboxKeyboard({
           if (focusZone === 'pix') {
             onOpenPix?.();
           } else if (focusZone === 'genres') {
-            enterAlbumsFromGenres();
-          } else if (focusZone === 'albums') {
-            enterTracksFromAlbums();
-          } else if (focusZone === 'tracks') {
-            onPlayCd?.();
+            if (library.albums.length > 0) {
+              enterAlbumsFromGenres();
+            } else if (library.tracks.length > 0) {
+              confirmTocarCd();
+            }
+          } else if (focusZone === 'albums' || focusZone === 'tracks') {
+            confirmTocarCd();
           }
           break;
         case 'vol_mais':
@@ -308,7 +356,7 @@ export function useJukeboxKeyboard({
       moveAlbumVertical,
       moveTrack,
       enterAlbumsFromGenres,
-      enterTracksFromAlbums,
+      confirmTocarCd,
       leaveTracksUp,
       focusAlbum,
       activateFocused,

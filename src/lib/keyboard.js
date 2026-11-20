@@ -1,3 +1,31 @@
+export const KNOWN_MACHINE_ACOES = new Set([
+  'cima',
+  'baixo',
+  'esquerda',
+  'direita',
+  'credito',
+  'pix',
+  'hits',
+  'fila',
+  'pular',
+  'tocar_cd',
+  'vol',
+  'vol_mais',
+  'vol_menos',
+  'cancelar',
+]);
+
+/** Aliases que o Django pode enviar além do slug canônico. */
+const ACAO_ALIASES = {
+  tocar: 'tocar_cd',
+  tocar_musica: 'tocar_cd',
+  tocar_faixa: 'tocar_cd',
+  selecionar: 'tocar_cd',
+  selecionar_faixa: 'tocar_cd',
+  confirmar: 'tocar_cd',
+  ok: 'tocar_cd',
+};
+
 export const TECLAS_DISPLAY_ORDER = [
   'cima',
   'baixo',
@@ -22,7 +50,14 @@ const KEY_ALIASES = {
 };
 
 export function normalizeTecla(tecla) {
-  return KEY_ALIASES[tecla] || tecla;
+  const trimmed = typeof tecla === 'string' ? tecla.trim() : tecla;
+  return KEY_ALIASES[trimmed] || trimmed;
+}
+
+export function normalizeMachineAcao(acao) {
+  if (!acao) return null;
+  const key = String(acao).trim().toLowerCase();
+  return ACAO_ALIASES[key] || key;
 }
 
 export function formatTeclaDisplay(tecla) {
@@ -64,7 +99,14 @@ export function sortTeclas(teclas = []) {
 }
 
 export function findAcaoByEvent(teclas, event) {
-  return teclas.find((item) => eventMatchesTecla(event, item.tecla))?.acao || null;
+  const matches = teclas.filter((item) => eventMatchesTecla(event, item.tecla));
+  if (!matches.length) return null;
+
+  const preferred = matches.find((item) =>
+    KNOWN_MACHINE_ACOES.has(normalizeMachineAcao(item.acao))
+  );
+  const item = preferred || matches[0];
+  return normalizeMachineAcao(item.acao);
 }
 
 /** Backend: migração `vol_mais` / `vol_menos` → `vol` (prioridade vol, vol_mais, vol_menos). */

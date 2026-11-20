@@ -134,9 +134,9 @@ Valores especiais de exibição:
 | `direita` | No **carrossel SUCESSOS**: próximo gênero (loop infinito). No **grid de artistas**: célula à direita; no fim da linha, primeira célula da linha de baixo |
 | `credito` | `handleInsertCredit()` → POST créditos + toast |
 | `hits` | Foco na seção SUCESSOS + scroll |
-| `fila` | **Ativa** o item focado: destaca fila (2s) e, se o foco está em uma faixa, adiciona à fila local. Na zona `pix`, abre o modal PIX |
+| `fila` | **Ativa** o item focado: destaca fila (2s) e, se o foco está em uma faixa, adiciona à fila local. Com faixas visíveis e foco ainda em `genres`/`albums`, desce o foco para a lista e enfileira a faixa destacada. Na zona `pix`, abre o modal PIX |
 | `pular` | Pula faixa e toca próxima da fila |
-| `tocar_cd` | **Zona `genres`:** foco no 1º artista. **Zona `albums`:** só desce o foco para a lista de músicas (não toca). **Zona `tracks`:** seleciona a faixa focada (ou a 1ª) — com o player livre, toca na hora; com música em reprodução, entra no **final da fila** (não substitui a atual). **Zona `pix`:** abre o modal PIX. Não enfileira o álbum inteiro |
+| `tocar_cd` | Aliases normalizados no front: `tocar`, `selecionar`, `tocar_faixa`, etc. → `tocar_cd`. **Zona `genres`:** sem artistas e com faixas flat, confirma a 1ª faixa; senão foco no 1º artista. **Zona `albums` / `tracks`:** foca a faixa (destaque ciano na lista) e confirma — com o player livre, toca na hora; com música em reprodução, entra no **final da fila** (não substitui a atual). **Zona `pix`:** abre o modal PIX. Não enfileira o álbum inteiro |
 | `pix` | Abre o modal PIX (se o backend cadastrar essa ação nas teclas da máquina) |
 | `vol` | Um clique +3%; cliques em sequência / segurar −3% contínuo (ver `useVolumeShortcuts`, passo `VOLUME_STEP_DELTA` em `storage.js`). Cada mudança abre o `VolumePopup` central com o percentual e a barra segmentada — permanece visível enquanto a tecla é segurada e some ~1,6 s após a última alteração |
 | `cancelar` | Fecha painéis e limpa erros |
@@ -147,7 +147,7 @@ Valores especiais de exibição:
 |------|-----------------|------------------|
 | `genres` | Moldura laranja em volta de **toda a faixa** do carrossel (`.genre-carousel-focus`) + anel ciano no vinil do gênero focado (cópia do meio) + **retângulo** em volta do card do gênero (vinil + nome; âmbar se selecionado, ciano se focado) | `esquerda` / `direita` (loop no carrossel); `baixo` → 1º artista |
 | `albums` | Anel ciano no card do artista | `esquerda` / `direita` (grid 3 col., quebra de linha); `cima` / `baixo` (mesma coluna) |
-| `tracks` | Linha ciano na lista de músicas | `cima` / `baixo`; `cima` no topo volta aos artistas; `baixo` na última faixa → CTA PIX |
+| `tracks` | Linha ciano na lista de músicas | `cima` / `baixo`; `cima` no topo volta aos artistas; `baixo` na última faixa → CTA PIX. Com **um único artista** na pasta, `cima`/`baixo` na zona `albums` navegam a lista de faixas |
 | `pix` | Anel âmbar no botão **Pagar com PIX** (centro do rodapé) | `cima` volta à última faixa (ou artistas); `fila` / `tocar_cd` abre o PIX |
 
 ### Modal PIX aberto
@@ -174,8 +174,10 @@ As setas **não disparam clique** (não tocam música). Toque/mouse continuam co
 "Enter"  → event.key === "Enter"
 "PgUp"   → event.key === "PageUp"
 "PgDn"   → event.key === "PageDown"
-"Q"      → case insensitive
+"Q"      → case insensitive (trim na tecla vinda da API)
 ```
+
+`acao` desconhecida com alias (`selecionar`, `tocar_faixa`…) é mapeada para `tocar_cd`. Se duas ações usarem a mesma tecla, prevalece uma ação reconhecida pelo front (`KNOWN_MACHINE_ACOES`).
 
 Teclas são ignoradas quando o foco está em `input`, `textarea` ou `select`.
 
