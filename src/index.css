@@ -32,12 +32,11 @@
   --browser-header-mb: 1rem;
   --browser-scroll-pad: 0.75rem;
   --browser-scroll-bottom: 6rem;
-  --browser-grid-gap-x: 1.5rem;
-  --browser-grid-gap-y: 1.65rem;
-  --tracks-panel-width: min(420px, 28vw);
-  --queue-panel-width: min(400px, 26vw);
+  --browser-grid-gap-x: 1.25rem;
+  --browser-grid-gap-y: 1.5rem;
+  --tracks-panel-width: min(272px, 17.5vw);
+  --queue-panel-width: min(236px, 15vw);
   --shell-right-reserve: 0px;
-  --album-grid-min-cell: 9.5rem;
 }
 
 .jukebox-tracks-panel {
@@ -67,7 +66,7 @@
 @media (min-width: 768px) {
   .jukebox-right-rail {
     flex-direction: row;
-    max-width: min(880px, 58vw);
+    max-width: min(540px, 34vw);
   }
 }
 
@@ -85,22 +84,14 @@
 
 .jukebox-album-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(var(--album-grid-min-cell), 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   column-gap: var(--browser-grid-gap-x);
   row-gap: var(--browser-grid-gap-y);
   width: 100%;
-}
-
-@media (min-width: 1280px) {
-  :root {
-    --album-grid-min-cell: 11.5rem;
-  }
-}
-
-@media (min-width: 1536px) {
-  :root {
-    --album-grid-min-cell: 13rem;
-  }
+  box-sizing: border-box;
+  /* Anel de foco (ring-offset) e leve hover não cortam nas bordas */
+  padding: 4px;
+  margin: -4px;
 }
 
 @layer base {

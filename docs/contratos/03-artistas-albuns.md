@@ -8,7 +8,7 @@
 
 ## Descrição
 
-Grid fixo de **3 colunas** com cards quadrados de **artistas/bandas** dentro da categoria selecionada. Cada card é uma subpasta do gênero.
+Grid fixo de **3 colunas** (`src/index.css` → `.jukebox-album-grid`) com cards quadrados (`aspect-square`) de **artistas/bandas** dentro da categoria selecionada. Colunas da direita (faixas + fila) mais estreitas para a grade de artistas usar o espaço central.
 
 ## Status
 

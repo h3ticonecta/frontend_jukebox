@@ -137,7 +137,7 @@ export default function AlbumCard({
       onClick={onClick}
       className={cn(
         SIZES[size],
-        'rounded-lg relative transition-transform duration-300 hover:scale-105 active:scale-95',
+        'rounded-lg relative transition-transform duration-300 hover:scale-[1.03] active:scale-[0.98]',
         'cursor-pointer shrink-0 group touch-manipulation',
         isSelected &&
           'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_18px_hsl(var(--primary)/0.5)]',
