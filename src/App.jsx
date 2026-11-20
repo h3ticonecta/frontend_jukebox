@@ -75,7 +75,7 @@ function JukeboxApp() {
   const creditToastTimerRef = useRef(null);
   const volumePopupTimerRef = useRef(null);
   const audioRefHolder = useRef(null);
-  const resumeStartedRef = useRef(false);
+  const resumeQueuePlaybackRef = useRef(null);
   const roletaConfigRef = useRef(null);
   const roletaSessionRef = useRef({ total: 0, girosGranted: 0, timer: null });
   const pixModalRef = useRef(null);
@@ -174,6 +174,7 @@ function JukeboxApp() {
   const resumeQueuePlayback = useCallback(async () => {
     const pendingQueue = queueRef.current;
     if (pendingQueue.length === 0) return false;
+    if (audioRefHolder.current?.currentSong) return true;
 
     const nextTrack = pendingQueue[0];
     if (nextTrack.playbackStarted) {
@@ -182,6 +183,8 @@ function JukeboxApp() {
 
     return playTrack(nextTrack, { fromQueue: true });
   }, [playTrack]);
+
+  resumeQueuePlaybackRef.current = resumeQueuePlayback;
 
   const handlePlayNext = useCallback(async () => {
     const player = audioRefHolder.current;
@@ -251,19 +254,16 @@ function JukeboxApp() {
   }, [audio.currentSong]);
 
   useEffect(() => {
-    if (!token || !audio.isAudioReady || queue.length === 0) return undefined;
+    if (!token || !audio.isAudioReady || queue.length === 0 || audio.currentSong) return undefined;
 
     let cancelled = false;
     let retryTimer = null;
 
     const tryResume = async () => {
-      if (cancelled || resumeStartedRef.current) return;
+      if (cancelled || audioRefHolder.current?.currentSong) return;
 
-      const started = await resumeQueuePlayback();
-      if (started) {
-        resumeStartedRef.current = true;
-        return;
-      }
+      const started = await resumeQueuePlaybackRef.current?.();
+      if (started || cancelled) return;
 
       retryTimer = window.setTimeout(tryResume, 2000);
     };
@@ -272,11 +272,19 @@ function JukeboxApp() {
 
     return () => {
       cancelled = true;
-      if (retryTimer) {
-        window.clearTimeout(retryTimer);
-      }
+      if (retryTimer) window.clearTimeout(retryTimer);
     };
-  }, [token, audio.isAudioReady, queue.length, resumeQueuePlayback]);
+  }, [token, audio.isAudioReady, queue.length, audio.currentSong]);
+
+  useEffect(() => {
+    const onOnline = () => {
+      if (!token || !queueRef.current.length) return;
+      if (audioRefHolder.current?.currentSong) return;
+      resumeQueuePlaybackRef.current?.();
+    };
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, [token]);
 
   const handleSkip = useCallback(() => {
     handlePlayNext();
@@ -490,13 +498,20 @@ function JukeboxApp() {
         ...track,
         cover: track.cover_url || album?.cover || null,
       };
-      setQueue((prev) => [...prev, queuedTrack]);
+      let playTarget = null;
+      setQueue((prev) => {
+        const next = [...prev, queuedTrack];
+        if (!audioRefHolder.current?.currentSong) {
+          playTarget = prev.length > 0 ? prev[0] : queuedTrack;
+        }
+        return next;
+      });
       setHighlightQueue(true);
 
-      // Player livre (nada tocando): a faixa entra como atual na hora,
-      // em vez de ficar parada na fila.
-      if (!audioRefHolder.current?.currentSong) {
-        playTrack(queuedTrack, { fromQueue: true });
+      // Player livre: toca o 1º da fila (itens já pagos); senão a faixa recém-adicionada.
+      if (playTarget) {
+        const options = playTarget.playbackStarted ? { resume: true } : { fromQueue: true };
+        playTrack(playTarget, options);
       }
     },
     [token, library.selectedAlbum, library.selectedGenre, playTrack]

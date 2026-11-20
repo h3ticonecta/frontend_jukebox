@@ -78,15 +78,20 @@ handleAddToQueue(track)  // tecla "fila" / botão na lista / seleção com playe
 
 handlePlayNext()  // fim da faixa, botão próximo ou tecla "pular"
   → remove fila[0] (faixa que acabou)
-  → se ainda houver itens: toca novo fila[0] (POST tocadas, sem novo débito)
+  → se ainda houver itens: toca novo fila[0] (POST tocadas, sem novo débito de crédito local)
   → senão: para o player
+
+**Créditos:** itens já na fila foram pagos ao enfileirar. Tocar `fila[0]` com `fromQueue: true` **não** exige saldo atual. O aviso "Créditos insuficientes" no header refere-se a **nova** seleção/enfileiramento — não bloqueia a reprodução da fila pendente.
 
 // Ao religar a máquina (boot do app com token válido)
   → restaura fila completa do localStorage (faixa tocando permanece em fila[0])
-  → flag `jukebox_should_resume_playback` indica autoplay pendente
-  → aguarda `<audio>` pronto e tenta tocar fila[0] (retry a cada 2s se bloqueado)
-  → se `playbackStarted`, só áudio; senão POST tocadas (sem débito)
+  → aguarda `<audio>` pronto e tenta tocar fila[0] (retry a cada 2s até iniciar ou a fila esvaziar)
+  → evento `online` do navegador dispara nova tentativa se a fila ficou parada sem rede
+  → se `playbackStarted`, só áudio; senão POST tocadas (**sem novo débito** — crédito já foi na fila)
   → não remove itens da fila no boot
+
+// Fila com itens mas player parado (ex.: POST /tocadas/ falhou offline)
+  → novas adições com player livre tentam tocar **fila[0]** (não só a faixa nova), sem cobrar de novo
 ```
 
 ---
