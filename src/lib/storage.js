@@ -225,10 +225,74 @@ function trackIdentity(track) {
   return track?.id || track?.key || null;
 }
 
+/** Cada linha da fila tem id estável — permite a mesma música várias vezes. */
+export function normalizePersistedQueue(queue) {
+  if (!Array.isArray(queue)) return [];
+  return queue.map((item, index) => {
+    if (!item || typeof item !== 'object') return item;
+    if (item.queueEntryId) return item;
+    const base = trackIdentity(item) || 'track';
+    return { ...item, queueEntryId: `${base}-slot-${index}` };
+  });
+}
+
+export function ensureQueueEntryId(track, index = 0) {
+  if (!track || typeof track !== 'object') return track;
+  if (track.queueEntryId) return track;
+  const base = trackIdentity(track) || 'track';
+  return {
+    ...track,
+    queueEntryId: `${base}-${Date.now().toString(36)}-${index}`,
+  };
+}
+
+export function queueItemsMatch(a, b) {
+  if (!a || !b) return false;
+  if (a.queueEntryId && b.queueEntryId) return a.queueEntryId === b.queueEntryId;
+  return a === b;
+}
+
+export function removeFirstQueueMatch(items, target) {
+  let removed = false;
+  return items.filter((item) => {
+    if (removed) return true;
+    if (queueItemsMatch(item, target)) {
+      removed = true;
+      return false;
+    }
+    if (!target.queueEntryId && !item.queueEntryId && target.id && item.id === target.id) {
+      removed = true;
+      return false;
+    }
+    return true;
+  });
+}
+
+export function promoteQueueItemToFront(items, track) {
+  const playing = { ...track, playbackStarted: true };
+  let idx = track.queueEntryId
+    ? items.findIndex((item) => item.queueEntryId === track.queueEntryId)
+    : -1;
+  if (idx < 0 && track.queueEntryId) {
+    return [playing, ...items];
+  }
+  if (idx < 0 && track.id) {
+    idx = items.findIndex((item) => item.id === track.id && !item.queueEntryId);
+    if (idx < 0) {
+      idx = items.findIndex((item) => item.id === track.id);
+    }
+  }
+  if (idx < 0) return [playing, ...items];
+  const next = [...items];
+  next[idx] = { ...next[idx], ...playing };
+  const [head] = next.splice(idx, 1);
+  return [head, ...next];
+}
+
 export function getSessionQueue() {
   migrateSessionKeyToLocal(PERSISTENT_KEYS.QUEUE);
   const data = readJson(localStorage, PERSISTENT_KEYS.QUEUE);
-  return Array.isArray(data) ? data : [];
+  return normalizePersistedQueue(Array.isArray(data) ? data : []);
 }
 
 /** Fila persistida com a faixa em reprodução sempre na posição 0 (se existir). */
@@ -239,8 +303,14 @@ export function getPersistedQueue() {
     return queue;
   }
 
-  const currentId = trackIdentity(savedCurrent);
-  const existingIndex = queue.findIndex((item) => trackIdentity(item) === currentId);
+  let existingIndex = -1;
+  if (savedCurrent.queueEntryId) {
+    existingIndex = queue.findIndex((item) => item.queueEntryId === savedCurrent.queueEntryId);
+  }
+  if (existingIndex === -1) {
+    const currentId = trackIdentity(savedCurrent);
+    existingIndex = queue.findIndex((item) => trackIdentity(item) === currentId);
+  }
 
   if (existingIndex === -1) {
     queue = [{ ...savedCurrent, playbackStarted: true }, ...queue];
@@ -256,7 +326,7 @@ export function getPersistedQueue() {
 }
 
 export function setSessionQueue(queue) {
-  const items = queue || [];
+  const items = normalizePersistedQueue(queue || []);
   localStorage.setItem(PERSISTENT_KEYS.QUEUE, JSON.stringify(items));
   setShouldResumePlayback(items.length > 0);
 }

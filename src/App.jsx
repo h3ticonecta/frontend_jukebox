@@ -25,8 +25,12 @@ import { buildMusicaTocadaPayload, buildPlayerSubtitle } from './lib/library';
 import {
   addCredits,
   deductCredits,
+  ensureQueueEntryId,
   getCreditsBalance,
   getPersistedQueue,
+  promoteQueueItemToFront,
+  queueItemsMatch,
+  removeFirstQueueMatch,
   setSessionCurrentSong,
   setSessionQueue,
 } from './lib/storage';
@@ -103,11 +107,7 @@ function JukeboxApp() {
   }, [library.selectedAlbum, library.selectedGenre]);
 
   const markPlayingInQueue = useCallback((track) => {
-    setQueue((prev) => {
-      const playing = { ...track, playbackStarted: true };
-      const rest = prev.filter((item) => item.id !== track.id);
-      return [playing, ...rest];
-    });
+    setQueue((prev) => promoteQueueItemToFront(prev, track));
   }, []);
 
   const playTrack = useCallback(
@@ -160,7 +160,7 @@ function JukeboxApp() {
           markPlayingInQueue(song);
         } else {
           // Reprodução direta pela lista: substitui a fila — não tocar as próximas faixas do álbum.
-          setQueue([{ ...song, playbackStarted: true }]);
+          setQueue([{ ...ensureQueueEntryId(song, 0), playbackStarted: true }]);
         }
         return true;
       } catch (err) {
@@ -192,11 +192,10 @@ function JukeboxApp() {
     if (!current) return;
 
     const waiting = queueRef.current;
-    const currentId = current.id;
     const rest =
-      waiting.length > 0 && waiting[0].id === currentId
+      waiting.length > 0 && queueItemsMatch(waiting[0], current)
         ? waiting.slice(1)
-        : waiting.filter((item) => item.id !== currentId);
+        : removeFirstQueueMatch(waiting, current);
 
     setQueue(rest);
 
@@ -494,10 +493,13 @@ function JukeboxApp() {
       setCredits(nextCredits);
 
       const album = library.selectedAlbum || library.selectedGenre;
-      const queuedTrack = {
-        ...track,
-        cover: track.cover_url || album?.cover || null,
-      };
+      const queuedTrack = ensureQueueEntryId(
+        {
+          ...track,
+          cover: track.cover_url || album?.cover || null,
+        },
+        queueRef.current.length
+      );
       let playTarget = null;
       setQueue((prev) => {
         const next = [...prev, queuedTrack];

@@ -5,7 +5,7 @@
 - `src/components/jukebox/WaitQueuePanel.jsx`
 - `src/components/jukebox/PlayerBar.jsx` — contador "em espera"
 - `src/App.jsx` — `queue` (estado React + `localStorage`)
-- `src/lib/storage.js` — `getSessionQueue()`, `setSessionCurrentSong()`
+- `src/lib/storage.js` — `getSessionQueue()`, `queueEntryId`, `setSessionCurrentSong()`
 - `src/lib/queueMediaCache.js` — pré-cache das próximas 5 faixas
 - `public/sw.js` — Cache Storage (áudios da fila + capas R2)
 
@@ -36,7 +36,8 @@ Exibe músicas aguardando reprodução e a faixa **tocando agora** com equalizad
 
 ```javascript
 {
-  id: track.key,           // chave R2
+  id: track.key,           // chave R2 (pode repetir na fila)
+  queueEntryId: "Musicas/.../song.mp3-m4abc2-0", // único por linha — evita colapsar duplicatas
   key: "Musicas/.../song.mp3",
   title: "Yesterday",
   artist: "Beatles",       // de folder_path (contrato 04)
@@ -44,6 +45,8 @@ Exibe músicas aguardando reprodução e a faixa **tocando agora** com equalizad
   media_url: "https://..."
 }
 ```
+
+Ao enfileirar, o front gera `queueEntryId`. Filas antigas sem o campo recebem `*-slot-N` ao carregar do `localStorage`. Remover/tocar a frente usa **uma** linha por vez — a mesma música pode aparecer várias vezes até ser tocada.
 
 ---
 
