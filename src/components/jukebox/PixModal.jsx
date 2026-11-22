@@ -9,6 +9,7 @@ import {
   pixStatusKind,
   resolvePixCreditosConcedidos,
   sincronizarPix,
+  withPixExpiry,
 } from '../../api/pagamentos';
 import { formatBRL } from '../../lib/billing';
 import { cn } from '../../lib/utils';
@@ -177,7 +178,7 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
         });
         const creditos = resolvePixCreditosConcedidos(data, lastCreditosRef.current);
         lastCreditosRef.current = creditos;
-        setCobranca({ ...data, quantidade_creditos: creditos });
+        setCobranca(withPixExpiry({ ...data, quantidade_creditos: creditos }));
         setStep('qr');
       } catch (err) {
         setAuthFailed(err?.status === 401 || err?.status === 403 || err?.data?.error?.code === 'UNAUTHORIZED');
@@ -201,7 +202,12 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
         if (cancelled) return;
         const creditos = resolvePixCreditosConcedidos(data, lastCreditosRef.current);
         lastCreditosRef.current = creditos;
-        setCobranca({ ...data, quantidade_creditos: creditos });
+        setCobranca((prev) =>
+          withPixExpiry(
+            { ...data, quantidade_creditos: creditos },
+            prev?._pixCreatedAt ?? Date.now()
+          )
+        );
         const kind = pixStatusKind(data.status);
         if (kind === 'aprovado' && !approvedRef.current) {
           approvedRef.current = true;
@@ -259,7 +265,7 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
   }, []);
 
   const qrSrc = pixQrImageSrc(cobranca?.qr_code_base64);
-  const expireText = remainingLabel(cobranca?.expires_at, now);
+  const expireText = remainingLabel(cobranca?._pixExpiresAt, now);
   const expired = expireText === 'QR expirado';
   const failed = pixStatusKind(cobranca?.status) === 'falhou';
   const hasRetry = expired || failed;

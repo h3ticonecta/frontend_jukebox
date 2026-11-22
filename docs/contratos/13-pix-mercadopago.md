@@ -54,9 +54,12 @@ Authorization: Maquina <token>
   "valor": 5.00,
   "descricao": "Créditos jukebox",
   "email": "jukebox-3@h3ti.com.br",
-  "payer_email": "jukebox-3@h3ti.com.br"
+  "payer_email": "jukebox-3@h3ti.com.br",
+  "expiracao_segundos": 300
 }
 ```
+
+O front envia **`expiracao_segundos: 300`** (5 minutos). O backend deve definir a expiração da cobrança no Mercado Pago e devolver `expires_at` coerente. O countdown do modal usa no máximo 5 minutos a partir da geração — mesmo que o backend ainda devolva prazo maior (ex.: 24 h).
 
 O Mercado Pago exige `payer.email` válido. O usuário da máquina (ex.: `Macgustavo`) **não** é e-mail — o front envia `jukebox-{id}@h3ti.com.br` (ou o `usuario` se já for um e-mail). O backend deve repassar esse campo ao MP; se ignorar e usar o login da máquina, a API devolve `payer.email must be a valid email`.
 
@@ -70,7 +73,7 @@ Response `201` — campos na UI:
 | `qr_code` | PIX copia e cola |
 | `qr_code_base64` | `<img src="data:image/png;base64,…">` (prefixo `data:` acrescentado se ausente) |
 | `status` | `pendente` enquanto paga |
-| `expires_at` | Countdown "Expira em M:SS" |
+| `expires_at` | Countdown "Expira em M:SS" (UI limitada a **5:00** após criar o QR) |
 
 ### Sincronizar (polling)
 

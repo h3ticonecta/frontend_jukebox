@@ -16,6 +16,9 @@ import { getMaquinaInfo, getMaquinaToken } from '../lib/storage';
  *   GET/PUT/PATCH/DELETE /api/v1/pagamentos/pix-creditos/{id}/
  */
 
+/** Validade do QR na UI e no POST (backend repassa ao Mercado Pago). */
+export const PIX_QR_EXPIRY_SECONDS = 5 * 60;
+
 export const PIX_CREDITOS_PADRAO = [
   { id: 'padrao-5', valor_pix: '5.00', valor_pix_numero: 5, quantidade_creditos: 5, ordem: 1, ativo: true },
   { id: 'padrao-10', valor_pix: '10.00', valor_pix_numero: 10, quantidade_creditos: 10, ordem: 2, ativo: true },
@@ -66,9 +69,37 @@ export async function criarPixQrCode(token, { valor, descricao = 'Créditos juke
       descricao,
       email,
       payer_email: email,
+      expiracao_segundos: PIX_QR_EXPIRY_SECONDS,
       ...(maquinaId ? { maquina_id: maquinaId } : {}),
     },
   });
+}
+
+export function resolvePixExpiresAt(cobranca, createdAtMs = Date.now()) {
+  if (!cobranca) return null;
+  const cap = createdAtMs + PIX_QR_EXPIRY_SECONDS * 1000;
+  let backendMs = Infinity;
+  if (cobranca.expires_at) {
+    const parsed = new Date(cobranca.expires_at).getTime();
+    if (Number.isFinite(parsed)) backendMs = parsed;
+  }
+  const baseMs = cobranca.created_at
+    ? new Date(cobranca.created_at).getTime()
+    : createdAtMs;
+  const fromCreation = Number.isFinite(baseMs) ? baseMs + PIX_QR_EXPIRY_SECONDS * 1000 : cap;
+  const effective = Math.min(backendMs, fromCreation, cap);
+  if (!Number.isFinite(effective)) return null;
+  return new Date(effective).toISOString();
+}
+
+export function withPixExpiry(data, createdAtMs = Date.now()) {
+  if (!data || typeof data !== 'object') return data;
+  const created = createdAtMs;
+  return {
+    ...data,
+    _pixCreatedAt: created,
+    _pixExpiresAt: resolvePixExpiresAt(data, created),
+  };
 }
 
 export async function consultarPix(token, id) {
