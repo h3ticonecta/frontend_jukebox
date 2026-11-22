@@ -16,6 +16,8 @@ import { cn } from '../../lib/utils';
 
 const POLL_MS = 3000;
 const SUCCESS_MS = 1800;
+/** Breve exibição de "QR expirado" antes de fechar o modal. */
+const EXPIRED_CLOSE_MS = 1200;
 const PRESET_COLS = 2;
 const PASS_THROUGH = new Set(['credito', 'pular', 'vol_mais', 'vol_menos']);
 
@@ -267,6 +269,9 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
   const qrSrc = pixQrImageSrc(cobranca?.qr_code_base64);
   const expireText = remainingLabel(cobranca?._pixExpiresAt, now);
   const expired = expireText === 'QR expirado';
+  const expiredByApi = ['expired', 'expirado'].includes(
+    String(cobranca?.status || '').toLowerCase()
+  );
   const failed = pixStatusKind(cobranca?.status) === 'falhou';
   const hasRetry = expired || failed;
   const creditosQr = resolvePixCreditosConcedidos(cobranca, lastCreditosRef.current || creditosOpcao);
@@ -275,6 +280,12 @@ const PixModal = forwardRef(function PixModal({ token, onApproved, onClose, onRe
     if (step !== 'qr' || !hasRetry) return;
     setNav('retry');
   }, [step, hasRetry]);
+
+  useEffect(() => {
+    if (step !== 'qr' || (!expired && !expiredByApi)) return undefined;
+    const timer = window.setTimeout(() => onCloseRef.current?.(), EXPIRED_CLOSE_MS);
+    return () => window.clearTimeout(timer);
+  }, [step, expired, expiredByApi]);
 
   const handleAction = useCallback(
     (acao) => {

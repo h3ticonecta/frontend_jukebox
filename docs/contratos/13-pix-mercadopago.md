@@ -107,7 +107,7 @@ Não há `POST /maquinas/creditos/` neste fluxo — o crédito já foi lançado 
 | `MP_API_ERROR` / `payer.email` | Mercado Pago exige e-mail válido do pagador (não usar o usuário da máquina). |
 | `401` / `UNAUTHORIZED` | Mensagem do backend (ex.: token inválido). Botão para sair e entrar de novo. |
 
-QR expirado ou status recusado/cancelado → botão "Escolher outro valor".
+QR expirado (timer ou status `expirado`/`expired`) → modal fecha sozinho após ~1,2 s. Status recusado/cancelado → botão "Escolher outro valor".
 
 ## Regras de negócio no front
 
