@@ -112,7 +112,8 @@ function JukeboxApp() {
 
   const playTrack = useCallback(
     async (track, { fromQueue = false, resume = false } = {}) => {
-      if (!token || !track?.media_url) return false;
+      const resolvedTrack = library.refreshTrackFromCatalog(track);
+      if (!token || !resolvedTrack?.media_url) return false;
 
       if (!fromQueue && !resume && getCreditsBalance() < CREDITS_PER_SONG) {
         setActionError('Créditos insuficientes');
@@ -122,8 +123,12 @@ function JukeboxApp() {
       setActionError(null);
       const album = library.selectedAlbum || library.selectedGenre;
       const song = {
-        ...track,
-        cover: track.cover || track.cover_url || album?.cover || null,
+        ...resolvedTrack,
+        cover:
+          resolvedTrack.cover ||
+          resolvedTrack.cover_url ||
+          album?.cover ||
+          null,
       };
 
       if (resume) {
@@ -168,21 +173,30 @@ function JukeboxApp() {
         return false;
       }
     },
-    [token, library.selectedAlbum, library.selectedGenre, playFromPlaylist, markPlayingInQueue]
+    [
+      token,
+      library.selectedAlbum,
+      library.selectedGenre,
+      library.refreshTrackFromCatalog,
+      playFromPlaylist,
+      markPlayingInQueue,
+    ]
   );
 
   const resumeQueuePlayback = useCallback(async () => {
-    const pendingQueue = queueRef.current;
+    const pendingQueue = queueRef.current.map((item) => library.refreshTrackFromCatalog(item));
     if (pendingQueue.length === 0) return false;
-    if (audioRefHolder.current?.currentSong) return true;
+    const player = audioRefHolder.current;
+    if (player?.isPlaying) return true;
+    if (player?.currentSong && (player.currentTime ?? 0) > 1) return true;
 
-    const nextTrack = pendingQueue[0];
+    const nextTrack = library.refreshTrackFromCatalog(pendingQueue[0]);
     if (nextTrack.playbackStarted) {
       return playTrack(nextTrack, { resume: true });
     }
 
     return playTrack(nextTrack, { fromQueue: true });
-  }, [playTrack]);
+  }, [library.refreshTrackFromCatalog, playTrack]);
 
   resumeQueuePlaybackRef.current = resumeQueuePlayback;
 
@@ -210,8 +224,22 @@ function JukeboxApp() {
     }
   }, [playTrack]);
 
+  const handleMediaError = useCallback(async () => {
+    setActionError('Não foi possível carregar o áudio. Avançando para a próxima faixa.');
+    const waiting = queueRef.current;
+    const rest = waiting.length > 0 ? waiting.slice(1) : [];
+    setQueue(rest);
+    audioRefHolder.current?.clearCurrentSong();
+    if (rest.length === 0) return;
+    const played = await playTrack(rest[0], { fromQueue: true });
+    if (!played) {
+      audioRefHolder.current?.clearCurrentSong();
+    }
+  }, [playTrack]);
+
   const audio = useAudioPlayer({
     onEnded: handlePlayNext,
+    onMediaError: handleMediaError,
     onDurationKnown: (song, duration_seconds) => {
       library.patchTrackDuration(song.id, Math.floor(duration_seconds));
     },
@@ -253,13 +281,18 @@ function JukeboxApp() {
   }, [audio.currentSong]);
 
   useEffect(() => {
-    if (!token || !audio.isAudioReady || queue.length === 0 || audio.currentSong) return undefined;
+    const needsAutoResume =
+      !audio.currentSong || (!audio.isPlaying && audio.currentTime < 0.5);
+    if (!token || !audio.isAudioReady || queue.length === 0 || !needsAutoResume) return undefined;
 
     let cancelled = false;
     let retryTimer = null;
 
     const tryResume = async () => {
-      if (cancelled || audioRefHolder.current?.currentSong) return;
+      if (cancelled) return;
+      const player = audioRefHolder.current;
+      if (player?.isPlaying) return;
+      if (player?.currentSong && (player.currentTime ?? 0) > 1) return;
 
       const started = await resumeQueuePlaybackRef.current?.();
       if (started || cancelled) return;
@@ -273,12 +306,21 @@ function JukeboxApp() {
       cancelled = true;
       if (retryTimer) window.clearTimeout(retryTimer);
     };
-  }, [token, audio.isAudioReady, queue.length, audio.currentSong]);
+  }, [
+    token,
+    audio.isAudioReady,
+    queue.length,
+    audio.currentSong,
+    audio.isPlaying,
+    audio.currentTime,
+  ]);
 
   useEffect(() => {
     const onOnline = () => {
       if (!token || !queueRef.current.length) return;
-      if (audioRefHolder.current?.currentSong) return;
+      const player = audioRefHolder.current;
+      if (player?.isPlaying) return;
+      if (player?.currentSong && (player.currentTime ?? 0) > 1) return;
       resumeQueuePlaybackRef.current?.();
     };
     window.addEventListener('online', onOnline);

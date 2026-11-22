@@ -545,6 +545,22 @@ export function useLibrary(token) {
     clearConnectivityBanner(setError);
   }, []);
 
+  const refreshTrackFromCatalog = useCallback((track) => {
+    if (!track) return track;
+    const key = track.id || track.key;
+    if (!key) return track;
+    const fresh = cacheRef.current.findTrackByKey(key);
+    if (!fresh) return track;
+    return {
+      ...track,
+      media_url: fresh.media_url || track.media_url || track.audio_url,
+      cover_url: fresh.cover_url || track.cover_url,
+      cover: fresh.cover_url || track.cover || track.cover_url,
+      duration_seconds: fresh.duration_seconds ?? track.duration_seconds,
+      media_type: fresh.media_type || track.media_type,
+    };
+  }, []);
+
   return {
     genres,
     albums,
@@ -571,5 +587,6 @@ export function useLibrary(token) {
     prefetchProgress,
     setError,
     clearConnectivityError,
+    refreshTrackFromCatalog,
   };
 }

@@ -1,7 +1,16 @@
+import { useEffect, useState } from 'react';
 import { Clock, Coins, Disc, Pause, Play, QrCode, SkipBack, SkipForward, Volume2 } from 'lucide-react';
 import { cn, formatDuration } from '../../lib/utils';
 
 function VinylThumb({ cover, isSpinning }) {
+  const [coverBroken, setCoverBroken] = useState(false);
+
+  useEffect(() => {
+    setCoverBroken(false);
+  }, [cover]);
+
+  const showCover = cover && !coverBroken;
+
   return (
     <div
       className={cn(
@@ -9,8 +18,13 @@ function VinylThumb({ cover, isSpinning }) {
         isSpinning && 'animate-spin-vinyl'
       )}
     >
-      {cover ? (
-        <img src={cover} alt="" className="w-full h-full object-cover" />
+      {showCover ? (
+        <img
+          src={cover}
+          alt=""
+          className="w-full h-full object-cover"
+          onError={() => setCoverBroken(true)}
+        />
       ) : (
         <div className="w-full h-full bg-muted flex items-center justify-center">
           <Disc className="text-primary" size={18} />

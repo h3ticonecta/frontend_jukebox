@@ -33,6 +33,16 @@ export function createLibraryCache() {
       idbSetAlbums(genrePath, entry);
     },
 
+    findTrackByKey(trackKey) {
+      if (!trackKey) return null;
+      for (const tracks of tracksByAlbum.values()) {
+        if (!tracks?.length) continue;
+        const hit = tracks.find((track) => track.id === trackKey || track.key === trackKey);
+        if (hit) return hit;
+      }
+      return null;
+    },
+
     getTracks(albumPath) {
       return tracksByAlbum.get(albumPath) ?? null;
     },

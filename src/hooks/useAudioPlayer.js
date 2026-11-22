@@ -21,11 +21,12 @@ async function startPlayback(audio) {
   }
 }
 
-export function useAudioPlayer({ onEnded, onDurationKnown } = {}) {
+export function useAudioPlayer({ onEnded, onDurationKnown, onMediaError } = {}) {
   const audioRef = useRef(null);
   const listenersCleanupRef = useRef(null);
   const onEndedRef = useRef(onEnded);
   const onDurationKnownRef = useRef(onDurationKnown);
+  const onMediaErrorRef = useRef(onMediaError);
   const currentSongRef = useRef(null);
   const [isAudioReady, setIsAudioReady] = useState(false);
   const [currentSong, setCurrentSong] = useState(null);
@@ -36,6 +37,7 @@ export function useAudioPlayer({ onEnded, onDurationKnown } = {}) {
 
   onEndedRef.current = onEnded;
   onDurationKnownRef.current = onDurationKnown;
+  onMediaErrorRef.current = onMediaError;
   currentSongRef.current = currentSong;
 
   const publishDuration = useCallback((seconds) => {
@@ -79,12 +81,21 @@ export function useAudioPlayer({ onEnded, onDurationKnown } = {}) {
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false);
 
+    const handleMediaError = () => {
+      setIsPlaying(false);
+      setCurrentSong(null);
+      setCurrentTime(0);
+      setDuration(null);
+      onMediaErrorRef.current?.();
+    };
+
     node.addEventListener('timeupdate', onTimeUpdate);
     node.addEventListener('loadedmetadata', syncDurationFromAudio);
     node.addEventListener('durationchange', syncDurationFromAudio);
     node.addEventListener('ended', handleEnded);
     node.addEventListener('play', onPlay);
     node.addEventListener('pause', onPause);
+    node.addEventListener('error', handleMediaError);
 
     listenersCleanupRef.current = () => {
       node.removeEventListener('timeupdate', onTimeUpdate);
@@ -93,6 +104,7 @@ export function useAudioPlayer({ onEnded, onDurationKnown } = {}) {
       node.removeEventListener('ended', handleEnded);
       node.removeEventListener('play', onPlay);
       node.removeEventListener('pause', onPause);
+      node.removeEventListener('error', handleMediaError);
     };
   }, [publishDuration]);
 
@@ -139,6 +151,9 @@ export function useAudioPlayer({ onEnded, onDurationKnown } = {}) {
 
     if (!started) {
       setIsPlaying(false);
+      setCurrentSong(null);
+      setCurrentTime(0);
+      setDuration(null);
     }
 
     return started;

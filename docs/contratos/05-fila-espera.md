@@ -25,10 +25,12 @@ Exibe músicas aguardando reprodução e a faixa **tocando agora** com equalizad
 | Persistência / API backend | ❌ |
 | Fila persistida (`localStorage`, sobrevive reboot) | ✅ |
 | Autoplay ao religar a máquina (retry até iniciar) | ✅ |
+| Retomada se o player falhou mas ainda mostra faixa (0:00) | ✅ |
+| `media_url`/`cover_url` da fila atualizados pelo cache IDB ao tocar | ✅ |
 | Pré-cache das próximas 5 faixas (Cache Storage) | ✅ |
 | Sincronização entre terminais | ❌ |
 
-> A fila **não** está no backend. Metadados ficam em `localStorage` (`jukebox_session_queue`). A faixa **em reprodução** permanece na posição 0 da fila (`playbackStarted: true`), para não perder a música se a máquina desligar no meio. `jukebox_session_current_song` é espelho auxiliar para reboot. Ao reiniciar, a fila inteira é restaurada e o app retoma `fila[0]` sem remover itens. O áudio das próximas **5** faixas (+ a que está tocando) é pré-baixado no Cache Storage via Service Worker — **não** a biblioteca inteira. Vídeos (MP4) **não** entram no pré-cache (arquivos grandes demais para baixar em lote): o player faz streaming direto do `media_url`.
+> A fila **não** está no backend. Metadados ficam em `localStorage` (`jukebox_session_queue`). A faixa **em reprodução** permanece na posição 0 da fila (`playbackStarted: true`), para não perder a música se a máquina desligar no meio. `jukebox_session_current_song` é espelho auxiliar para reboot. Ao reiniciar, a fila inteira é restaurada e o app retoma `fila[0]` sem remover itens. Se a mídia falhar ao carregar, o player **não** mantém faixa fantasma: limpa o estado, remove `fila[0]` e tenta a próxima (retry automático continua enquanto `0:00` e fila > 0). Antes de tocar, `refreshTrackFromCatalog` reconcilia `media_url` e capa com o cache offline (IndexedDB). O áudio das próximas **5** faixas (+ a que está tocando) é pré-baixado no Cache Storage via Service Worker — **não** a biblioteca inteira. Vídeos (MP4) **não** entram no pré-cache (arquivos grandes demais para baixar em lote): o player faz streaming direto do `media_url`.
 
 ---
 
