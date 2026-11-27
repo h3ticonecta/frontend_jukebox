@@ -6,6 +6,8 @@ import { cn } from '../../lib/utils';
 const IGNORED_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'NumLock', 'ScrollLock']);
 
 const MINI_SIZE = 'w-[min(380px,42vw)] h-[min(214px,24vw)]';
+/** Acima do conteúdo, abaixo do header — espelha o afastamento que o mini tinha do PlayerBar. */
+const MINI_ANCHOR = 'top-16 right-4';
 
 /** Tempo no mini player até voltar sozinho à tela cheia: 3 minutos. */
 const MINI_AUTO_EXPAND_MS = 3 * 60 * 1000;
@@ -18,7 +20,7 @@ const MINI_AUTO_EXPAND_MS = 3 * 60 * 1000;
  * faixa de vídeo:
  * - Tela cheia (padrão ao iniciar a faixa): overlay com fundo escuro;
  * - Mini player (qualquer tecla pressionada, ou botão minimizar): janela
- *   ~380px no canto inferior direito, liberando a navegação para escolher
+ *   ~380px no canto superior direito, liberando a navegação para escolher
  *   mais faixas e montar a fila. A tecla mantém sua ação normal;
  * - Fechado (botão X): só o áudio continua; "Ver vídeo" reabre.
  *
@@ -93,8 +95,8 @@ export default function VideoStage({ mediaRef, currentSong }) {
             'absolute bg-black transition-all duration-300 ease-out',
             fullScreen && 'bottom-0 right-0 w-full h-full object-contain pb-[60px]',
             miniVisible &&
-              `bottom-[4.5rem] right-4 ${MINI_SIZE} object-cover rounded-xl border border-secondary/60 shadow-[0_8px_32px_rgba(0,0,0,0.85)] pointer-events-auto cursor-pointer`,
-            !fullScreen && !miniVisible && 'bottom-[4.5rem] right-4 w-px h-px opacity-0 pointer-events-none'
+              `${MINI_ANCHOR} ${MINI_SIZE} object-cover rounded-xl border border-secondary/60 shadow-[0_8px_32px_rgba(0,0,0,0.85)] pointer-events-auto cursor-pointer`,
+            !fullScreen && !miniVisible && `${MINI_ANCHOR} w-px h-px opacity-0 pointer-events-none`
           )}
           preload="auto"
           autoPlay
@@ -127,7 +129,7 @@ export default function VideoStage({ mediaRef, currentSong }) {
 
         {miniVisible && (
           <div
-            className={cn('absolute bottom-[4.5rem] right-4 pointer-events-none', MINI_SIZE)}
+            className={cn('absolute pointer-events-none', MINI_ANCHOR, MINI_SIZE)}
             aria-hidden="true"
           >
             <div className="absolute top-1.5 right-1.5 flex items-center gap-1.5 pointer-events-auto">
@@ -158,7 +160,7 @@ export default function VideoStage({ mediaRef, currentSong }) {
         <button
           type="button"
           onClick={reopenFull}
-          className="fixed bottom-[4.5rem] right-4 z-30 flex items-center gap-2 px-4 py-3 min-h-[48px] rounded-lg glass-surface border border-secondary/50 text-secondary shadow-lg active:scale-95 transition-all touch-manipulation"
+          className="fixed top-16 right-4 z-30 flex items-center gap-2 px-4 py-3 min-h-[48px] rounded-lg glass-surface border border-secondary/50 text-secondary shadow-lg active:scale-95 transition-all touch-manipulation"
           aria-label="Mostrar vídeo"
           title="Mostrar vídeo"
         >
