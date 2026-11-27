@@ -82,9 +82,11 @@ handleAddToQueue(track)  // tecla "fila" / botão na lista / seleção com playe
   → player livre: a faixa entra como atual na hora (POST tocadas, sem novo débito)
 
 handlePlayNext()  // fim da faixa, botão próximo ou tecla "pular"
-  → remove fila[0] (faixa que acabou)
+  → remove fila[0] (faixa que acabou), casando `queueEntryId` ou `id`/`key` com `currentSong` (`queueItemsMatch`)
   → se ainda houver itens: toca novo fila[0] (POST tocadas, sem novo débito de crédito local)
   → senão: para o player
+
+**Importante:** na primeira faixa escolhida com player livre (`playTrack` sem `fromQueue`), o objeto enviado ao player **e** `fila[0]` compartilham o mesmo `queueEntryId` — evita repetir a primeira música ao avançar.
 
 **Créditos:** itens já na fila foram pagos ao enfileirar. Tocar `fila[0]` com `fromQueue: true` **não** exige saldo atual. O aviso "Créditos insuficientes" no header refere-se a **nova** seleção/enfileiramento — não bloqueia a reprodução da fila pendente.
 

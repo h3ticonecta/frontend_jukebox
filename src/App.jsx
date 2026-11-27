@@ -159,13 +159,16 @@ function JukeboxApp() {
           setCredits(nextCredits);
         }
 
-        const started = await playFromPlaylist(song);
+        const queueEntry = fromQueue
+          ? song
+          : { ...ensureQueueEntryId(song, 0), playbackStarted: true };
+        const started = await playFromPlaylist(queueEntry);
         if (!started) return false;
         if (fromQueue) {
-          markPlayingInQueue(song);
+          markPlayingInQueue(queueEntry);
         } else {
           // Reprodução direta pela lista: substitui a fila — não tocar as próximas faixas do álbum.
-          setQueue([{ ...ensureQueueEntryId(song, 0), playbackStarted: true }]);
+          setQueue([queueEntry]);
         }
         return true;
       } catch (err) {

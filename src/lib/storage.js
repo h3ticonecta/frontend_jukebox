@@ -249,6 +249,10 @@ export function ensureQueueEntryId(track, index = 0) {
 export function queueItemsMatch(a, b) {
   if (!a || !b) return false;
   if (a.queueEntryId && b.queueEntryId) return a.queueEntryId === b.queueEntryId;
+  const idA = trackIdentity(a);
+  const idB = trackIdentity(b);
+  // Uma das pontas sem queueEntryId (ex.: currentSong do player vs fila[0])
+  if (idA && idB && idA === idB && (!a.queueEntryId || !b.queueEntryId)) return true;
   return a === b;
 }
 
